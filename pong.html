@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcard.com</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #000;
+    color: #fff;
+    font-family: "Courier New", monospace;
+    text-align: center;
+}
+
+h1 {
+    margin: 25px 0 15px;
+    font-size: 38px;
+    letter-spacing: 3px;
+}
+
+#difficulty {
+    margin-bottom: 15px;
+}
+
+#difficulty button,
+.controls button {
+    padding: 10px 16px;
+    margin: 4px;
+    border: 2px solid #fff;
+    background: #111;
+    color: #fff;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+#difficulty button:hover,
+.controls button:hover {
+    background: #fff;
+    color: #000;
+}
+
+#difficulty button.selected {
+    background: #fff;
+    color: #000;
+}
+
+#score {
+    font-size: 28px;
+    margin: 15px;
+}
+
+canvas {
+    display: block;
+    margin: auto;
+    background: #111;
+    border: 3px solid #fff;
+    max-width: 95%;
+}
+
+.controls {
+    margin-top: 18px;
+    color: #aaa;
+    line-height: 1.8;
+}
+</style>
+</head>
+
+<body>
+
+<h1>PONG</h1>
+
+<div id="difficulty">
+
+    <button id="easy" onclick="setDifficulty('easy')">
+        EASY
+    </button>
+
+    <button id="medium" onclick="setDifficulty('medium')">
+        MEDIUM
+    </button>
+
+    <button id="hard" onclick="setDifficulty('hard')">
+        HARD
+    </button>
+
+    <button id="impossible" onclick="setDifficulty('impossible')">
+        IMPOSSIBLE
+    </button>
+
+</div>
+
+<div id="score">
+    <span id="playerScore">0</span>
+    -
+    <span id="computerScore">0</span>
+</div>
+
+<canvas id="game" width="800" height="500"></canvas>
+
+<div class="controls">
+    ↑ / ↓ TO MOVE
+    <br>
+    FIRST TO 10 WINS
+    <br><br>
+
+    <button onclick="resetGame()">
+        RESET
+    </button>
+
+    <button onclick="window.location.href='index.html'">
+        BACK
+    </button>
+</div>
+
+<script>
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const playerScoreElement =
+    document.getElementById("playerScore");
+
+const computerScoreElement =
+    document.getElementById("computerScore");
+
+const paddleWidth = 12;
+const paddleHeight = 90;
+
+let player = {
+    x: 25,
+    y: canvas.height / 2 - paddleHeight / 2,
+    speed: 7
+};
+
+let computer = {
+    x: canvas.width - 37,
+    y: canvas.height / 2 - paddleHeight / 2
+};
+
+let ball = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    size: 10,
+    speedX: 5,
+    speedY: 3
+};
+
+let playerScore = 0;
+let computerScore = 0;
+
+let difficulty = "medium";
+let aiSpeed = 5;
+
+let keys = {};
+
+document.addEventListener("keydown", function(event) {
+
+    const key = event.key.toLowerCase();
+
+    if (
+        key === "arrowup" ||
+        key === "arrowdown"
+    ) {
+        event.preventDefault();
+    }
+
+    keys[key] = true;
+
+});
+
+document.addEventListener("keyup", function(event) {
+
+    keys[event.key.toLowerCase()] = false;
+
+});
+
+
+function setDifficulty(level) {
+
+    difficulty = level;
+
+    document
+        .querySelectorAll("#difficulty button")
+        .forEach(function(button) {
+            button.classList.remove("selected");
+        });
+
+    document
+        .getElementById(level)
+        .classList.add("selected");
+
+    if (level === "easy") {
+        aiSpeed = 3;
+    }
+
+    if (level === "medium") {
+        aiSpeed = 5;
+    }
+
+    if (level === "hard") {
+        aiSpeed = 7;
+    }
+
+    if (level === "impossible") {
+        aiSpeed = 10;
+    }
+
+}
+
+
+function resetBall(direction) {
+
+    ball.x = canvas.width / 2;
+    ball.y = canvas.height / 2;
+
+    ball.speedX = 5 * direction;
+
+    ball.speedY = Math.random() * 6 - 3;
+
+}
+
+
+function resetGame() {
+
+    playerScore = 0;
+    computerScore = 0;
+
+    playerScoreElement.textContent = "0";
+    computerScoreElement.textContent = "0";
+
+    player.y =
+        canvas.height / 2 -
+        paddleHeight / 2;
+
+    computer.y =
+        canvas.height / 2 -
+        paddleHeight / 2;
+
+    resetBall(
+        Math.random() < 0.5 ? 1 : -1
+    );
+
+}
+
+
+function update() {
+
+    if (keys["arrowup"]) {
+        player.y -= player.speed;
+    }
+
+    if (keys["arrowdown"]) {
+        player.y += player.speed;
+    }
+
+    if (player.y < 0) {
+        player.y = 0;
+    }
+
+    if (
+        player.y >
+        canvas.height - paddleHeight
+    ) {
+        player.y =
+            canvas.height - paddleHeight;
+    }
+
+
+    let targetY = ball.y;
+
+    if (difficulty === "easy") {
+        targetY =
+            ball.y +
+            Math.sin(Date.now() / 300) * 70;
+    }
+
+    if (difficulty === "medium") {
+        targetY =
+            ball.y +
+            Math.sin(Date.now() / 500) * 25;
+    }
+
+    if (difficulty === "hard") {
+        targetY = ball.y;
+    }
+
+    if (difficulty === "impossible") {
+        targetY = ball.y;
+    }
+
+
+    let computerCenter =
+        computer.y + paddleHeight / 2;
+
+    if (computerCenter < targetY) {
+        computer.y += aiSpeed;
+    }
+
+    if (computerCenter > targetY) {
+        computer.y -= aiSpeed;
+    }
+
+    if (computer.y < 0) {
+        computer.y = 0;
+    }
+
+    if (
+        computer.y >
+        canvas.height - paddleHeight
+    ) {
+        computer.y =
+            canvas.height - paddleHeight;
+    }
+
+
+    ball.x += ball.speedX;
+    ball.y += ball.speedY;
+
+
+    if (
+        ball.y <= 0 ||
+        ball.y >= canvas.height - ball.size
+    ) {
+        ball.speedY *= -1;
+    }
+
+
+    if (
+        ball.x <= player.x + paddleWidth &&
+        ball.x >= player.x &&
+        ball.y + ball.size >= player.y &&
+        ball.y <= player.y + paddleHeight
+    ) {
+
+        ball.speedX =
+            Math.abs(ball.speedX) + 0.15;
+
+        ball.speedY +=
+            (
+                ball.y -
+                (
+                    player.y +
+                    paddleHeight / 2
+                )
+            ) * 0.05;
+    }
+
+
+    if (
+        ball.x + ball.size >= computer.x &&
+        ball.x <= computer.x + paddleWidth &&
+        ball.y + ball.size >= computer.y &&
+        ball.y <= computer.y + paddleHeight
+    ) {
+
+        ball.speedX =
+            -Math.abs(ball.speedX) - 0.15;
+
+        ball.speedY +=
+            (
+                ball.y -
+                (
+                    computer.y +
+                    paddleHeight / 2
+                )
+            ) * 0.05;
+    }
+
+
+    if (ball.x < 0) {
+
+        computerScore++;
+
+        computerScoreElement.textContent =
+            computerScore;
+
+        if (computerScore >= 10) {
+            endGame("AI WINS!");
+            return;
+        }
+
+        resetBall(1);
+    }
+
+
+    if (ball.x > canvas.width) {
+
+        playerScore++;
+
+        playerScoreElement.textContent =
+            playerScore;
+
+        if (playerScore >= 10) {
+            endGame("YOU WIN!");
+            return;
+        }
+
+        resetBall(-1);
+    }
+
+}
+
+
+function draw() {
+
+    ctx.fillStyle = "#111";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    ctx.strokeStyle = "#444";
+
+    ctx.setLineDash([10, 10]);
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        canvas.width / 2,
+        0
+    );
+
+    ctx.lineTo(
+        canvas.width / 2,
+        canvas.height
+    );
+
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+
+    ctx.fillStyle = "#fff";
+
+    ctx.fillRect(
+        player.x,
+        player.y,
+        paddleWidth,
+        paddleHeight
+    );
+
+    ctx.fillRect(
+        computer.x,
+        computer.y,
+        paddleWidth,
+        paddleHeight
+    );
+
+    ctx.fillRect(
+        ball.x,
+        ball.y,
+        ball.size,
+        ball.size
+    );
+
+}
+
+
+function endGame(message) {
+
+    setTimeout(function() {
+
+        alert(message);
+
+        resetGame();
+
+    }, 100);
+
+}
+
+
+function gameLoop() {
+
+    update();
+
+    draw();
+
+    requestAnimationFrame(gameLoop);
+
+}
+
+
+let rPresses = 0;
+let rTimer = null;
+
+document.addEventListener("keydown", function(event) {
+
+    if (event.key.toLowerCase() !== "r") {
+        return;
+    }
+
+    rPresses++;
+
+    clearTimeout(rTimer);
+
+    rTimer = setTimeout(function() {
+        rPresses = 0;
+    }, 700);
+
+    if (rPresses >= 3) {
+
+        rPresses = 0;
+
+        clearTimeout(rTimer);
+
+        window.location.href =
+            "flashcard.html";
+    }
+
+});
+
+
+setDifficulty("medium");
+
+resetBall(1);
+
+gameLoop();
+
+</script>
+
+</body>
+</html>

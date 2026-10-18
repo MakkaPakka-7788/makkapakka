@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flashcard.com</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #1f2330;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      color: white;
+    }
+
+    #gameContainer {
+      position: relative;
+      width: min(1000px, 95vw);
+    }
+
+    canvas {
+      width: 100%;
+      display: block;
+      background: #87ceeb;
+      border: 4px solid #111827;
+      border-radius: 12px;
+    }
+
+    #instructions {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 15px;
+      color: #d1d5db;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="gameContainer">
+  <canvas id="game" width="1000" height="500"></canvas>
+
+  <div id="instructions">
+    SPACE / ↑ / W / TAP to jump
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const GAME_WIDTH = canvas.width;
+const GAME_HEIGHT = canvas.height;
+
+const groundY = 410;
+
+let gameStarted = false;
+let gameOver = false;
+
+let score = 0;
+let highScore = Number(localStorage.getItem("pixelRunnerHighScore")) || 0;
+
+let speed = 7;
+let frame = 0;
+
+let obstacleTimer = 0;
+let nextObstacle = randomNumber(75, 130);
+
+let clouds = [];
+let obstacles = [];
+let particles = [];
+
+const player = {
+  x: 120,
+  y: groundY - 65,
+
+  width: 48,
+  height: 65,
+
+  velocityY: 0,
+
+  gravity: 0.9,
+  jumpPower: -17,
+
+  grounded: true,
+
+  animation: 0
+};
+
+function randomNumber(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function resetGame() {
+
+  score = 0;
+  speed = 7;
+  frame = 0;
+
+  obstacles = [];
+  particles = [];
+
+  obstacleTimer = 0;
+  nextObstacle = randomNumber(70, 120);
+
+  player.y = groundY - player.height;
+  player.velocityY = 0;
+  player.grounded = true;
+
+  gameOver = false;
+  gameStarted = true;
+}
+
+function jump() {
+
+  if (!gameStarted) {
+    resetGame();
+  }
+
+  if (gameOver) {
+    resetGame();
+    return;
+  }
+
+  if (player.grounded) {
+
+    player.velocityY = player.jumpPower;
+    player.grounded = false;
+
+    createDust(player.x + 20, groundY);
+  }
+}
+
+function createCloud() {
+
+  clouds.push({
+    x: GAME_WIDTH + 100,
+    y: randomNumber(50, 180),
+    speed: Math.random() * 0.6 + 0.3,
+    size: randomNumber(35, 65)
+  });
+}
+
+function createObstacle() {
+
+  const type = Math.random();
+
+  if (type < 0.55) {
+
+    obstacles.push({
+      type: "cactus",
+      x: GAME_WIDTH + 50,
+      y: groundY - 65,
+      width: 40,
+      height: 65
+    });
+
+  } else if (type < 0.85) {
+
+    obstacles.push({
+      type: "rock",
+      x: GAME_WIDTH + 50,
+      y: groundY - 45,
+      width: 55,
+      height: 45
+    });
+
+  } else {
+
+    obstacles.push({
+      type: "double",
+      x: GAME_WIDTH + 50,
+      y: groundY - 72,
+      width: 70,
+      height: 72
+    });
+  }
+}
+
+function createDust(x, y) {
+
+  for (let i = 0; i < 7; i++) {
+
+    particles.push({
+      x,
+      y,
+      dx: Math.random() * 4 - 2,
+      dy: Math.random() * -3,
+      life: 30,
+      size: randomNumber(3, 7)
+    });
+  }
+}
+
+function updatePlayer() {
+
+  player.velocityY += player.gravity;
+  player.y += player.velocityY;
+
+  if (player.y + player.height >= groundY) {
+
+    player.y = groundY - player.height;
+    player.velocityY = 0;
+    player.grounded = true;
+  }
+
+  player.animation += 0.25;
+}
+
+function updateObstacles() {
+
+  obstacleTimer++;
+
+  if (obstacleTimer >= nextObstacle) {
+
+    createObstacle();
+
+    obstacleTimer = 0;
+
+    nextObstacle = randomNumber(
+      Math.max(55, 95 - speed * 2),
+      Math.max(85, 140 - speed * 2)
+    );
+  }
+
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+
+    obstacles[i].x -= speed;
+
+    if (obstacles[i].x + obstacles[i].width < 0) {
+      obstacles.splice(i, 1);
+    }
+  }
+}
+
+function updateClouds() {
+
+  if (frame % 160 === 0) {
+    createCloud();
+  }
+
+  clouds.forEach(cloud => {
+    cloud.x -= cloud.speed;
+  });
+
+  clouds = clouds.filter(cloud => cloud.x > -150);
+}
+
+function updateParticles() {
+
+  particles.forEach(p => {
+
+    p.x += p.dx;
+    p.y += p.dy;
+
+    p.life--;
+
+  });
+
+  particles = particles.filter(p => p.life > 0);
+}
+
+function collisionCheck() {
+
+  const playerBox = {
+    x: player.x + 8,
+    y: player.y + 7,
+    width: player.width - 16,
+    height: player.height - 10
+  };
+
+  for (const obstacle of obstacles) {
+
+    const obstacleBox = {
+      x: obstacle.x + 5,
+      y: obstacle.y + 5,
+      width: obstacle.width - 10,
+      height: obstacle.height - 5
+    };
+
+    if (
+      playerBox.x < obstacleBox.x + obstacleBox.width &&
+      playerBox.x + playerBox.width > obstacleBox.x &&
+      playerBox.y < obstacleBox.y + obstacleBox.height &&
+      playerBox.y + playerBox.height > obstacleBox.y
+    ) {
+
+      gameOver = true;
+
+      if (Math.floor(score) > highScore) {
+
+        highScore = Math.floor(score);
+
+        localStorage.setItem(
+          "pixelRunnerHighScore",
+          highScore
+        );
+      }
+    }
+  }
+}
+
+function updateGame() {
+
+  if (!gameStarted || gameOver) {
+    return;
+  }
+
+  frame++;
+
+  score += 0.12;
+
+  speed = Math.min(
+    16,
+    7 + score / 250
+  );
+
+  updatePlayer();
+  updateObstacles();
+  updateClouds();
+  updateParticles();
+
+  collisionCheck();
+}
+
+function drawBackground() {
+
+  const gradient = ctx.createLinearGradient(
+    0,
+    0,
+    0,
+    GAME_HEIGHT
+  );
+
+  gradient.addColorStop(0, "#72c7ff");
+  gradient.addColorStop(1, "#d9f2ff");
+
+  ctx.fillStyle = gradient;
+
+  ctx.fillRect(
+    0,
+    0,
+    GAME_WIDTH,
+    GAME_HEIGHT
+  );
+
+  // sun
+  ctx.fillStyle = "#ffd45c";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    820,
+    90,
+    42,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  // mountains
+  ctx.fillStyle = "#82a9b0";
+
+  drawTriangle(
+    80,
+    groundY,
+    220,
+    180,
+    370,
+    groundY
+  );
+
+  drawTriangle(
+    280,
+    groundY,
+    460,
+    210,
+    650,
+    groundY
+  );
+
+  drawTriangle(
+    570,
+    groundY,
+    770,
+    170,
+    950,
+    groundY
+  );
+
+  // distant hills
+  ctx.fillStyle = "#68a66f";
+
+  ctx.beginPath();
+
+  ctx.moveTo(0, groundY);
+
+  ctx.quadraticCurveTo(
+    180,
+    300,
+    380,
+    groundY
+  );
+
+  ctx.quadraticCurveTo(
+    600,
+    310,
+    820,
+    groundY
+  );
+
+  ctx.quadraticCurveTo(
+    900,
+    340,
+    GAME_WIDTH,
+    groundY
+  );
+
+  ctx.lineTo(GAME_WIDTH, groundY);
+
+  ctx.fill();
+
+  drawClouds();
+}
+
+function drawTriangle(x1, y1, x2, y2, x3, y3) {
+
+  ctx.beginPath();
+
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.lineTo(x3, y3);
+
+  ctx.closePath();
+
+  ctx.fill();
+}
+
+function drawClouds() {
+
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+
+  clouds.forEach(cloud => {
+
+    ctx.beginPath();
+
+    ctx.arc(
+      cloud.x,
+      cloud.y,
+      cloud.size * 0.35,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.arc(
+      cloud.x + cloud.size * 0.4,
+      cloud.y - 10,
+      cloud.size * 0.45,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.arc(
+      cloud.x + cloud.size * 0.8,
+      cloud.y,
+      cloud.size * 0.35,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+
+  });
+}
+
+function drawGround() {
+
+  ctx.fillStyle = "#c89b5b";
+
+  ctx.fillRect(
+    0,
+    groundY,
+    GAME_WIDTH,
+    GAME_HEIGHT - groundY
+  );
+
+  ctx.fillStyle = "#66a14f";
+
+  ctx.fillRect(
+    0,
+    groundY,
+    GAME_WIDTH,
+    12
+  );
+
+  // moving ground lines
+
+  ctx.fillStyle = "#a47a48";
+
+  const offset = (frame * speed) % 60;
+
+  for (
+    let x = -offset;
+    x < GAME_WIDTH;
+    x += 60
+  ) {
+
+    ctx.fillRect(
+      x,
+      groundY + 45,
+      25,
+      5
+    );
+  }
+}
+
+function drawPlayer() {
+
+  const x = player.x;
+  const y = player.y;
+
+  // body
+  ctx.fillStyle = "#263238";
+
+  ctx.fillRect(
+    x + 9,
+    y + 18,
+    32,
+    34
+  );
+
+  // head
+  ctx.fillStyle = "#37474f";
+
+  ctx.fillRect(
+    x + 18,
+    y,
+    30,
+    27
+  );
+
+  // mouth
+  ctx.fillStyle = "#263238";
+
+  ctx.fillRect(
+    x + 37,
+    y + 18,
+    15,
+    8
+  );
+
+  // eye
+  ctx.fillStyle = "white";
+
+  ctx.fillRect(
+    x + 37,
+    y + 6,
+    6,
+    6
+  );
+
+  ctx.fillStyle = "#111";
+
+  ctx.fillRect(
+    x + 40,
+    y + 8,
+    3,
+    3
+  );
+
+  // tail
+  ctx.fillStyle = "#37474f";
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    x + 10,
+    y + 25
+  );
+
+  ctx.lineTo(
+    x - 15,
+    y + 15
+  );
+
+  ctx.lineTo(
+    x + 10,
+    y + 40
+  );
+
+  ctx.fill();
+
+  // legs
+
+  ctx.fillStyle = "#263238";
+
+  if (
+    player.grounded &&
+    Math.floor(player.animation) % 2 === 0
+  ) {
+
+    ctx.fillRect(
+      x + 12,
+      y + 48,
+      10,
+      17
+    );
+
+    ctx.fillRect(
+      x + 31,
+      y + 48,
+      10,
+      10
+    );
+
+  } else {
+
+    ctx.fillRect(
+      x + 12,
+      y + 48,
+      10,
+      11
+    );
+
+    ctx.fillRect(
+      x + 31,
+      y + 48,
+      10,
+      17
+    );
+  }
+}
+
+function drawObstacles() {
+
+  obstacles.forEach(obstacle => {
+
+    if (obstacle.type === "cactus") {
+
+      ctx.fillStyle = "#2f8f46";
+
+      ctx.fillRect(
+        obstacle.x + 12,
+        obstacle.y,
+        18,
+        obstacle.height
+      );
+
+      ctx.fillRect(
+        obstacle.x,
+        obstacle.y + 22,
+        16,
+        14
+      );
+
+      ctx.fillRect(
+        obstacle.x + 26,
+        obstacle.y + 30,
+        15,
+        14
+      );
+
+    }
+
+    else if (obstacle.type === "rock") {
+
+      ctx.fillStyle = "#616161";
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        obstacle.x,
+        obstacle.y + obstacle.height
+      );
+
+      ctx.lineTo(
+        obstacle.x + 8,
+        obstacle.y + 12
+      );
+
+      ctx.lineTo(
+        obstacle.x + 30,
+        obstacle.y
+      );
+
+      ctx.lineTo(
+        obstacle.x + 52,
+        obstacle.y + 20
+      );
+
+      ctx.lineTo(
+        obstacle.x + 55,
+        obstacle.y + obstacle.height
+      );
+
+      ctx.closePath();
+
+      ctx.fill();
+
+    }
+
+    else {
+
+      ctx.fillStyle = "#26783b";
+
+      ctx.fillRect(
+        obstacle.x + 6,
+        obstacle.y + 15,
+        20,
+        obstacle.height - 15
+      );
+
+      ctx.fillRect(
+        obstacle.x + 42,
+        obstacle.y,
+        18,
+        obstacle.height
+      );
+
+      ctx.fillRect(
+        obstacle.x + 22,
+        obstacle.y + 35,
+        28,
+        13
+      );
+    }
+
+  });
+}
+
+function drawParticles() {
+
+  ctx.fillStyle = "rgba(115,80,45,0.5)";
+
+  particles.forEach(p => {
+
+    ctx.fillRect(
+      p.x,
+      p.y,
+      p.size,
+      p.size
+    );
+
+  });
+}
+
+function drawUI() {
+
+  ctx.fillStyle = "#1f2937";
+
+  ctx.font = "bold 28px Arial";
+
+  ctx.fillText(
+    "Score: " + Math.floor(score),
+    25,
+    45
+  );
+
+  ctx.font = "20px Arial";
+
+  ctx.fillText(
+    "Best: " + highScore,
+    25,
+    75
+  );
+
+  ctx.fillText(
+    "Speed: " + speed.toFixed(1),
+    25,
+    103
+  );
+}
+
+function drawStartScreen() {
+
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+
+  ctx.fillRect(
+    0,
+    0,
+    GAME_WIDTH,
+    GAME_HEIGHT
+  );
+
+  ctx.fillStyle = "white";
+
+  ctx.textAlign = "center";
+
+  ctx.font = "bold 55px Arial";
+
+  ctx.fillText(
+    "PIXEL RUNNER",
+    GAME_WIDTH / 2,
+    190
+  );
+
+  ctx.font = "26px Arial";
+
+  ctx.fillText(
+    "Jump over obstacles and survive!",
+    GAME_WIDTH / 2,
+    240
+  );
+
+  ctx.font = "bold 28px Arial";
+
+  ctx.fillText(
+    "Press SPACE or TAP to start",
+    GAME_WIDTH / 2,
+    310
+  );
+
+  ctx.textAlign = "left";
+}
+
+function drawGameOver() {
+
+  // Iconic retro retry screen
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+  ctx.textAlign = "center";
+
+  ctx.fillStyle = "#ff2b2b";
+  ctx.font = "bold 64px Courier New";
+  ctx.fillText(
+    "RETRY",
+    GAME_WIDTH / 2,
+    190
+  );
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 28px Courier New";
+  ctx.fillText(
+    "SCORE: " + Math.floor(score),
+    GAME_WIDTH / 2,
+    255
+  );
+
+  ctx.fillStyle = "#aaa";
+  ctx.font = "22px Courier New";
+  ctx.fillText(
+    "BEST: " + highScore,
+    GAME_WIDTH / 2,
+    295
+  );
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 24px Courier New";
+  ctx.fillText(
+    "PRESS SPACE OR TAP TO RETRY",
+    GAME_WIDTH / 2,
+    360
+  );
+
+  ctx.textAlign = "left";
+}
+
+function draw() {
+
+  drawBackground();
+
+  drawGround();
+
+  drawParticles();
+
+  drawObstacles();
+
+  drawPlayer();
+
+  drawUI();
+
+  if (!gameStarted) {
+    drawStartScreen();
+  }
+
+  if (gameOver) {
+    drawGameOver();
+  }
+}
+
+function gameLoop() {
+
+  updateGame();
+
+  draw();
+
+  requestAnimationFrame(gameLoop);
+}
+
+let rCount = 0;
+let rTimer = null;
+
+function handleTripleR(event) {
+
+  if (event.code !== "KeyR") return;
+
+  rCount++;
+
+  clearTimeout(rTimer);
+
+  rTimer = setTimeout(() => {
+    rCount = 0;
+  }, 700);
+
+  if (rCount >= 3) {
+    rCount = 0;
+    window.location.href = "index.html";
+  }
+}
+
+document.addEventListener("keydown", handleTripleR);
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.code === "Space" ||
+      event.code === "ArrowUp" ||
+      event.code === "KeyW"
+    ) {
+
+      event.preventDefault();
+
+      jump();
+    }
+
+  }
+);
+
+canvas.addEventListener(
+  "pointerdown",
+  () => {
+    jump();
+  }
+);
+
+createCloud();
+createCloud();
+
+gameLoop();
+</script>
+
+</body>
+</html>

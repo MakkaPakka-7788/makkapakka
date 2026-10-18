@@ -1,0 +1,1499 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Flashcard.com</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #000;
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game {
+    display: flex;
+    gap: 22px;
+    align-items: flex-start;
+}
+
+#board {
+    width: 300px;
+    height: 600px;
+    background: #050505;
+    border: 2px solid #333;
+    box-shadow:
+        0 0 12px rgba(0,255,255,.2),
+        inset 0 0 25px rgba(0,255,255,.04);
+    image-rendering: pixelated;
+}
+
+#side {
+    width: 180px;
+}
+
+#side h1 {
+    margin: 0 0 20px;
+    font-size: 30px;
+    color: #00ffff;
+    text-shadow:
+        0 0 5px #00ffff,
+        0 0 15px #00ffff,
+        0 0 30px #00ffff;
+}
+
+.box {
+    background: #050505;
+    border: 2px solid #333;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 0 8px rgba(0,255,255,.12);
+}
+
+.label {
+    color: #777;
+    font-size: 10px;
+    margin-bottom: 7px;
+}
+
+.value {
+    font-size: 22px;
+}
+
+#next {
+    width: 140px;
+    height: 120px;
+    background: #050505;
+    border: 2px solid #333;
+}
+
+button {
+    background: #050505;
+    color: white;
+    border: 2px solid #555;
+    padding: 10px 16px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    border-color: white;
+    box-shadow: 0 0 10px rgba(255,255,255,.3);
+}
+
+#overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.94);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+#panel {
+    width: min(90vw, 400px);
+    padding: 38px;
+    text-align: center;
+    background: #000;
+    border: 2px solid #333;
+}
+
+#overlayTitle {
+    margin: 0 0 20px;
+    font-size: 42px;
+}
+
+#overlayText {
+    color: #999;
+    line-height: 1.7;
+    font-size: 13px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* START / NORMAL */
+
+.start-title {
+    color: #00ffff;
+    text-shadow:
+        0 0 5px #00ffff,
+        0 0 15px #00ffff,
+        0 0 30px #00ffff;
+}
+
+/* RETRY */
+
+.retry-title {
+    color: #ff2222;
+    text-shadow:
+        0 0 5px #ff2222,
+        0 0 15px #ff2222,
+        0 0 30px #ff0000,
+        0 0 55px #ff0000;
+}
+
+.retry-button {
+    background: #180000;
+    color: #ff2222;
+    border: 2px solid #ff2222;
+    box-shadow:
+        0 0 8px #ff0000,
+        0 0 18px rgba(255,0,0,.35);
+}
+
+.retry-button:hover {
+    background: #ff2222;
+    color: #000;
+    box-shadow:
+        0 0 12px #ff2222,
+        0 0 30px #ff0000;
+}
+
+.home-button {
+    background: #080808;
+    color: #fff;
+    border: 2px solid #555;
+}
+
+@media (max-width: 650px) {
+
+    body {
+        padding: 15px;
+    }
+
+    #game {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #side {
+        width: 300px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+    <canvas id="board"
+            width="300"
+            height="600"></canvas>
+
+    <div id="side">
+
+        <h1>TETRIS</h1>
+
+        <div class="box">
+            <div class="label">SCORE</div>
+            <div class="value" id="score">0</div>
+        </div>
+
+        <div class="box">
+            <div class="label">LINES</div>
+            <div class="value" id="lines">0</div>
+        </div>
+
+        <div class="box">
+            <div class="label">LEVEL</div>
+            <div class="value" id="level">1</div>
+        </div>
+
+        <div class="label">NEXT</div>
+
+        <canvas id="next"
+                width="140"
+                height="120"></canvas>
+
+        <br>
+
+        <button onclick="togglePause()">
+            PAUSE
+        </button>
+
+    </div>
+
+</div>
+
+
+<div id="overlay">
+
+    <div id="panel">
+
+        <h1 id="overlayTitle"
+            class="start-title">
+            TETRIS
+        </h1>
+
+        <p id="overlayText">
+            Arrow keys to move<br>
+            ↑ to rotate<br>
+            ↓ to drop<br>
+            SPACE to hard drop
+        </p>
+
+        <button id="mainButton"
+                onclick="startGame()">
+            START
+        </button>
+
+        <button id="homeButton"
+                class="home-button"
+                onclick="goHome()"
+                style="display:none;">
+            HOME
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const canvas =
+    document.getElementById("board");
+
+const ctx =
+    canvas.getContext("2d");
+
+const nextCanvas =
+    document.getElementById("next");
+
+const nextCtx =
+    nextCanvas.getContext("2d");
+
+
+const COLS = 10;
+const ROWS = 20;
+const SIZE = 30;
+
+
+/* CLASSIC TETRIS COLOURS */
+
+const colors = {
+    I: "#00ffff",
+    O: "#ffff00",
+    T: "#aa00ff",
+    S: "#00ff44",
+    Z: "#ff1744",
+    J: "#246bff",
+    L: "#ff9900"
+};
+
+
+/* TETRIS PIECES */
+
+const pieces = {
+
+    I: [
+        [[1,1,1,1]],
+        [[1],[1],[1],[1]]
+    ],
+
+    O: [
+        [
+            [1,1],
+            [1,1]
+        ]
+    ],
+
+    T: [
+        [
+            [0,1,0],
+            [1,1,1]
+        ],
+        [
+            [1,0],
+            [1,1],
+            [1,0]
+        ],
+        [
+            [1,1,1],
+            [0,1,0]
+        ],
+        [
+            [0,1],
+            [1,1],
+            [0,1]
+        ]
+    ],
+
+    S: [
+        [
+            [0,1,1],
+            [1,1,0]
+        ],
+        [
+            [1,0],
+            [1,1],
+            [0,1]
+        ]
+    ],
+
+    Z: [
+        [
+            [1,1,0],
+            [0,1,1]
+        ],
+        [
+            [0,1],
+            [1,1],
+            [1,0]
+        ]
+    ],
+
+    J: [
+        [
+            [1,0,0],
+            [1,1,1]
+        ],
+        [
+            [1,1],
+            [1,0],
+            [1,0]
+        ],
+        [
+            [1,1,1],
+            [0,0,1]
+        ],
+        [
+            [0,1],
+            [0,1],
+            [1,1]
+        ]
+    ],
+
+    L: [
+        [
+            [0,0,1],
+            [1,1,1]
+        ],
+        [
+            [1,0],
+            [1,0],
+            [1,1]
+        ],
+        [
+            [1,1,1],
+            [1,0,0]
+        ],
+        [
+            [1,1],
+            [0,1],
+            [0,1]
+        ]
+    ]
+};
+
+
+const types =
+    Object.keys(pieces);
+
+
+let board = [];
+let current = null;
+let nextType = null;
+let rotation = 0;
+
+let score = 0;
+let lines = 0;
+let level = 1;
+
+let running = false;
+let paused = false;
+
+let dropCounter = 0;
+let lastTime = 0;
+let dropInterval = 700;
+
+
+/* BOARD */
+
+function createBoard() {
+
+    board = [];
+
+    for (
+        let y = 0;
+        y < ROWS;
+        y++
+    ) {
+
+        board.push(
+            new Array(COLS).fill(null)
+        );
+
+    }
+
+}
+
+
+/* RANDOM */
+
+function randomType() {
+
+    return types[
+        Math.floor(
+            Math.random() * types.length
+        )
+    ];
+
+}
+
+
+/* SHAPE */
+
+function getShape(type, rot) {
+
+    return pieces[type][
+        rot % pieces[type].length
+    ];
+
+}
+
+
+/* SPAWN */
+
+function spawnPiece() {
+
+    const type =
+        nextType || randomType();
+
+    nextType =
+        randomType();
+
+    current = {
+        type: type,
+        x: 0,
+        y: 0
+    };
+
+    rotation = 0;
+
+    const shape =
+        getShape(
+            current.type,
+            rotation
+        );
+
+    current.x =
+        Math.floor(
+            (COLS - shape[0].length) / 2
+        );
+
+    if (
+        collision(
+            current.x,
+            current.y,
+            rotation
+        )
+    ) {
+
+        endGame();
+        return;
+
+    }
+
+    drawNext();
+
+}
+
+
+/* COLLISION */
+
+function collision(x, y, rot) {
+
+    const shape =
+        getShape(
+            current.type,
+            rot
+        );
+
+    for (
+        let row = 0;
+        row < shape.length;
+        row++
+    ) {
+
+        for (
+            let col = 0;
+            col < shape[row].length;
+            col++
+        ) {
+
+            if (!shape[row][col]) {
+                continue;
+            }
+
+            const bx = x + col;
+            const by = y + row;
+
+            if (
+                bx < 0 ||
+                bx >= COLS ||
+                by >= ROWS
+            ) {
+
+                return true;
+
+            }
+
+            if (
+                by >= 0 &&
+                board[by][bx]
+            ) {
+
+                return true;
+
+            }
+
+        }
+
+    }
+
+    return false;
+
+}
+
+
+/* MERGE */
+
+function merge() {
+
+    const shape =
+        getShape(
+            current.type,
+            rotation
+        );
+
+    shape.forEach(
+        (row, y) => {
+
+            row.forEach(
+                (value, x) => {
+
+                    if (value) {
+
+                        board[
+                            current.y + y
+                        ][
+                            current.x + x
+                        ] =
+                            current.type;
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+/* CLEAR LINES */
+
+function clearLines() {
+
+    let cleared = 0;
+
+    for (
+        let y = ROWS - 1;
+        y >= 0;
+        y--
+    ) {
+
+        if (
+            board[y].every(
+                cell => cell !== null
+            )
+        ) {
+
+            board.splice(y, 1);
+
+            board.unshift(
+                new Array(COLS).fill(null)
+            );
+
+            cleared++;
+
+            y++;
+
+        }
+
+    }
+
+    if (cleared > 0) {
+
+        const points =
+            [0,100,300,500,800];
+
+        score +=
+            points[cleared] * level;
+
+        lines += cleared;
+
+        level =
+            Math.floor(lines / 10) + 1;
+
+        dropInterval =
+            Math.max(
+                80,
+                700 - (level - 1) * 55
+            );
+
+        updateStats();
+
+    }
+
+}
+
+
+/* LOCK */
+
+function lockPiece() {
+
+    merge();
+
+    clearLines();
+
+    spawnPiece();
+
+}
+
+
+/* MOVE */
+
+function move(dir) {
+
+    if (
+        !running ||
+        paused ||
+        !current
+    ) return;
+
+    if (
+        !collision(
+            current.x + dir,
+            current.y,
+            rotation
+        )
+    ) {
+
+        current.x += dir;
+
+    }
+
+    draw();
+
+}
+
+
+/* SOFT DROP */
+
+function softDrop() {
+
+    if (
+        !running ||
+        paused ||
+        !current
+    ) return;
+
+    if (
+        !collision(
+            current.x,
+            current.y + 1,
+            rotation
+        )
+    ) {
+
+        current.y++;
+
+    }
+    else {
+
+        lockPiece();
+
+    }
+
+    dropCounter = 0;
+
+    draw();
+
+}
+
+
+/* HARD DROP */
+
+function hardDrop() {
+
+    if (
+        !running ||
+        paused ||
+        !current
+    ) return;
+
+    let distance = 0;
+
+    while (
+        !collision(
+            current.x,
+            current.y + 1,
+            rotation
+        )
+    ) {
+
+        current.y++;
+
+        distance++;
+
+    }
+
+    score += distance * 2;
+
+    updateStats();
+
+    lockPiece();
+
+    draw();
+
+}
+
+
+/* ROTATE */
+
+function rotatePiece() {
+
+    if (
+        !running ||
+        paused ||
+        !current
+    ) return;
+
+    const newRotation =
+        (
+            rotation + 1
+        ) %
+        pieces[current.type].length;
+
+    const kicks =
+        [0,-1,1,-2,2];
+
+    for (
+        const kick of kicks
+    ) {
+
+        if (
+            !collision(
+                current.x + kick,
+                current.y,
+                newRotation
+            )
+        ) {
+
+            current.x += kick;
+
+            rotation =
+                newRotation;
+
+            draw();
+
+            return;
+
+        }
+
+    }
+
+}
+
+
+/* GHOST */
+
+function getGhostY() {
+
+    let y =
+        current.y;
+
+    while (
+        !collision(
+            current.x,
+            y + 1,
+            rotation
+        )
+    ) {
+
+        y++;
+
+    }
+
+    return y;
+
+}
+
+
+/* DRAW BLOCK */
+
+function drawBlock(
+    context,
+    x,
+    y,
+    type,
+    size,
+    alpha = 1
+) {
+
+    context.globalAlpha = alpha;
+
+    context.fillStyle =
+        colors[type];
+
+    if (alpha === 1) {
+
+        context.shadowColor =
+            colors[type];
+
+        context.shadowBlur = 10;
+
+    }
+
+    context.fillRect(
+        x * size,
+        y * size,
+        size,
+        size
+    );
+
+    context.shadowBlur = 0;
+
+
+    /* LIGHT */
+
+    context.fillStyle =
+        "rgba(255,255,255,.35)";
+
+    context.fillRect(
+        x * size + 2,
+        y * size + 2,
+        size - 4,
+        4
+    );
+
+
+    /* DARK */
+
+    context.fillStyle =
+        "rgba(0,0,0,.3)";
+
+    context.fillRect(
+        x * size + 2,
+        y * size + size - 6,
+        size - 4,
+        4
+    );
+
+
+    context.strokeStyle =
+        "rgba(0,0,0,.7)";
+
+    context.strokeRect(
+        x * size + 1,
+        y * size + 1,
+        size - 2,
+        size - 2
+    );
+
+    context.globalAlpha = 1;
+
+}
+
+
+/* DRAW BOARD */
+
+function draw() {
+
+    ctx.fillStyle =
+        "#050505";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    /* GRID */
+
+    ctx.strokeStyle =
+        "#111";
+
+    for (
+        let x = 0;
+        x <= COLS;
+        x++
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x * SIZE,
+            0
+        );
+
+        ctx.lineTo(
+            x * SIZE,
+            canvas.height
+        );
+
+        ctx.stroke();
+
+    }
+
+    for (
+        let y = 0;
+        y <= ROWS;
+        y++
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            0,
+            y * SIZE
+        );
+
+        ctx.lineTo(
+            canvas.width,
+            y * SIZE
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    /* PLACED BLOCKS */
+
+    board.forEach(
+        (row,y) => {
+
+            row.forEach(
+                (type,x) => {
+
+                    if (type) {
+
+                        drawBlock(
+                            ctx,
+                            x,
+                            y,
+                            type,
+                            SIZE
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    if (!current) return;
+
+    const shape =
+        getShape(
+            current.type,
+            rotation
+        );
+
+
+    /* GHOST */
+
+    const ghostY =
+        getGhostY();
+
+    shape.forEach(
+        (row,y) => {
+
+            row.forEach(
+                (value,x) => {
+
+                    if (value) {
+
+                        drawBlock(
+                            ctx,
+                            current.x + x,
+                            ghostY + y,
+                            current.type,
+                            SIZE,
+                            .18
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    /* CURRENT */
+
+    shape.forEach(
+        (row,y) => {
+
+            row.forEach(
+                (value,x) => {
+
+                    if (value) {
+
+                        drawBlock(
+                            ctx,
+                            current.x + x,
+                            current.y + y,
+                            current.type,
+                            SIZE
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+/* NEXT */
+
+function drawNext() {
+
+    nextCtx.fillStyle =
+        "#050505";
+
+    nextCtx.fillRect(
+        0,
+        0,
+        nextCanvas.width,
+        nextCanvas.height
+    );
+
+    if (!nextType) return;
+
+    const shape =
+        getShape(
+            nextType,
+            0
+        );
+
+    const size = 25;
+
+    const offsetX =
+        Math.floor(
+            (
+                nextCanvas.width / size -
+                shape[0].length
+            ) / 2
+        );
+
+    const offsetY =
+        Math.floor(
+            (
+                nextCanvas.height / size -
+                shape.length
+            ) / 2
+        );
+
+    shape.forEach(
+        (row,y) => {
+
+            row.forEach(
+                (value,x) => {
+
+                    if (value) {
+
+                        drawBlock(
+                            nextCtx,
+                            offsetX + x,
+                            offsetY + y,
+                            nextType,
+                            size
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+/* STATS */
+
+function updateStats() {
+
+    document.getElementById("score")
+        .textContent = score;
+
+    document.getElementById("lines")
+        .textContent = lines;
+
+    document.getElementById("level")
+        .textContent = level;
+
+}
+
+
+/* START */
+
+function startGame() {
+
+    createBoard();
+
+    score = 0;
+    lines = 0;
+    level = 1;
+
+    dropInterval = 700;
+    dropCounter = 0;
+
+    paused = false;
+    running = true;
+
+    nextType =
+        randomType();
+
+    spawnPiece();
+
+    updateStats();
+
+    document.getElementById(
+        "overlayTitle"
+    ).className =
+        "start-title";
+
+    document.getElementById(
+        "overlay"
+    ).classList.add("hidden");
+
+    lastTime =
+        performance.now();
+
+    requestAnimationFrame(
+        gameLoop
+    );
+
+    draw();
+
+}
+
+
+/* LOOP */
+
+function gameLoop(time) {
+
+    if (!running) return;
+
+    const delta =
+        time - lastTime;
+
+    lastTime = time;
+
+    if (!paused) {
+
+        dropCounter += delta;
+
+        if (
+            dropCounter >=
+            dropInterval
+        ) {
+
+            softDrop();
+
+        }
+
+    }
+
+    draw();
+
+    requestAnimationFrame(
+        gameLoop
+    );
+
+}
+
+
+/* PAUSE */
+
+function togglePause() {
+
+    if (!running) return;
+
+    paused = !paused;
+
+    const overlay =
+        document.getElementById("overlay");
+
+    const title =
+        document.getElementById("overlayTitle");
+
+    const text =
+        document.getElementById("overlayText");
+
+    const button =
+        document.getElementById("mainButton");
+
+    const home =
+        document.getElementById("homeButton");
+
+
+    if (paused) {
+
+        title.textContent =
+            "PAUSED";
+
+        title.className =
+            "start-title";
+
+        text.innerHTML =
+            "Game paused.<br><br>" +
+            "Press CONTINUE to resume.";
+
+        button.textContent =
+            "CONTINUE";
+
+        button.className = "";
+
+        button.onclick =
+            togglePause;
+
+        home.style.display =
+            "none";
+
+        overlay.classList.remove(
+            "hidden"
+        );
+
+    }
+    else {
+
+        overlay.classList.add(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+/* RETRY */
+
+function endGame() {
+
+    running = false;
+
+    document.getElementById(
+        "overlayTitle"
+    ).textContent =
+        "RETRY";
+
+    document.getElementById(
+        "overlayTitle"
+    ).className =
+        "retry-title";
+
+
+    document.getElementById(
+        "overlayText"
+    ).innerHTML =
+        "Score: " +
+        score +
+        "<br><br>" +
+        "Lines: " +
+        lines;
+
+
+    const button =
+        document.getElementById(
+            "mainButton"
+        );
+
+    button.textContent =
+        "RETRY";
+
+    button.className =
+        "retry-button";
+
+    button.onclick =
+        startGame;
+
+
+    document.getElementById(
+        "homeButton"
+    ).style.display =
+        "inline-block";
+
+
+    document.getElementById(
+        "overlay"
+    ).classList.remove(
+        "hidden"
+    );
+
+}
+
+
+/* HOME */
+
+function goHome() {
+
+    window.location.href =
+        "index.html";
+
+}
+
+
+/* KEYBOARD */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        const key =
+            event.key.toLowerCase();
+
+        if (
+            key === "arrowleft"
+        ) {
+
+            event.preventDefault();
+
+            move(-1);
+
+        }
+
+        if (
+            key === "arrowright"
+        ) {
+
+            event.preventDefault();
+
+            move(1);
+
+        }
+
+        if (
+            key === "arrowdown"
+        ) {
+
+            event.preventDefault();
+
+            softDrop();
+
+        }
+
+        if (
+            key === "arrowup"
+        ) {
+
+            event.preventDefault();
+
+            rotatePiece();
+
+        }
+
+        if (key === " ") {
+
+            event.preventDefault();
+
+            hardDrop();
+
+        }
+
+        if (key === "p") {
+
+            togglePause();
+
+        }
+
+    }
+);
+
+
+/* RRR SECRET SHORTCUT */
+
+let rPresses = 0;
+let rTimer;
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key.toLowerCase() !== "r"
+        ) {
+            return;
+        }
+
+        rPresses++;
+
+        clearTimeout(rTimer);
+
+        rTimer =
+            setTimeout(
+                function() {
+                    rPresses = 0;
+                },
+                700
+            );
+
+        if (rPresses === 3) {
+
+            window.location.href =
+                "flashcard.html";
+
+            rPresses = 0;
+
+        }
+
+    }
+);
+
+
+/* INITIAL */
+
+createBoard();
+updateStats();
+draw();
+
+</script>
+
+</body>
+</html>
+```

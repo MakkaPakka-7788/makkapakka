@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Flashcard Creator</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: #080808;
+    color: #eee;
+    font-family: "Courier New", monospace;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.game {
+    width: 900px;
+    max-width: 94%;
+}
+
+.panel {
+    background: #111;
+    border: 2px solid #333;
+    padding: 30px;
+    box-shadow: 8px 8px 0 #000;
+}
+
+h1 {
+    text-align: center;
+    margin: 0;
+    font-size: 42px;
+    letter-spacing: 3px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #777;
+    margin: 8px 0 20px;
+}
+
+.turn {
+    text-align: center;
+    font-size: 24px;
+    margin: 12px 0;
+}
+
+.choose {
+    text-align: center;
+    color: #aaa;
+    margin-bottom: 15px;
+}
+
+.choiceButtons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+button {
+    background: #eee;
+    color: #111;
+    border: 0;
+    padding: 13px 24px;
+
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 16px;
+
+    cursor: pointer;
+}
+
+button:hover {
+    background: white;
+}
+
+button:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}
+
+
+/* COUNTDOWN */
+
+.countdown {
+    height: 70px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font-size: 52px;
+    font-weight: bold;
+}
+
+.countdown.hidden {
+    visibility: hidden;
+}
+
+
+/* SPINNER */
+
+.spinnerArea {
+    position: relative;
+
+    display: flex;
+    justify-content: center;
+
+    margin: 20px 0 25px;
+}
+
+.pointer {
+    position: absolute;
+
+    top: -25px;
+
+    z-index: 5;
+
+    width: 0;
+    height: 0;
+
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-top: 32px solid #eee;
+}
+
+.spinner {
+    width: 280px;
+    height: 280px;
+
+    border-radius: 50%;
+
+    background: #292929;
+
+    border: 12px solid #666;
+
+    box-shadow: inset 0 0 0 8px #111;
+
+    position: relative;
+
+    transition:
+        transform 1.4s cubic-bezier(.17,.67,.19,1.2);
+}
+
+.slot {
+    position: absolute;
+
+    width: 45px;
+    height: 45px;
+
+    border-radius: 50%;
+
+    background: #080808;
+
+    border: 4px solid #666;
+
+    left: 50%;
+    top: 50%;
+
+    margin-left: -22px;
+    margin-top: -22px;
+
+    transition: .2s;
+}
+
+.slot.used {
+    background: #555;
+    border-color: #888;
+}
+
+.slot.hit {
+    background: #ff6666;
+    border-color: #ff9999;
+}
+
+.slot.safeHit {
+    background: #7ee787;
+    border-color: #b5ffbe;
+}
+
+
+/* SIX POSITIONS */
+
+.slot:nth-child(1) {
+    transform: rotate(0deg) translateX(98px);
+}
+
+.slot:nth-child(2) {
+    transform: rotate(60deg) translateX(98px);
+}
+
+.slot:nth-child(3) {
+    transform: rotate(120deg) translateX(98px);
+}
+
+.slot:nth-child(4) {
+    transform: rotate(180deg) translateX(98px);
+}
+
+.slot:nth-child(5) {
+    transform: rotate(240deg) translateX(98px);
+}
+
+.slot:nth-child(6) {
+    transform: rotate(300deg) translateX(98px);
+}
+
+.center {
+    position: absolute;
+
+    width: 70px;
+    height: 70px;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    border-radius: 50%;
+
+    background: #111;
+
+    border: 5px solid #777;
+}
+
+
+/* STATUS */
+
+.status {
+    text-align: center;
+
+    min-height: 55px;
+
+    font-size: 21px;
+    font-weight: bold;
+
+    margin: 10px 0;
+}
+
+.normal {
+    color: #ddd;
+}
+
+.safe {
+    color: #7ee787;
+}
+
+.danger {
+    color: #ff6666;
+}
+
+.point {
+    color: #ffd866;
+}
+
+
+/* SLOT COUNTER */
+
+.slotCounter {
+    text-align: center;
+
+    margin: 8px 0 20px;
+
+    color: #999;
+
+    font-size: 14px;
+}
+
+.slotCounter span {
+    color: #eee;
+    font-weight: bold;
+}
+
+
+/* PLAYERS */
+
+.players {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 15px;
+
+    margin: 20px 0;
+}
+
+.player {
+    background: #181818;
+
+    border: 2px solid #333;
+
+    padding: 18px;
+
+    text-align: center;
+}
+
+.player.active {
+    border-color: #aaa;
+}
+
+.playerName {
+    font-size: 20px;
+
+    font-weight: bold;
+
+    margin-bottom: 10px;
+}
+
+.score {
+    font-size: 24px;
+}
+
+
+/* CONTROLS */
+
+.controls {
+    text-align: center;
+}
+
+.spinButton {
+    font-size: 21px;
+
+    padding: 15px 40px;
+
+    box-shadow: 5px 5px 0 #000;
+}
+
+.spinButton:active {
+    transform: translate(4px, 4px);
+
+    box-shadow: 1px 1px 0 #000;
+}
+
+
+/* INFO */
+
+.info {
+    text-align: center;
+
+    color: #555;
+
+    font-size: 12px;
+
+    margin-top: 20px;
+
+    line-height: 1.7;
+}
+
+
+/* RETRY */
+
+.retry {
+    display: none;
+
+    text-align: center;
+}
+
+.retry h2 {
+    color: #ff6666;
+
+    font-size: 42px;
+
+    margin: 5px;
+}
+
+.final {
+    font-size: 22px;
+
+    line-height: 2;
+
+    margin: 25px;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+
+    h1 {
+        font-size: 30px;
+    }
+
+    .spinner {
+        width: 220px;
+        height: 220px;
+    }
+
+    .slot:nth-child(1) {
+        transform: rotate(0deg) translateX(75px);
+    }
+
+    .slot:nth-child(2) {
+        transform: rotate(60deg) translateX(75px);
+    }
+
+    .slot:nth-child(3) {
+        transform: rotate(120deg) translateX(75px);
+    }
+
+    .slot:nth-child(4) {
+        transform: rotate(180deg) translateX(75px);
+    }
+
+    .slot:nth-child(5) {
+        transform: rotate(240deg) translateX(75px);
+    }
+
+    .slot:nth-child(6) {
+        transform: rotate(300deg) translateX(75px);
+    }
+
+    .players {
+        grid-template-columns: 1fr;
+    }
+
+    .choiceButtons {
+        flex-direction: column;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div class="game">
+
+<div class="panel" id="gamePanel">
+
+<h1>DANGER SPINNER</h1>
+
+<div class="subtitle">
+6 SLOTS • 1 DANGER • 5 SAFE
+</div>
+
+
+<div class="turn" id="turnText">
+YOUR CHOICE
+</div>
+
+<div class="choose" id="chooseText">
+Choose who takes the spin.
+</div>
+
+
+<div class="choiceButtons">
+
+<button id="botButton" onclick="chooseBot()">
+BOT SPIN
+</button>
+
+<button id="youButton" onclick="chooseYou()">
+YOU SPIN
+</button>
+
+</div>
+
+
+<div
+id="countdown"
+class="countdown hidden"
+>
+6
+</div>
+
+
+<div class="spinnerArea">
+
+<div class="pointer"></div>
+
+<div
+class="spinner"
+id="spinner"
+>
+
+<div class="slot"></div>
+<div class="slot"></div>
+<div class="slot"></div>
+<div class="slot"></div>
+<div class="slot"></div>
+<div class="slot"></div>
+
+<div class="center"></div>
+
+</div>
+
+</div>
+
+
+<div class="slotCounter">
+SLOTS REMAINING:
+<span id="slotsRemaining">6</span>
+</div>
+
+
+<div
+class="status normal"
+id="status"
+>
+Choose BOT SPIN or YOU SPIN.
+</div>
+
+
+<div class="players">
+
+<div
+class="player"
+id="youPlayer"
+>
+
+<div class="playerName">
+YOU
+</div>
+
+<div class="score">
+<span id="youScore">0</span>
+</div>
+
+</div>
+
+
+<div
+class="player"
+id="botPlayer"
+>
+
+<div class="playerName">
+BOT
+</div>
+
+<div class="score">
+<span id="botScore">0</span>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="controls">
+
+<button
+class="spinButton"
+id="spinButton"
+onclick="spin()"
+disabled
+>
+SPIN
+</button>
+
+</div>
+
+
+<div class="info">
+
+THE DANGER SLOT IS RANDOMIZED EACH ROUND<br>
+EACH OF THE 6 SLOTS CAN ONLY BE USED ONCE<br>
+AFTER 6 SPINS → NEW RANDOM DANGER SLOT
+
+</div>
+
+</div>
+
+
+<div
+class="panel retry"
+id="retryPanel"
+>
+
+<h2>ROUND OVER</h2>
+
+<div class="final">
+
+YOU:
+<span id="finalYou">0</span>
+
+<br>
+
+BOT:
+<span id="finalBot">0</span>
+
+<br><br>
+
+WINNER:
+<span id="winner">—</span>
+
+</div>
+
+
+<button
+class="spinButton"
+onclick="restart()"
+>
+PLAY AGAIN
+</button>
+
+</div>
+
+</div>
+
+
+<script>
+
+
+/*
+========================================
+GAME VARIABLES
+========================================
+*/
+
+
+let selected = null;
+
+let spinning = false;
+
+let rotation = 0;
+
+let youScore = 0;
+
+let botScore = 0;
+
+
+/*
+Six slots.
+
+false = unused
+true = already used
+*/
+
+let usedSlots = [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+];
+
+
+/*
+ONE RANDOM DANGER SLOT.
+
+This changes whenever
+a new set of six begins.
+*/
+
+let dangerSlot = randomDangerSlot();
+
+
+/*
+========================================
+RANDOM DANGER
+========================================
+*/
+
+function randomDangerSlot() {
+
+    return Math.floor(
+        Math.random() * 6
+    );
+
+}
+
+
+/*
+========================================
+RESET SIX SLOTS
+========================================
+*/
+
+function resetSlots() {
+
+    usedSlots = [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+    ];
+
+
+    /*
+    IMPORTANT:
+    The danger location is randomized
+    again every time the six slots reset.
+    */
+
+    dangerSlot =
+        randomDangerSlot();
+
+
+    updateSlotDisplay();
+
+}
+
+
+/*
+========================================
+GET RANDOM UNUSED SLOT
+========================================
+*/
+
+function getRandomUnusedSlot() {
+
+    let available = [];
+
+    for (
+        let i = 0;
+        i < 6;
+        i++
+    ) {
+
+        if (!usedSlots[i]) {
+
+            available.push(i);
+
+        }
+
+    }
+
+
+    if (available.length === 0) {
+
+        return null;
+
+    }
+
+
+    const randomIndex =
+        Math.floor(
+            Math.random() *
+            available.length
+        );
+
+
+    return available[randomIndex];
+
+}
+
+
+/*
+========================================
+UPDATE SLOT DISPLAY
+========================================
+*/
+
+function updateSlotDisplay() {
+
+    const slots =
+        document.querySelectorAll(".slot");
+
+
+    let remaining = 0;
+
+
+    for (
+        let i = 0;
+        i < 6;
+        i++
+    ) {
+
+        slots[i].classList.remove("used");
+        slots[i].classList.remove("hit");
+        slots[i].classList.remove("safeHit");
+
+
+        if (usedSlots[i]) {
+
+            slots[i].classList.add("used");
+
+        }
+
+        else {
+
+            remaining++;
+
+        }
+
+    }
+
+
+    document.getElementById(
+        "slotsRemaining"
+    ).textContent = remaining;
+
+}
+
+
+/*
+========================================
+CHOOSE BOT
+========================================
+*/
+
+function chooseBot() {
+
+    if (spinning) return;
+
+    if (getRandomUnusedSlot() === null) {
+
+        resetSlots();
+
+    }
+
+
+    selected = "bot";
+
+
+    document.getElementById(
+        "turnText"
+    ).textContent =
+        "BOT SPIN";
+
+
+    document.getElementById(
+        "chooseText"
+    ).textContent =
+        "You chose the BOT.";
+
+
+    document.getElementById(
+        "spinButton"
+    ).disabled = false;
+
+
+    updateActive();
+
+}
+
+
+/*
+========================================
+CHOOSE YOU
+========================================
+*/
+
+function chooseYou() {
+
+    if (spinning) return;
+
+
+    if (getRandomUnusedSlot() === null) {
+
+        resetSlots();
+
+    }
+
+
+    selected = "you";
+
+
+    document.getElementById(
+        "turnText"
+    ).textContent =
+        "YOUR SPIN";
+
+
+    document.getElementById(
+        "chooseText"
+    ).textContent =
+        "You must take the spin.";
+
+
+    document.getElementById(
+        "spinButton"
+    ).disabled = false;
+
+
+    updateActive();
+
+}
+
+
+/*
+========================================
+ACTIVE PLAYER
+========================================
+*/
+
+function updateActive() {
+
+    document
+        .getElementById("youPlayer")
+        .classList.remove("active");
+
+
+    document
+        .getElementById("botPlayer")
+        .classList.remove("active");
+
+
+    if (selected === "you") {
+
+        document
+            .getElementById("youPlayer")
+            .classList.add("active");
+
+    }
+
+
+    if (selected === "bot") {
+
+        document
+            .getElementById("botPlayer")
+            .classList.add("active");
+
+    }
+
+}
+
+
+/*
+========================================
+COUNTDOWN
+========================================
+*/
+
+function countdown(callback) {
+
+    const box =
+        document.getElementById(
+            "countdown"
+        );
+
+
+    box.classList.remove("hidden");
+
+
+    let number = 6;
+
+
+    box.textContent = number;
+
+
+    const timer =
+        setInterval(function() {
+
+            number--;
+
+
+            if (number > 0) {
+
+                box.textContent =
+                    number;
+
+            }
+
+            else {
+
+                clearInterval(timer);
+
+
+                box.textContent =
+                    "GO!";
+
+
+                setTimeout(function() {
+
+                    box.classList.add(
+                        "hidden"
+                    );
+
+
+                    callback();
+
+                }, 300);
+
+            }
+
+        }, 350);
+
+}
+
+
+/*
+========================================
+SPIN
+========================================
+*/
+
+function spin() {
+
+    if (
+        spinning ||
+        !selected
+    ) {
+        return;
+    }
+
+
+    /*
+    Pick ONLY from unused slots.
+    */
+
+    const result =
+        getRandomUnusedSlot();
+
+
+    if (result === null) {
+
+        resetSlots();
+
+        return;
+
+    }
+
+
+    spinning = true;
+
+
+    document.getElementById(
+        "spinButton"
+    ).disabled = true;
+
+
+    document.getElementById(
+        "botButton"
+    ).disabled = true;
+
+
+    document.getElementById(
+        "youButton"
+    ).disabled = true;
+
+
+    const currentPlayer =
+        selected;
+
+
+    document.getElementById(
+        "status"
+    ).className =
+        "status normal";
+
+
+    document.getElementById(
+        "status"
+    ).textContent =
+        currentPlayer.toUpperCase() +
+        " IS GETTING READY...";
+
+
+    countdown(function() {
+
+
+        /*
+        Mark the slot as used.
+
+        It can NEVER be selected
+        again during this set of six.
+        */
+
+        usedSlots[result] = true;
+
+
+        updateSlotDisplay();
+
+
+        /*
+        Visual rotation.
+        */
+
+        rotation +=
+            720 +
+            Math.floor(
+                Math.random() * 1080
+            );
+
+
+        document.getElementById(
+            "spinner"
+        ).style.transform =
+            `rotate(${rotation}deg)`;
+
+
+        document.getElementById(
+            "status"
+        ).textContent =
+            currentPlayer.toUpperCase() +
+            " IS SPINNING...";
+
+
+        setTimeout(function() {
+
+
+            /*
+            Check the hidden randomized
+            danger slot.
+            */
+
+            const danger =
+                result === dangerSlot;
+
+
+            if (danger) {
+
+                dangerResult(
+                    currentPlayer,
+                    result
+                );
+
+            }
+
+            else {
+
+                safeResult(
+                    currentPlayer,
+                    result
+                );
+
+            }
+
+
+        }, 1400);
+
+    });
+
+}
+
+
+/*
+========================================
+DANGER RESULT
+========================================
+*/
+
+function dangerResult(
+    player,
+    slot
+) {
+
+    const slots =
+        document.querySelectorAll(
+            ".slot"
+        );
+
+
+    slots[slot].classList.add(
+        "hit"
+    );
+
+
+    if (player === "bot") {
+
+
+        /*
+        BOT DANGER
+        */
+
+        youScore++;
+
+
+        updateScores();
+
+
+        document.getElementById(
+            "status"
+        ).className =
+            "status point";
+
+
+        document.getElementById(
+            "status"
+        ).textContent =
+            "DANGER! BOT HIT IT — YOU GET +1!";
+
+
+        setTimeout(function() {
+
+            /*
+            If all six have now been used,
+            start a completely new set.
+            */
+
+            checkSixUsed();
+
+
+            nextChoice(
+                "BOT FAILED — CHOOSE AGAIN."
+            );
+
+        }, 900);
+
+
+    }
+
+    else {
+
+
+        /*
+        YOU DANGER
+        */
+
+        botScore++;
+
+
+        updateScores();
+
+
+        document.getElementById(
+            "status"
+        ).className =
+            "status danger";
+
+
+        document.getElementById(
+            "status"
+        ).textContent =
+            "DANGER! BOT GETS +1!";
+
+
+        setTimeout(function() {
+
+            endRound();
+
+        }, 1000);
+
+    }
+
+}
+
+
+/*
+========================================
+SAFE RESULT
+========================================
+*/
+
+function safeResult(
+    player,
+    slot
+) {
+
+    const slots =
+        document.querySelectorAll(
+            ".slot"
+        );
+
+
+    slots[slot].classList.add(
+        "safeHit"
+    );
+
+
+    document.getElementById(
+        "status"
+    ).className =
+        "status safe";
+
+
+    document.getElementById(
+        "status"
+    ).textContent =
+        "✓ SAFE!";
+
+
+    if (player === "bot") {
+
+
+        /*
+        BOT SAFE:
+        USER MUST GO.
+        */
+
+        setTimeout(function() {
+
+            selected = "you";
+
+
+            spinning = false;
+
+
+            document.getElementById(
+                "turnText"
+            ).textContent =
+                "YOUR TURN";
+
+
+            document.getElementById(
+                "chooseText"
+            ).textContent =
+                "BOT WAS SAFE — YOU MUST SPIN.";
+
+
+            document.getElementById(
+                "spinButton"
+            ).disabled = false;
+
+
+            updateActive();
+
+
+        }, 900);
+
+
+    }
+
+    else {
+
+
+        /*
+        YOU SAFE:
+        CHOOSE AGAIN.
+        */
+
+        setTimeout(function() {
+
+            checkSixUsed();
+
+
+            nextChoice(
+                "YOU WERE SAFE — CHOOSE AGAIN."
+            );
+
+
+        }, 900);
+
+    }
+
+}
+
+
+/*
+========================================
+CHECK IF ALL SIX USED
+========================================
+*/
+
+function checkSixUsed() {
+
+    const allUsed =
+        usedSlots.every(
+            slot => slot === true
+        );
+
+
+    if (!allUsed) {
+
+        return;
+
+    }
+
+
+    /*
+    SIX SLOTS COMPLETE.
+
+    Create a completely new
+    randomized danger slot.
+    */
+
+    setTimeout(function() {
+
+        resetSlots();
+
+        document.getElementById(
+            "status"
+        ).textContent =
+            "ALL 6 SLOTS USED — NEW SET!";
+
+    }, 100);
+
+}
+
+
+/*
+========================================
+NEXT CHOICE
+========================================
+*/
+
+function nextChoice(message) {
+
+    /*
+    If all six were used,
+    start the new set first.
+    */
+
+    if (
+        usedSlots.every(
+            slot => slot === true
+        )
+    ) {
+
+        resetSlots();
+
+    }
+
+
+    selected = null;
+
+    spinning = false;
+
+
+    document.getElementById(
+        "turnText"
+    ).textContent =
+        "YOUR CHOICE";
+
+
+    document.getElementById(
+        "chooseText"
+    ).textContent =
+        message;
+
+
+    document.getElementById(
+        "spinButton"
+    ).disabled = true;
+
+
+    document.getElementById(
+        "botButton"
+    ).disabled = false;
+
+
+    document.getElementById(
+        "youButton"
+    ).disabled = false;
+
+
+    updateActive();
+
+}
+
+
+/*
+========================================
+SCORES
+========================================
+*/
+
+function updateScores() {
+
+    document.getElementById(
+        "youScore"
+    ).textContent =
+        youScore;
+
+
+    document.getElementById(
+        "botScore"
+    ).textContent =
+        botScore;
+
+}
+
+
+/*
+========================================
+END ROUND
+========================================
+*/
+
+function endRound() {
+
+    spinning = true;
+
+
+    document.getElementById(
+        "gamePanel"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "retryPanel"
+    ).style.display =
+        "block";
+
+
+    document.getElementById(
+        "finalYou"
+    ).textContent =
+        youScore;
+
+
+    document.getElementById(
+        "finalBot"
+    ).textContent =
+        botScore;
+
+
+    let winner;
+
+
+    if (youScore > botScore) {
+
+        winner = "YOU";
+
+    }
+
+    else if (botScore > youScore) {
+
+        winner = "BOT";
+
+    }
+
+    else {
+
+        winner = "DRAW";
+
+    }
+
+
+    document.getElementById(
+        "winner"
+    ).textContent =
+        winner;
+
+}
+
+
+/*
+========================================
+RESTART
+========================================
+*/
+
+function restart() {
+
+    selected = null;
+
+    spinning = false;
+
+    rotation = 0;
+
+    youScore = 0;
+
+    botScore = 0;
+
+
+    resetSlots();
+
+
+    document.getElementById(
+        "spinner"
+    ).style.transform =
+        "rotate(0deg)";
+
+
+    document.getElementById(
+        "gamePanel"
+    ).style.display =
+        "block";
+
+
+    document.getElementById(
+        "retryPanel"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "status"
+    ).className =
+        "status normal";
+
+
+    document.getElementById(
+        "status"
+    ).textContent =
+        "Choose BOT SPIN or YOU SPIN.";
+
+
+    document.getElementById(
+        "turnText"
+    ).textContent =
+        "YOUR CHOICE";
+
+
+    document.getElementById(
+        "chooseText"
+    ).textContent =
+        "Choose who takes the spin.";
+
+
+    document.getElementById(
+        "spinButton"
+    ).disabled = true;
+
+
+    document.getElementById(
+        "botButton"
+    ).disabled = false;
+
+
+    document.getElementById(
+        "youButton"
+    ).disabled = false;
+
+
+    document.getElementById(
+        "countdown"
+    ).classList.add(
+        "hidden"
+    );
+
+
+    updateScores();
+
+    updateActive();
+
+}
+
+
+/*
+========================================
+RRR SHORTCUT
+========================================
+*/
+
+let rCount = 0;
+
+let rTimer = null;
+
+
+document.addEventListener(
+    "keydown",
+    function(e) {
+
+        if (
+            e.key.toLowerCase() !== "r"
+        ) {
+            return;
+        }
+
+
+        rCount++;
+
+
+        clearTimeout(rTimer);
+
+
+        rTimer = setTimeout(
+            function() {
+
+                rCount = 0;
+
+            },
+            700
+        );
+
+
+        if (rCount === 3) {
+
+            rCount = 0;
+
+            window.location.href =
+                "flashcard.html";
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>

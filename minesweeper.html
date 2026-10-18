@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcard.com</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    user-select:none;
+}
+
+html,body{
+    margin:0;
+    padding:0;
+    min-height:100%;
+}
+
+body{
+    background:#c0c0c0;
+    font-family:"Courier New",monospace;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:25px 10px;
+    color:#000;
+}
+
+.game{
+    background:#c0c0c0;
+    border:4px solid;
+    border-color:#fff #808080 #808080 #fff;
+    padding:10px;
+    box-shadow:2px 2px 0 #000;
+    max-width:100%;
+}
+
+.top{
+    border:4px solid;
+    border-color:#808080 #fff #fff #808080;
+    padding:8px;
+    margin-bottom:10px;
+}
+
+.title{
+    font-size:20px;
+    font-weight:bold;
+    margin-bottom:8px;
+    text-align:center;
+}
+
+.controls{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+}
+
+select,
+button{
+    font-family:"Courier New",monospace;
+    font-weight:bold;
+}
+
+select{
+    background:#fff;
+    border:2px solid #808080;
+    padding:4px 8px;
+    font-size:14px;
+}
+
+.reset{
+    width:42px;
+    height:38px;
+    padding:0;
+    font-size:22px;
+    background:#c0c0c0;
+    border:3px solid;
+    border-color:#fff #808080 #808080 #fff;
+    cursor:pointer;
+}
+
+.reset:active{
+    border-color:#808080 #fff #fff #808080;
+}
+
+.info{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+}
+
+.counter,
+.timer{
+    background:#000;
+    color:#f00;
+    font-family:"Courier New",monospace;
+    font-size:25px;
+    font-weight:bold;
+    letter-spacing:2px;
+    padding:2px 5px;
+    min-width:75px;
+    text-align:center;
+    height:32px;
+    line-height:28px;
+}
+
+.status{
+    text-align:center;
+    font-weight:bold;
+    font-size:13px;
+    flex:1;
+}
+
+.board-wrap{
+    border:4px solid;
+    border-color:#808080 #fff #fff #808080;
+    padding:4px;
+    overflow:auto;
+    max-width:calc(100vw - 30px);
+    max-height:calc(100vh - 180px);
+}
+
+.board{
+    display:grid;
+    background:#808080;
+    width:max-content;
+}
+
+.cell{
+    width:28px;
+    height:28px;
+    background:#c0c0c0;
+    border:3px solid;
+    border-color:#fff #808080 #808080 #fff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-family:Arial,sans-serif;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.cell.revealed{
+    background:#c0c0c0;
+    border:1px solid #808080;
+    cursor:default;
+}
+
+.cell.mine{
+    background:#f00;
+}
+
+.mine-icon{
+    font-size:17px;
+    color:#000;
+}
+
+.flag{
+    color:#d00;
+    font-size:18px;
+}
+
+.n1{color:#0000ff}
+.n2{color:#008000}
+.n3{color:#ff0000}
+.n4{color:#000080}
+.n5{color:#800000}
+.n6{color:#008080}
+.n7{color:#000000}
+.n8{color:#808080}
+
+.footer{
+    margin-top:8px;
+    text-align:center;
+    font-size:11px;
+}
+
+@media(max-width:600px){
+    body{
+        padding:10px 5px;
+    }
+
+    .game{
+        padding:7px;
+    }
+
+    .cell{
+        width:25px;
+        height:25px;
+        font-size:16px;
+    }
+
+    .title{
+        font-size:16px;
+    }
+
+    .counter,
+    .timer{
+        font-size:20px;
+        min-width:65px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <div class="top">
+
+        <div class="title">MINESWEEPER</div>
+
+        <div class="controls">
+
+            <select id="difficulty">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+
+            <button class="reset" id="reset">🙂</button>
+
+        </div>
+
+        <div class="info">
+
+            <div class="counter" id="counter">010</div>
+
+            <div class="status" id="status">Click a square to begin</div>
+
+            <div class="timer" id="timer">000</div>
+
+        </div>
+
+    </div>
+
+    <div class="board-wrap">
+        <div class="board" id="board"></div>
+    </div>
+
+    <div class="footer">
+        Left click: reveal &nbsp; | &nbsp; Right click: flag
+    </div>
+
+</div>
+
+<script>
+
+const levels = {
+    easy:{
+        rows:9,
+        cols:9,
+        mines:10
+    },
+    medium:{
+        rows:16,
+        cols:16,
+        mines:40
+    },
+    hard:{
+        rows:16,
+        cols:30,
+        mines:99
+    }
+};
+
+const boardElement = document.getElementById("board");
+const difficultyElement = document.getElementById("difficulty");
+const resetButton = document.getElementById("reset");
+const counterElement = document.getElementById("counter");
+const timerElement = document.getElementById("timer");
+const statusElement = document.getElementById("status");
+
+let level = "easy";
+let rows = 9;
+let cols = 9;
+let mineCount = 10;
+
+let board = [];
+let firstClick = true;
+let gameOver = false;
+let won = false;
+let flags = 0;
+let revealed = 0;
+let seconds = 0;
+let timer = null;
+
+function formatNumber(number){
+    if(number < 0){
+        return "-" + String(Math.abs(number)).padStart(2,"0");
+    }
+
+    return String(number).padStart(3,"0");
+}
+
+function updateCounter(){
+    counterElement.textContent = formatNumber(mineCount - flags);
+}
+
+function updateTimer(){
+    timerElement.textContent = formatNumber(Math.min(seconds,999));
+}
+
+function createEmptyBoard(){
+
+    board = [];
+
+    for(let r=0;r<rows;r++){
+
+        const row = [];
+
+        for(let c=0;c<cols;c++){
+
+            row.push({
+                mine:false,
+                revealed:false,
+                flagged:false,
+                number:0
+            });
+
+        }
+
+        board.push(row);
+    }
+}
+
+function placeMines(safeRow,safeCol){
+
+    const safe = new Set();
+
+    for(let r=safeRow-1;r<=safeRow+1;r++){
+        for(let c=safeCol-1;c<=safeCol+1;c++){
+
+            if(r>=0 && r<rows && c>=0 && c<cols){
+                safe.add(r + "," + c);
+            }
+
+        }
+    }
+
+    let placed = 0;
+
+    while(placed < mineCount){
+
+        const r = Math.floor(Math.random() * rows);
+        const c = Math.floor(Math.random() * cols);
+
+        if(board[r][c].mine){
+            continue;
+        }
+
+        if(safe.has(r + "," + c)){
+            continue;
+        }
+
+        board[r][c].mine = true;
+        placed++;
+    }
+
+    calculateNumbers();
+}
+
+function calculateNumbers(){
+
+    for(let r=0;r<rows;r++){
+
+        for(let c=0;c<cols;c++){
+
+            if(board[r][c].mine){
+                continue;
+            }
+
+            let count = 0;
+
+            for(let dr=-1;dr<=1;dr++){
+                for(let dc=-1;dc<=1;dc++){
+
+                    if(dr===0 && dc===0){
+                        continue;
+                    }
+
+                    const nr = r + dr;
+                    const nc = c + dc;
+
+                    if(
+                        nr>=0 &&
+                        nr<rows &&
+                        nc>=0 &&
+                        nc<cols &&
+                        board[nr][nc].mine
+                    ){
+                        count++;
+                    }
+                }
+            }
+
+            board[r][c].number = count;
+        }
+    }
+}
+
+function startTimer(){
+
+    if(timer !== null){
+        return;
+    }
+
+    timer = setInterval(()=>{
+        if(!gameOver){
+            seconds++;
+            updateTimer();
+        }
+    },1000);
+}
+
+function stopTimer(){
+
+    if(timer !== null){
+        clearInterval(timer);
+        timer = null;
+    }
+}
+
+function drawBoard(){
+
+    boardElement.innerHTML = "";
+
+    boardElement.style.gridTemplateColumns =
+        `repeat(${cols}, 28px)`;
+
+    for(let r=0;r<rows;r++){
+
+        for(let c=0;c<cols;c++){
+
+            const cell = document.createElement("div");
+
+            cell.className = "cell";
+
+            const data = board[r][c];
+
+            if(data.revealed){
+
+                cell.classList.add("revealed");
+
+                if(data.mine){
+
+                    cell.classList.add("mine");
+
+                    const mine = document.createElement("span");
+                    mine.className = "mine-icon";
+                    mine.textContent = "💣";
+
+                    cell.appendChild(mine);
+
+                }else if(data.number > 0){
+
+                    cell.textContent = data.number;
+                    cell.classList.add("n" + data.number);
+
+                }
+
+            }else if(data.flagged){
+
+                cell.innerHTML = "🚩";
+                cell.classList.add("flag");
+
+            }
+
+            cell.addEventListener("click",()=>{
+                reveal(r,c);
+            });
+
+            cell.addEventListener("contextmenu",(event)=>{
+                event.preventDefault();
+                toggleFlag(r,c);
+            });
+
+            boardElement.appendChild(cell);
+        }
+    }
+}
+
+function reveal(r,c){
+
+    if(gameOver){
+        return;
+    }
+
+    const cell = board[r][c];
+
+    if(cell.flagged || cell.revealed){
+        return;
+    }
+
+    if(firstClick){
+
+        firstClick = false;
+
+        placeMines(r,c);
+        startTimer();
+    }
+
+    if(cell.mine){
+
+        cell.revealed = true;
+
+        revealAllMines();
+
+        gameOver = true;
+        won = false;
+
+        stopTimer();
+
+        resetButton.textContent = "😵";
+        statusElement.textContent = "BOOM! You hit a mine.";
+
+        drawBoard();
+
+        return;
+    }
+
+    floodReveal(r,c);
+
+    checkWin();
+
+    drawBoard();
+
+    saveGame();
+}
+
+function floodReveal(startR,startC){
+
+    const queue = [[startR,startC]];
+    const visited = new Set();
+
+    while(queue.length){
+
+        const [r,c] = queue.shift();
+        const key = r + "," + c;
+
+        if(visited.has(key)){
+            continue;
+        }
+
+        visited.add(key);
+
+        if(r<0 || r>=rows || c<0 || c>=cols){
+            continue;
+        }
+
+        const cell = board[r][c];
+
+        if(cell.mine || cell.flagged || cell.revealed){
+            continue;
+        }
+
+        cell.revealed = true;
+        revealed++;
+
+        if(cell.number === 0){
+
+            for(let dr=-1;dr<=1;dr++){
+                for(let dc=-1;dc<=1;dc++){
+
+                    if(dr===0 && dc===0){
+                        continue;
+                    }
+
+                    queue.push([r+dr,c+dc]);
+                }
+            }
+        }
+    }
+}
+
+function toggleFlag(r,c){
+
+    if(gameOver){
+        return;
+    }
+
+    const cell = board[r][c];
+
+    if(cell.revealed){
+        return;
+    }
+
+    if(!cell.flagged && flags >= mineCount){
+        return;
+    }
+
+    cell.flagged = !cell.flagged;
+
+    if(cell.flagged){
+        flags++;
+    }else{
+        flags--;
+    }
+
+    updateCounter();
+    drawBoard();
+    saveGame();
+}
+
+function revealAllMines(){
+
+    for(let r=0;r<rows;r++){
+
+        for(let c=0;c<cols;c++){
+
+            if(board[r][c].mine){
+                board[r][c].revealed = true;
+            }
+        }
+    }
+}
+
+function checkWin(){
+
+    const safeCells = rows * cols - mineCount;
+
+    if(revealed >= safeCells){
+
+        gameOver = true;
+        won = true;
+
+        stopTimer();
+
+        for(let r=0;r<rows;r++){
+
+            for(let c=0;c<cols;c++){
+
+                if(board[r][c].mine &&
+                   !board[r][c].flagged){
+
+                    board[r][c].flagged = true;
+                    flags++;
+                }
+            }
+        }
+
+        updateCounter();
+
+        resetButton.textContent = "😎";
+        statusElement.textContent = "YOU WIN! 🎉";
+
+        drawBoard();
+
+        saveGame();
+    }
+}
+
+function newGame(){
+
+    stopTimer();
+
+    level = difficultyElement.value;
+
+    rows = levels[level].rows;
+    cols = levels[level].cols;
+    mineCount = levels[level].mines;
+
+    firstClick = true;
+    gameOver = false;
+    won = false;
+
+    flags = 0;
+    revealed = 0;
+    seconds = 0;
+
+    resetButton.textContent = "🙂";
+    statusElement.textContent = "Click a square to begin";
+
+    updateCounter();
+    updateTimer();
+
+    createEmptyBoard();
+    drawBoard();
+
+    saveGame();
+}
+
+function saveGame(){
+
+    try{
+
+        const save = {
+            level,
+            board,
+            firstClick,
+            gameOver,
+            won,
+            flags,
+            revealed,
+            seconds
+        };
+
+        localStorage.setItem(
+            "flashcardMinesweeperSave",
+            JSON.stringify(save)
+        );
+
+    }catch(error){
+
+    }
+}
+
+function loadGame(){
+
+    try{
+
+        const saved =
+            localStorage.getItem("flashcardMinesweeperSave");
+
+        if(!saved){
+            newGame();
+            return;
+        }
+
+        const data = JSON.parse(saved);
+
+        if(!levels[data.level]){
+            newGame();
+            return;
+        }
+
+        level = data.level;
+        difficultyElement.value = level;
+
+        rows = levels[level].rows;
+        cols = levels[level].cols;
+        mineCount = levels[level].mines;
+
+        board = data.board;
+
+        firstClick = data.firstClick;
+        gameOver = data.gameOver;
+        won = data.won;
+        flags = data.flags;
+        revealed = data.revealed;
+        seconds = data.seconds;
+
+        updateCounter();
+        updateTimer();
+
+        if(gameOver){
+
+            if(won){
+
+                resetButton.textContent = "😎";
+                statusElement.textContent = "YOU WIN! 🎉";
+
+            }else{
+
+                resetButton.textContent = "😵";
+                statusElement.textContent = "BOOM! You hit a mine.";
+
+            }
+
+        }else{
+
+            statusElement.textContent =
+                firstClick
+                ? "Click a square to begin"
+                : "Game in progress";
+
+            if(!firstClick){
+                startTimer();
+            }
+        }
+
+        drawBoard();
+
+    }catch(error){
+
+        newGame();
+
+    }
+}
+
+resetButton.addEventListener("click",()=>{
+    newGame();
+});
+
+difficultyElement.addEventListener("change",()=>{
+    newGame();
+});
+
+document.addEventListener("keydown",(event)=>{
+
+    if(event.key.toLowerCase() === "r"){
+        if(event.repeat){
+            return;
+        }
+    }
+
+    if(event.key.toLowerCase() === "r"){
+        window.location.href = "index.html";
+    }
+
+});
+
+let rPressed = false;
+
+document.addEventListener("keydown",(event)=>{
+
+    if(event.key.toLowerCase() === "r"){
+
+        if(rPressed){
+            window.location.href = "index.html";
+        }
+
+        rPressed = true;
+
+        setTimeout(()=>{
+            rPressed = false;
+        },500);
+    }
+
+});
+
+loadGame();
+
+</script>
+
+</body>
+</html>

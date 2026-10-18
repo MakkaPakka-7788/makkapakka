@@ -1,0 +1,1718 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Flashcard.com</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #000;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+    overflow-x: hidden;
+}
+
+#top {
+    width: 500px;
+    max-width: 94vw;
+    margin: 20px auto 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #39ff14;
+    text-shadow:
+        0 0 5px #39ff14,
+        0 0 15px #39ff14,
+        0 0 25px #39ff14;
+}
+
+#score {
+    font-size: 14px;
+    color: #aaa;
+}
+
+#canvas {
+    width: 500px;
+    height: 500px;
+    max-width: 94vw;
+    max-height: 94vw;
+    border: 2px solid #222;
+    background: #000;
+    box-shadow:
+        0 0 15px rgba(0,255,80,.15);
+    image-rendering: pixelated;
+}
+
+#controls {
+    margin: 12px;
+}
+
+button {
+    background: #111;
+    color: white;
+    border: 2px solid #444;
+    padding: 10px 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    border-color: #39ff14;
+    box-shadow: 0 0 10px rgba(57,255,20,.4);
+}
+
+#touch {
+    display: none;
+    margin: 10px auto;
+}
+
+.touch-row {
+    display: flex;
+    justify-content: center;
+}
+
+.touch-button {
+    width: 55px;
+    height: 55px;
+    margin: 3px;
+    font-size: 20px;
+}
+
+#overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.94);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+#panel {
+    width: min(90vw, 400px);
+    padding: 35px;
+    background: #000;
+    border: 2px solid #333;
+}
+
+#overlayTitle {
+    font-size: 42px;
+    margin: 0 0 20px;
+    color: #39ff14;
+    text-shadow:
+        0 0 5px #39ff14,
+        0 0 15px #39ff14,
+        0 0 30px #39ff14;
+}
+
+#overlayText {
+    color: #aaa;
+    line-height: 1.7;
+    font-size: 13px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.retry-title {
+    color: #ff2222 !important;
+    text-shadow:
+        0 0 5px #ff2222,
+        0 0 15px #ff2222,
+        0 0 30px #ff0000,
+        0 0 50px #ff0000 !important;
+}
+
+.retry-button {
+    color: #ff2222;
+    border-color: #ff2222;
+    background: #180000;
+    box-shadow:
+        0 0 10px #ff0000,
+        0 0 25px rgba(255,0,0,.35);
+}
+
+.retry-button:hover {
+    background: #ff2222;
+    color: #000;
+}
+
+@media (max-width: 700px) {
+    #touch {
+        display: block;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="top">
+
+    <div id="title">
+        SNAKE
+    </div>
+
+    <div id="score">
+        Score: 0 | Best: 0
+    </div>
+
+</div>
+
+<canvas id="canvas"
+        width="500"
+        height="500">
+</canvas>
+
+<div id="controls">
+
+    <button onclick="togglePause()">
+        PAUSE
+    </button>
+
+</div>
+
+<div id="touch">
+
+    <div class="touch-row">
+
+        <button
+            class="touch-button"
+            onclick="changeDirection('up')">
+            ▲
+        </button>
+
+    </div>
+
+    <div class="touch-row">
+
+        <button
+            class="touch-button"
+            onclick="changeDirection('left')">
+            ◀
+        </button>
+
+        <button
+            class="touch-button"
+            onclick="changeDirection('down')">
+            ▼
+        </button>
+
+        <button
+            class="touch-button"
+            onclick="changeDirection('right')">
+            ▶
+        </button>
+
+    </div>
+
+</div>
+
+
+<div id="overlay">
+
+    <div id="panel">
+
+        <h1 id="overlayTitle">
+            SNAKE
+        </h1>
+
+        <p id="overlayText">
+            Use the arrow keys or WASD<br>
+            to move the snake.
+        </p>
+
+        <button id="mainButton"
+                onclick="startGame()">
+            START
+        </button>
+
+        <br>
+
+        <button id="homeButton"
+                onclick="goHome()"
+                style="display:none;">
+            HOME
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const canvas =
+    document.getElementById("canvas");
+
+const ctx =
+    canvas.getContext("2d");
+
+
+/* BOARD */
+
+const GRID = 25;
+const CELL = 20;
+
+
+/* GAME */
+
+let snake;
+let direction;
+let nextDirection;
+
+let foods = [];
+
+let obstacles = [];
+
+let portals = [];
+
+let score = 0;
+
+let best =
+    Number(
+        localStorage.getItem("snakeBest")
+    ) || 0;
+
+let running = false;
+let paused = false;
+
+let gameTimer;
+
+
+/* PORTAL SETTINGS */
+
+const PORTAL_COUNT = 12;
+
+
+/* OBSTACLE SETTINGS */
+
+const OBSTACLE_COUNT = 7;
+
+
+/* =========================
+   RANDOM CELL
+========================= */
+
+function randomCell() {
+
+    return {
+        x:
+            Math.floor(
+                Math.random() * GRID
+            ),
+
+        y:
+            Math.floor(
+                Math.random() * GRID
+            )
+    };
+
+}
+
+
+/* =========================
+   POSITION CHECK
+========================= */
+
+function samePosition(a,b) {
+
+    return (
+        a.x === b.x &&
+        a.y === b.y
+    );
+
+}
+
+
+function occupied(x,y) {
+
+    if (
+        snake &&
+        snake.some(
+            part =>
+                part.x === x &&
+                part.y === y
+        )
+    ) {
+        return true;
+    }
+
+    if (
+        foods.some(
+            food =>
+                food.x === x &&
+                food.y === y
+        )
+    ) {
+        return true;
+    }
+
+    if (
+        obstacles.some(
+            obstacle =>
+                obstacle.x === x &&
+                obstacle.y === y
+        )
+    ) {
+        return true;
+    }
+
+    return false;
+
+}
+
+
+/* =========================
+   MAKE FOOD
+========================= */
+
+function createFoods() {
+
+    foods = [];
+
+    while (
+        foods.length < 3
+    ) {
+
+        const p =
+            randomCell();
+
+        if (
+            !occupied(
+                p.x,
+                p.y
+            )
+        ) {
+
+            foods.push(p);
+
+        }
+
+    }
+
+}
+
+
+/* =========================
+   MAKE OBSTACLES
+========================= */
+
+function createObstacles() {
+
+    obstacles = [];
+
+    while (
+        obstacles.length <
+        OBSTACLE_COUNT
+    ) {
+
+        const p =
+            randomCell();
+
+        if (
+            !occupied(
+                p.x,
+                p.y
+            )
+        ) {
+
+            obstacles.push(p);
+
+        }
+
+    }
+
+}
+
+
+/* =========================
+   MAKE PORTALS
+========================= */
+
+function createPortals() {
+
+    portals = [];
+
+    /*
+       12 portals = 6 pairs
+    */
+
+    while (
+        portals.length <
+        PORTAL_COUNT
+    ) {
+
+        const p =
+            randomCell();
+
+        if (
+            occupied(
+                p.x,
+                p.y
+            )
+        ) {
+            continue;
+        }
+
+        let tooClose = false;
+
+        for (
+            const portal of portals
+        ) {
+
+            if (
+                Math.abs(
+                    portal.x - p.x
+                ) <= 1 &&
+                Math.abs(
+                    portal.y - p.y
+                ) <= 1
+            ) {
+
+                tooClose = true;
+                break;
+
+            }
+
+        }
+
+        if (!tooClose) {
+
+            portals.push({
+
+                x: p.x,
+                y: p.y,
+
+                dx:
+                    Math.random() < .5
+                    ? 1
+                    : -1,
+
+                dy:
+                    Math.random() < .5
+                    ? 1
+                    : -1
+
+            });
+
+        }
+
+    }
+
+}
+
+
+/* =========================
+   MOVE PORTALS
+========================= */
+
+function movePortals() {
+
+    for (
+        const portal of portals
+    ) {
+
+        /*
+           Portals constantly move.
+           They bounce off the edges.
+        */
+
+        let nx =
+            portal.x + portal.dx;
+
+        let ny =
+            portal.y + portal.dy;
+
+
+        if (
+            nx < 0 ||
+            nx >= GRID
+        ) {
+
+            portal.dx *= -1;
+
+            nx =
+                portal.x +
+                portal.dx;
+
+        }
+
+
+        if (
+            ny < 0 ||
+            ny >= GRID
+        ) {
+
+            portal.dy *= -1;
+
+            ny =
+                portal.y +
+                portal.dy;
+
+        }
+
+
+        /*
+           Don't let portals sit directly
+           on obstacles.
+        */
+
+        if (
+            obstacles.some(
+                obstacle =>
+                    obstacle.x === nx &&
+                    obstacle.y === ny
+            )
+        ) {
+
+            portal.dx *= -1;
+            portal.dy *= -1;
+
+        }
+        else {
+
+            portal.x = nx;
+            portal.y = ny;
+
+        }
+
+    }
+
+}
+
+
+/* =========================
+   RANDOMIZE OBSTACLES
+========================= */
+
+function randomizeObstacles() {
+
+    obstacles = [];
+
+    let attempts = 0;
+
+    while (
+        obstacles.length <
+        OBSTACLE_COUNT &&
+        attempts < 1000
+    ) {
+
+        attempts++;
+
+        const p =
+            randomCell();
+
+        if (
+            occupied(
+                p.x,
+                p.y
+            )
+        ) {
+            continue;
+        }
+
+        if (
+            portals.some(
+                portal =>
+                    portal.x === p.x &&
+                    portal.y === p.y
+            )
+        ) {
+            continue;
+        }
+
+        obstacles.push(p);
+
+    }
+
+}
+
+
+/* =========================
+   START
+========================= */
+
+function startGame() {
+
+    snake = [
+
+        {
+            x: 12,
+            y: 12
+        },
+
+        {
+            x: 11,
+            y: 12
+        },
+
+        {
+            x: 10,
+            y: 12
+        }
+
+    ];
+
+
+    direction = {
+        x: 1,
+        y: 0
+    };
+
+
+    nextDirection = {
+        x: 1,
+        y: 0
+    };
+
+
+    score = 0;
+
+    paused = false;
+    running = true;
+
+
+    obstacles = [];
+
+    portals = [];
+
+    foods = [];
+
+
+    /*
+       Create obstacles first so
+       other objects avoid them.
+    */
+
+    createObstacles();
+
+    createPortals();
+
+    createFoods();
+
+
+    updateScore();
+
+
+    document
+        .getElementById(
+            "overlay"
+        )
+        .classList.add(
+            "hidden"
+        );
+
+
+    document
+        .getElementById(
+            "homeButton"
+        )
+        .style.display =
+        "none";
+
+
+    document
+        .getElementById(
+            "mainButton"
+        )
+        .className = "";
+
+
+    clearInterval(gameTimer);
+
+
+    gameTimer =
+        setInterval(
+            gameStep,
+            115
+        );
+
+
+    draw();
+
+}
+
+
+/* =========================
+   GAME STEP
+========================= */
+
+function gameStep() {
+
+    if (
+        !running ||
+        paused
+    ) {
+        return;
+    }
+
+
+    direction =
+        nextDirection;
+
+
+    const head = {
+        x:
+            snake[0].x +
+            direction.x,
+
+        y:
+            snake[0].y +
+            direction.y
+    };
+
+
+    /*
+       WALL WRAP
+    */
+
+    if (head.x < 0) {
+        head.x = GRID - 1;
+    }
+
+    if (head.x >= GRID) {
+        head.x = 0;
+    }
+
+    if (head.y < 0) {
+        head.y = GRID - 1;
+    }
+
+    if (head.y >= GRID) {
+        head.y = 0;
+    }
+
+
+    /*
+       OBSTACLE COLLISION
+    */
+
+    if (
+        obstacles.some(
+            obstacle =>
+                obstacle.x === head.x &&
+                obstacle.y === head.y
+        )
+    ) {
+
+        endGame();
+        return;
+
+    }
+
+
+    snake.unshift(head);
+
+
+    /*
+       FOOD
+    */
+
+    let ateFood = false;
+
+    for (
+        let i = foods.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        if (
+            samePosition(
+                head,
+                foods[i]
+            )
+        ) {
+
+            foods.splice(
+                i,
+                1
+            );
+
+            score++;
+
+            ateFood = true;
+
+            break;
+
+        }
+
+    }
+
+
+    if (ateFood) {
+
+        /*
+           NEW FOOD
+        */
+
+        let newFood;
+
+        do {
+
+            newFood =
+                randomCell();
+
+        }
+        while (
+            occupied(
+                newFood.x,
+                newFood.y
+            )
+        );
+
+
+        foods.push(
+            newFood
+        );
+
+
+        /*
+           THIS IS THE IMPORTANT PART:
+           every time food is eaten,
+           all 7 obstacles randomize.
+        */
+
+        randomizeObstacles();
+
+
+        updateScore();
+
+    }
+    else {
+
+        snake.pop();
+
+    }
+
+
+    /*
+       PORTAL TELEPORT
+    */
+
+    checkPortals();
+
+
+    /*
+       PORTALS KEEP MOVING
+    */
+
+    movePortals();
+
+
+    draw();
+
+}
+
+
+/* =========================
+   PORTAL TELEPORT
+========================= */
+
+function checkPortals() {
+
+    const head =
+        snake[0];
+
+
+    for (
+        let i = 0;
+        i < portals.length;
+        i += 2
+    ) {
+
+        const a =
+            portals[i];
+
+        const b =
+            portals[i + 1];
+
+
+        if (
+            samePosition(
+                head,
+                a
+            )
+        ) {
+
+            snake[0] = {
+
+                x: b.x,
+                y: b.y
+
+            };
+
+            return;
+
+        }
+
+
+        if (
+            samePosition(
+                head,
+                b
+            )
+        ) {
+
+            snake[0] = {
+
+                x: a.x,
+                y: a.y
+
+            };
+
+            return;
+
+        }
+
+    }
+
+}
+
+
+/* =========================
+   DIRECTION
+========================= */
+
+function changeDirection(dir) {
+
+    if (
+        !running ||
+        paused
+    ) {
+        return;
+    }
+
+
+    if (
+        dir === "up" &&
+        direction.y !== 1
+    ) {
+
+        nextDirection = {
+            x: 0,
+            y: -1
+        };
+
+    }
+
+
+    if (
+        dir === "down" &&
+        direction.y !== -1
+    ) {
+
+        nextDirection = {
+            x: 0,
+            y: 1
+        };
+
+    }
+
+
+    if (
+        dir === "left" &&
+        direction.x !== 1
+    ) {
+
+        nextDirection = {
+            x: -1,
+            y: 0
+        };
+
+    }
+
+
+    if (
+        dir === "right" &&
+        direction.x !== -1
+    ) {
+
+        nextDirection = {
+            x: 1,
+            y: 0
+        };
+
+    }
+
+}
+
+
+/* =========================
+   PAUSE
+========================= */
+
+function togglePause() {
+
+    if (!running) {
+        return;
+    }
+
+
+    paused =
+        !paused;
+
+
+    if (paused) {
+
+        document
+            .getElementById(
+                "overlayTitle"
+            )
+            .textContent =
+            "PAUSED";
+
+
+        document
+            .getElementById(
+                "overlayTitle"
+            )
+            .className = "";
+
+
+        document
+            .getElementById(
+                "overlayText"
+            )
+            .innerHTML =
+            "Game paused.<br><br>" +
+            "Press CONTINUE to resume.";
+
+
+        const button =
+            document.getElementById(
+                "mainButton"
+            );
+
+
+        button.textContent =
+            "CONTINUE";
+
+
+        button.onclick =
+            togglePause;
+
+
+        document
+            .getElementById(
+                "homeButton"
+            )
+            .style.display =
+            "none";
+
+
+        document
+            .getElementById(
+                "overlay"
+            )
+            .classList.remove(
+                "hidden"
+            );
+
+    }
+    else {
+
+        document
+            .getElementById(
+                "overlay"
+            )
+            .classList.add(
+                "hidden"
+            );
+
+    }
+
+}
+
+
+/* =========================
+   GAME OVER / RETRY
+========================= */
+
+function endGame() {
+
+    running = false;
+
+    clearInterval(
+        gameTimer
+    );
+
+
+    if (
+        score > best
+    ) {
+
+        best = score;
+
+        localStorage.setItem(
+            "snakeBest",
+            best
+        );
+
+    }
+
+
+    document
+        .getElementById(
+            "overlayTitle"
+        )
+        .textContent =
+        "RETRY";
+
+
+    document
+        .getElementById(
+            "overlayTitle"
+        )
+        .className =
+        "retry-title";
+
+
+    document
+        .getElementById(
+            "overlayText"
+        )
+        .innerHTML =
+        "Score: " +
+        score +
+        "<br><br>" +
+        "Best: " +
+        best;
+
+
+    const button =
+        document.getElementById(
+            "mainButton"
+        );
+
+
+    button.textContent =
+        "RETRY";
+
+
+    button.onclick =
+        startGame;
+
+
+    button.className =
+        "retry-button";
+
+
+    document
+        .getElementById(
+            "homeButton"
+        )
+        .style.display =
+        "inline-block";
+
+
+    document
+        .getElementById(
+            "overlay"
+        )
+        .classList.remove(
+            "hidden"
+        );
+
+}
+
+
+/* =========================
+   SCORE
+========================= */
+
+function updateScore() {
+
+    document
+        .getElementById(
+            "score"
+        )
+        .textContent =
+        "Score: " +
+        score +
+        " | Best: " +
+        best;
+
+}
+
+
+/* =========================
+   DRAW
+========================= */
+
+function draw() {
+
+    /*
+       BLACK BACKGROUND
+    */
+
+    ctx.fillStyle =
+        "#000";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    /*
+       SQUARE GRID
+    */
+
+    ctx.strokeStyle =
+        "#111";
+
+    ctx.lineWidth = 1;
+
+
+    for (
+        let x = 0;
+        x <= GRID;
+        x++
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x * CELL,
+            0
+        );
+
+        ctx.lineTo(
+            x * CELL,
+            canvas.height
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    for (
+        let y = 0;
+        y <= GRID;
+        y++
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            0,
+            y * CELL
+        );
+
+        ctx.lineTo(
+            canvas.width,
+            y * CELL
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    /*
+       OBSTACLES
+       GREY SQUARES
+    */
+
+    for (
+        const obstacle of obstacles
+    ) {
+
+        ctx.fillStyle =
+            "#555";
+
+        ctx.fillRect(
+            obstacle.x * CELL + 2,
+            obstacle.y * CELL + 2,
+            CELL - 4,
+            CELL - 4
+        );
+
+
+        ctx.strokeStyle =
+            "#777";
+
+        ctx.strokeRect(
+            obstacle.x * CELL + 2,
+            obstacle.y * CELL + 2,
+            CELL - 4,
+            CELL - 4
+        );
+
+    }
+
+
+    /*
+       PORTALS
+       BLUE OUTER
+       BLACK INNER
+    */
+
+    for (
+        const portal of portals
+    ) {
+
+        const cx =
+            portal.x * CELL +
+            CELL / 2;
+
+        const cy =
+            portal.y * CELL +
+            CELL / 2;
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            cx,
+            cy,
+            8,
+            0,
+            Math.PI * 2
+        );
+
+
+        ctx.fillStyle =
+            "#006eff";
+
+        ctx.shadowColor =
+            "#006eff";
+
+        ctx.shadowBlur =
+            12;
+
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            cx,
+            cy,
+            4,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fillStyle =
+            "#000";
+
+        ctx.fill();
+
+    }
+
+
+    /*
+       FOOD
+       3 RED PIXEL FRUITS
+    */
+
+    for (
+        const food of foods
+    ) {
+
+        ctx.fillStyle =
+            "#ff3333";
+
+        ctx.shadowColor =
+            "#ff3333";
+
+        ctx.shadowBlur =
+            8;
+
+        ctx.fillRect(
+            food.x * CELL + 5,
+            food.y * CELL + 5,
+            10,
+            10
+        );
+
+        ctx.shadowBlur = 0;
+
+    }
+
+
+    /*
+       SNAKE
+    */
+
+    snake.forEach(
+        (part,index) => {
+
+            ctx.fillStyle =
+                index === 0
+                ? "#159400"
+                : "#39ff14";
+
+
+            ctx.shadowColor =
+                "#39ff14";
+
+            ctx.shadowBlur =
+                index === 0
+                ? 8
+                : 5;
+
+
+            ctx.fillRect(
+                part.x * CELL + 2,
+                part.y * CELL + 2,
+                CELL - 4,
+                CELL - 4
+            );
+
+
+            ctx.shadowBlur = 0;
+
+        }
+    );
+
+
+    /*
+       HEAD EYES
+    */
+
+    if (
+        snake &&
+        snake.length
+    ) {
+
+        const head =
+            snake[0];
+
+
+        ctx.fillStyle =
+            "#000";
+
+
+        if (
+            direction.x !== 0
+        ) {
+
+            const eyeX =
+                direction.x === 1
+                ? head.x * CELL + 14
+                : head.x * CELL + 4;
+
+
+            ctx.fillRect(
+                eyeX,
+                head.y * CELL + 5,
+                3,
+                3
+            );
+
+
+            ctx.fillRect(
+                eyeX,
+                head.y * CELL + 12,
+                3,
+                3
+            );
+
+        }
+        else {
+
+            const eyeY =
+                direction.y === 1
+                ? head.y * CELL + 14
+                : head.y * CELL + 4;
+
+
+            ctx.fillRect(
+                head.x * CELL + 5,
+                eyeY,
+                3,
+                3
+            );
+
+
+            ctx.fillRect(
+                head.x * CELL + 12,
+                eyeY,
+                3,
+                3
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =========================
+   HOME
+========================= */
+
+function goHome() {
+
+    window.location.href =
+        "index.html";
+
+}
+
+
+/* =========================
+   KEYBOARD
+========================= */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        const key =
+            event.key.toLowerCase();
+
+
+        if (
+            key === "arrowup" ||
+            key === "w"
+        ) {
+
+            event.preventDefault();
+
+            changeDirection(
+                "up"
+            );
+
+        }
+
+
+        if (
+            key === "arrowdown" ||
+            key === "s"
+        ) {
+
+            event.preventDefault();
+
+            changeDirection(
+                "down"
+            );
+
+        }
+
+
+        if (
+            key === "arrowleft" ||
+            key === "a"
+        ) {
+
+            event.preventDefault();
+
+            changeDirection(
+                "left"
+            );
+
+        }
+
+
+        if (
+            key === "arrowright" ||
+            key === "d"
+        ) {
+
+            event.preventDefault();
+
+            changeDirection(
+                "right"
+            );
+
+        }
+
+
+        if (key === "p") {
+
+            togglePause();
+
+        }
+
+    }
+);
+
+
+/* =========================
+   RRR SECRET SHORTCUT
+========================= */
+
+let rPresses = 0;
+let rTimer;
+
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key.toLowerCase()
+            !== "r"
+        ) {
+            return;
+        }
+
+
+        rPresses++;
+
+
+        clearTimeout(
+            rTimer
+        );
+
+
+        rTimer =
+            setTimeout(
+                function() {
+
+                    rPresses = 0;
+
+                },
+                700
+            );
+
+
+        if (
+            rPresses === 3
+        ) {
+
+            window.location.href =
+                "flashcard.html";
+
+            rPresses = 0;
+
+        }
+
+    }
+);
+
+
+/* INITIAL */
+
+updateScore();
+draw();
+
+</script>
+
+</body>
+</html>
+```

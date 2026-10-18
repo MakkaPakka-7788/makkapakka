@@ -1,0 +1,487 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcard.com</title>
+<script>
+if (!window.location.search.includes("games=true")) {
+    window.location.replace("flashcard.html");
+}
+</script>
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: #080808;
+    color: #eee;
+    font-family: "Courier New", monospace;
+}
+
+header {
+    background: #101010;
+    border-bottom: 2px solid #333;
+    padding: 18px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo { font-size: 25px; font-weight: bold; }
+.logo span { color: #777; }
+
+.flashcardsButton {
+    background: #eee;
+    color: #111;
+    border: 0;
+    padding: 10px 16px;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.container {
+    width: min(1100px, 94%);
+    margin: auto;
+    padding: 40px 0 60px;
+}
+
+.title { text-align: center; }
+.title h1 { font-size: 46px; margin: 0 0 10px; }
+.title p { color: #777; }
+
+.section { margin-top: 40px; }
+
+.sectionTitle {
+    color: #aaa;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+.games {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.game {
+    background: #111;
+    border: 2px solid #333;
+    color: #eee;
+    text-decoration: none;
+    min-height: 165px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: 0.15s;
+}
+
+.game:hover {
+    background: #191919;
+    border-color: #777;
+    transform: translateY(-2px);
+}
+
+.icon { font-size: 42px; }
+.name { font-size: 21px; font-weight: bold; }
+
+.description {
+    color: #777;
+    font-size: 12px;
+    margin-top: 7px;
+}
+
+.flashcardBox {
+    margin-top: 35px;
+    background: #111;
+    border: 2px solid #333;
+    padding: 25px;
+    text-align: center;
+}
+
+.flashcardBox p { color: #777; }
+
+.flashcardBox button {
+    background: #eee;
+    color: #111;
+    border: 0;
+    padding: 11px 20px;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.bottomText {
+    text-align: center;
+    margin-top: 35px;
+    color: #555;
+    font-size: 11px;
+}
+
+/* FlashAccount panel */
+#flashaccount-panel {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+    width: min(280px, calc(100vw - 24px));
+    background: #111;
+    color: #fff;
+    padding: 14px;
+    border: 1px solid #444;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 4px 18px #0009;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+
+#flashaccount-panel.account-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+#flashaccount-panel strong {
+    display: block;
+    margin-bottom: 8px;
+}
+
+#flashaccount-panel button {
+    padding: 8px 12px;
+    margin: 3px 3px 3px 0;
+    cursor: pointer;
+}
+
+#flashaccount-panel button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+#flashaccount-status {
+    margin: 8px 0;
+    overflow-wrap: anywhere;
+}
+</style>
+</head>
+
+<body>
+
+<div id="flashaccount-panel">
+    <strong>FlashAccount</strong>
+    <div id="flashaccount-status" role="status" aria-live="polite">
+        Checking sign-in...
+    </div>
+    <button id="flashaccount-login" type="button">
+        Sign in with Google
+    </button>
+    <button id="flashaccount-logout" type="button" hidden>
+        Sign out
+    </button>
+</div>
+
+<header>
+    <div class="logo">FLASHCARD<span>.COM</span></div>
+    <button class="flashcardsButton" onclick="openFlashcards()">FLASHCARDS</button>
+</header>
+
+<div class="container">
+    <div class="title">
+        <h1>HOME</h1>
+        <p>Choose a game.</p>
+    </div>
+
+    <div class="section">
+        <div class="sectionTitle">GAMES</div>
+        <div class="games">
+
+            <a class="game" href="snake.html">
+                <div class="icon">🐍</div>
+                <div>
+                    <div class="name">SNAKE</div>
+                    <div class="description">Eat food, use portals and avoid obstacles.</div>
+                </div>
+            </a>
+
+            <a class="game" href="tetris.html">
+                <div class="icon">▦</div>
+                <div>
+                    <div class="name">TETRIS</div>
+                    <div class="description">Classic falling blocks.</div>
+                </div>
+            </a>
+
+            <a class="game" href="pong.html">
+                <div class="icon">🏓</div>
+                <div>
+                    <div class="name">PONG</div>
+                    <div class="description">Battle the computer.</div>
+                </div>
+            </a>
+
+            <a class="game" href="flappybird.html">
+                <div class="icon">🐦</div>
+                <div>
+                    <div class="name">FLAPPY BIRD</div>
+                    <div class="description">Fly through the pipes.</div>
+                </div>
+            </a>
+
+            <a class="game" href="towerdefense.html">
+                <div class="icon">🏰</div>
+                <div>
+                    <div class="name">TOWER DEFENCE</div>
+                    <div class="description">Defend castles and conquer kingdoms.</div>
+                </div>
+            </a>
+
+            <a class="game" href="dino.html">
+                <div class="icon">🦖</div>
+                <div>
+                    <div class="name">DINO</div>
+                    <div class="description">Jump over obstacles and survive.</div>
+                </div>
+            </a>
+
+            <a class="game" href="pacman.html">
+                <div class="icon">🟡</div>
+                <div>
+                    <div class="name">PAC-MAN</div>
+                    <div class="description">Eat pellets and escape the ghosts.</div>
+                </div>
+            </a>
+
+            <a class="game" href="danger-spinner.html">
+                <div class="icon">🎰</div>
+                <div>
+                    <div class="name">DANGER SPINNER</div>
+                    <div class="description">Spin the wheel, test your luck and build a streak.</div>
+                </div>
+            </a>
+
+            <a class="game" href="dune-dash.html">
+                <div class="icon">🏜️</div>
+                <div>
+                    <div class="name">DUNE DASH</div>
+                    <div class="description">Roll across endless dunes, launch into the air and climb higher.</div>
+                </div>
+            </a>
+
+            <a class="game" href="rng.html">
+                <div class="icon">🎲</div>
+                <div>
+                    <div class="name">RNG</div>
+                    <div class="description">Roll for insanely rare RNGs.</div>
+                </div>
+            </a>
+
+            <a class="game" href="minesweeper.html">
+                <div class="icon">💣</div>
+                <div>
+                    <div class="name">MINESWEEPER</div>
+                    <div class="description">Clear the board without hitting a mine.</div>
+                </div>
+            </a>
+
+            <a class="game" href="plinko.html">
+                <div class="icon">🔴</div>
+                <div>
+                    <div class="name">PLINKO</div>
+                    <div class="description">Drop the ball, test your luck and hit the jackpots.</div>
+                </div>
+            </a>
+
+            <a class="game" href="https://makkapakka-7788.github.io/car.f1/">
+                <div class="icon">🚗</div>
+                <div>
+                    <div class="name">CAR</div>
+                    <div class="description">Play the car game.</div>
+                </div>
+            </a>
+
+            <a class="game" href="https://makkapakka-7788.github.io/flashcards.city/?quality=low">
+                <div class="icon">🏙️</div>
+                <div>
+                    <div class="name">FABLE CITIES</div>
+                    <div class="description">Build and manage your own city.</div>
+                </div>
+            </a>
+
+            <a class="game" href="https://makkapakka-7788.github.io/dr-doom/">
+                <div class="icon">💀</div>
+                <div>
+                    <div class="name">DOOM</div>
+                    <div class="description">Play classic DOOM in your browser.</div>
+                </div>
+            </a>
+
+            <a class="game" href="https://makkapakka-7788.github.io/Clicker./" target="_blank" rel="noopener noreferrer">
+                <div class="icon">⚛️</div>
+                <div>
+                    <div class="name">ANTIMATTER DIMENSIONS</div>
+                    <div class="description">Grow antimatter, unlock upgrades and progress through an enormous incremental game.</div>
+                </div>
+            </a>
+
+            <a class="game" href="https://makkapakka-7788.github.io/fish-of-the-tiny/">
+                <div class="icon">🎣</div>
+                <div>
+                    <div class="name">TINY FISHING</div>
+                    <div class="description">Cast your line, catch fish and earn money to upgrade your fishing gear.</div>
+                </div>
+            </a>
+
+            <a class="game" href="https://makkapakka-7788.github.io/Ironcrown/">
+                <div class="icon">⚔️</div>
+                <div>
+                    <div class="name">IRONCROWN</div>
+                    <div class="description">Build your kingdom, expand your territory and develop your civilisation.</div>
+                </div>
+            </a>
+
+            <a class="game" href="https://makkapakka-7788.github.io/NEW.f0/">
+                <div class="icon">🏎️</div>
+                <div>
+                    <div class="name">POLY TRACK 6.3</div>
+                    <div class="description">Race through tracks, master your driving and beat your best times.</div>
+                </div>
+            </a>
+
+            <a class="game" href="https://makkapakka-7788.github.io/Balatro/">
+                <div class="icon">.</div>
+                <div>
+                    <div class="name">Poker</div>
+                    <div class="description">Lets Go</div>
+                </div>
+            </a>
+
+        </div>
+    </div>
+
+    <div class="flashcardBox">
+        <h2>FLASHCARD CREATOR</h2>
+        <p>Create sets, make cards and study.</p>
+        <button onclick="openFlashcards()">OPEN FLASHCARDS</button>
+    </div>
+
+    <div class="bottomText">RRR = SWITCH BETWEEN HOME AND FLASHCARDS</div>
+</div>
+
+<script>
+function openFlashcards() {
+    window.location.href =
+        "https://makkapakka-7788.github.io/MAKKASENTPAKKING-PoRtfolio/flashcard.html";
+}
+
+let rCount = 0;
+let rTimer = null;
+
+document.addEventListener("keydown", function(e) {
+    if (e.key.toLowerCase() !== "r") return;
+
+    rCount++;
+    clearTimeout(rTimer);
+
+    rTimer = setTimeout(function() {
+        rCount = 0;
+    }, 700);
+
+    if (rCount === 3) {
+        rCount = 0;
+        window.location.href =
+            "https://makkapakka-7788.github.io/MAKKASENTPAKKING-PoRtfolio/flashcard.html";
+    }
+});
+</script>
+
+<script type="module">
+const panel = document.getElementById("flashaccount-panel");
+const status = document.getElementById("flashaccount-status");
+const login = document.getElementById("flashaccount-login");
+const logout = document.getElementById("flashaccount-logout");
+
+let panelTimer;
+
+function showPanelAndResetTimer() {
+    panel.classList.remove("account-hidden");
+    clearTimeout(panelTimer);
+
+    panelTimer = setTimeout(() => {
+        panel.classList.add("account-hidden");
+    }, 60000);
+}
+
+panel.addEventListener("pointerdown", showPanelAndResetTimer);
+panel.addEventListener("keydown", showPanelAndResetTimer);
+
+showPanelAndResetTimer();
+
+function updateUser(user) {
+    status.textContent = user
+        ? "Signed in as " + (user.displayName || user.email || "Google user")
+        : "Not signed in";
+
+    login.hidden = !!user;
+    logout.hidden = !user;
+}
+
+try {
+    await import(
+        "https://makkapakka-7788.github.io/MAKKASENTPAKKING-PoRtfolio/flashaccount.js"
+    );
+
+    const account = window.FlashAccount;
+
+    if (!account) {
+        throw new Error("FlashAccount did not initialize.");
+    }
+
+    login.addEventListener("click", async () => {
+        showPanelAndResetTimer();
+        login.disabled = true;
+        status.textContent = "Opening Google sign-in...";
+
+        try {
+            await account.signInWithGoogle();
+        } catch (error) {
+            status.textContent = "Sign-in failed: " + error.message;
+        } finally {
+            login.disabled = false;
+            showPanelAndResetTimer();
+        }
+    });
+
+    logout.addEventListener("click", async () => {
+        showPanelAndResetTimer();
+        logout.disabled = true;
+
+        try {
+            await account.signOut();
+        } catch (error) {
+            status.textContent = "Sign-out failed: " + error.message;
+        } finally {
+            logout.disabled = false;
+            showPanelAndResetTimer();
+        }
+    });
+
+    window.addEventListener("flashaccount-auth", event => {
+        updateUser(event.detail);
+    });
+
+    updateUser(account.auth.currentUser);
+} catch (error) {
+    console.error("FlashAccount error:", error);
+    status.textContent = "Couldn't connect. Check the browser console.";
+    login.disabled = true;
+    logout.disabled = true;
+}
+</script>
+
+</body>
+</html>

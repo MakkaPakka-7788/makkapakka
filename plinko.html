@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcard.com</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #080808;
+    color: #eee;
+    font-family: "Courier New", monospace;
+    overflow-x: hidden;
+}
+
+header {
+    background: #101010;
+    border-bottom: 2px solid #333;
+    padding: 16px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.logo span {
+    color: #777;
+}
+
+.money {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.main {
+    width: min(1200px, 96%);
+    margin: auto;
+    padding: 20px 0 50px;
+}
+
+.top {
+    margin-bottom: 15px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 34px;
+}
+
+.info {
+    color: #777;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.controls {
+    background: #111;
+    border: 2px solid #333;
+    padding: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.controls label {
+    color: #aaa;
+    font-weight: bold;
+}
+
+.bet {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.bet button {
+    width: 38px;
+    height: 38px;
+    background: #222;
+    color: #eee;
+    border: 1px solid #444;
+    font-family: inherit;
+    font-size: 21px;
+    cursor: pointer;
+}
+
+.bet button:hover {
+    background: #333;
+}
+
+.bet input {
+    width: 125px;
+    height: 38px;
+    background: #080808;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.drop {
+    margin-left: auto;
+    background: #eee;
+    color: #111;
+    border: 0;
+    height: 44px;
+    min-width: 170px;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.drop:hover {
+    background: #ccc;
+}
+
+.reset {
+    background: #222;
+    color: #eee;
+    border: 1px solid #555;
+    height: 44px;
+    min-width: 100px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.reset:hover {
+    background: #333;
+}
+
+.message {
+    min-height: 25px;
+    text-align: center;
+    font-size: 16px;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.boardWrap {
+    width: 100%;
+    overflow-x: auto;
+    background: #050505;
+    border: 2px solid #333;
+    padding: 15px;
+}
+
+#board {
+    position: relative;
+    width: 1120px;
+    height: 900px;
+    margin: auto;
+    background: #0b0b0b;
+    overflow: hidden;
+}
+
+.peg {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #eee;
+    border: 1px solid #aaa;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+}
+
+.ball {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #e53935;
+    border: 2px solid #fff;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    pointer-events: none;
+}
+
+.arrow {
+    position: absolute;
+    top: 17px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #eee;
+    font-size: 28px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.slot {
+    position: absolute;
+    bottom: 0;
+    height: 115px;
+    border-left: 1px solid #333;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 17px;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
+.slot:last-child {
+    border-right: 1px solid #333;
+}
+
+.slotText {
+    font-size: 12px;
+    font-weight: bold;
+    color: #aaa;
+    white-space: nowrap;
+    transform: rotate(-90deg);
+}
+
+.slot.center .slotText {
+    color: #fff;
+    font-size: 14px;
+}
+
+.slot.win {
+    background: #eee;
+}
+
+.slot.win .slotText {
+    color: #111;
+}
+
+.bottomInfo {
+    margin-top: 12px;
+    text-align: center;
+    color: #555;
+    font-size: 11px;
+}
+
+@media(max-width:700px) {
+    .drop {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .reset {
+        width: 100%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+FLASHCARD<span>.COM</span>
+</div>
+
+<div class="money" id="money">
+$1.00
+</div>
+
+</header>
+
+<div class="main">
+
+<div class="top">
+
+<h1>PLINKO</h1>
+
+<div class="info">
+50% chance left • 50% chance right • MAX 100 BALLS
+</div>
+
+</div>
+
+<div class="controls">
+
+<label>BET</label>
+
+<div class="bet">
+
+<button onclick="changeBet(-1)">−</button>
+
+<input
+id="bet"
+type="number"
+min="0.01"
+step="0.01"
+value="1"
+>
+
+<button onclick="changeBet(1)">+</button>
+
+</div>
+
+<button
+class="drop"
+onclick="dropBall()"
+>
+↓ DROP BALL
+</button>
+
+<button
+class="reset"
+onclick="resetGame()"
+>
+RESET
+</button>
+
+</div>
+
+<div
+class="message"
+id="message"
+></div>
+
+<div class="boardWrap">
+
+<div id="board">
+
+<div class="arrow">↓</div>
+
+</div>
+
+</div>
+
+<div class="bottomInfo">
+RRR = RETURN TO HOME
+</div>
+
+</div>
+
+<script>
+
+const board =
+document.getElementById("board");
+
+const moneyDisplay =
+document.getElementById("money");
+
+const betInput =
+document.getElementById("bet");
+
+const message =
+document.getElementById("message");
+
+const multipliers = [
+    1000,
+    250,
+    50,
+    50,
+    10,
+    10,
+    5,
+    5,
+    2,
+    2,
+    1,
+    1,
+    0.75,
+    0.5,
+    0.2,
+    0.5,
+    0.75,
+    1,
+    1,
+    2,
+    2,
+    5,
+    5,
+    10,
+    10,
+    50,
+    50,
+    250,
+    1000
+];
+
+const ROWS = 26;
+const FIRST_ROW_COUNT = 2;
+
+const CENTER = 560;
+
+const PEG_SPACING = 38;
+const ROW_SPACING = 25;
+const TOP_Y = 85;
+
+const SLOT_WIDTH = 38;
+
+const MAX_BALLS = 100;
+
+const BALL_RADIUS = 9;
+
+const TRIANGLE_TOP_Y = 50;
+
+const TRIANGLE_BOTTOM_Y =
+    TOP_Y +
+    (ROWS - 1) *
+    ROW_SPACING;
+
+const TRIANGLE_TOP_HALF_WIDTH = 24;
+
+const TRIANGLE_BOTTOM_HALF_WIDTH =
+    ((FIRST_ROW_COUNT + ROWS - 1) - 1) *
+    PEG_SPACING /
+    2 +
+    20;
+
+const pegs = [];
+const balls = [];
+
+let money = 1;
+
+const savedMoney =
+    localStorage.getItem(
+        "flashcardPlinkoMoney"
+    );
+
+if (
+    savedMoney !== null &&
+    Number.isFinite(Number(savedMoney)) &&
+    Number(savedMoney) >= 0
+) {
+    money = Number(savedMoney);
+}
+
+function saveMoney() {
+
+    localStorage.setItem(
+        "flashcardPlinkoMoney",
+        money.toFixed(2)
+    );
+}
+
+function updateMoney() {
+
+    moneyDisplay.textContent =
+        "$" + money.toFixed(2);
+
+    saveMoney();
+}
+
+function changeBet(amount) {
+
+    let bet =
+        Number(
+            betInput.value
+        );
+
+    if (
+        !Number.isFinite(bet)
+    ) {
+        bet = 1;
+    }
+
+    if (amount > 0) {
+        bet += 1;
+    } else {
+        bet -= 1;
+    }
+
+    if (bet < 0.01) {
+        bet = 0.01;
+    }
+
+    if (bet > money) {
+        bet = money;
+    }
+
+    betInput.value =
+        bet.toFixed(2);
+}
+
+function resetGame() {
+
+    money = 1;
+
+    localStorage.removeItem(
+        "flashcardPlinkoMoney"
+    );
+
+    for (
+        let i = balls.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        if (
+            balls[i].element &&
+            balls[i].element.parentNode
+        ) {
+
+            balls[i].element.remove();
+        }
+    }
+
+    balls.length = 0;
+
+    betInput.value =
+        "1.00";
+
+    message.textContent =
+        "GAME RESET — $1.00";
+
+    updateMoney();
+}
+
+function createPegs() {
+
+    for (
+        let row = 0;
+        row < ROWS;
+        row++
+    ) {
+
+        const count =
+            FIRST_ROW_COUNT + row;
+
+        const y =
+            TOP_Y +
+            row * ROW_SPACING;
+
+        const totalWidth =
+            (count - 1) *
+            PEG_SPACING;
+
+        const startX =
+            CENTER -
+            totalWidth / 2;
+
+        for (
+            let i = 0;
+            i < count;
+            i++
+        ) {
+
+            const x =
+                startX +
+                i * PEG_SPACING;
+
+            const peg =
+                document.createElement("div");
+
+            peg.className =
+                "peg";
+
+            peg.style.left =
+                x + "px";
+
+            peg.style.top =
+                y + "px";
+
+            board.appendChild(peg);
+
+            pegs.push({
+                x: x,
+                y: y
+            });
+        }
+    }
+}
+
+function createSlots() {
+
+    const totalWidth =
+        (multipliers.length - 1) *
+        SLOT_WIDTH;
+
+    const startX =
+        CENTER -
+        totalWidth / 2;
+
+    for (
+        let i = 0;
+        i < multipliers.length;
+        i++
+    ) {
+
+        const slot =
+            document.createElement("div");
+
+        slot.className =
+            "slot";
+
+        if (i === 14) {
+            slot.classList.add("center");
+        }
+
+        slot.style.left =
+            (
+                startX +
+                i * SLOT_WIDTH
+            ) + "px";
+
+        slot.style.width =
+            SLOT_WIDTH + "px";
+
+        const text =
+            document.createElement("div");
+
+        text.className =
+            "slotText";
+
+        text.textContent =
+            "×" +
+            multipliers[i];
+
+        slot.appendChild(text);
+
+        board.appendChild(slot);
+    }
+}
+
+function getTriangleHalfWidth(y) {
+
+    const usableHeight =
+        TRIANGLE_BOTTOM_Y -
+        TRIANGLE_TOP_Y;
+
+    const progress =
+        Math.max(
+            0,
+            Math.min(
+                1,
+                (y - TRIANGLE_TOP_Y) /
+                usableHeight
+            )
+        );
+
+    return (
+        TRIANGLE_TOP_HALF_WIDTH +
+        (
+            TRIANGLE_BOTTOM_HALF_WIDTH -
+            TRIANGLE_TOP_HALF_WIDTH
+        ) *
+        progress
+    );
+}
+
+function keepInsideTriangle(ball) {
+
+    const halfWidth =
+        getTriangleHalfWidth(
+            ball.y
+        );
+
+    const leftBoundary =
+        CENTER -
+        halfWidth +
+        ball.radius;
+
+    const rightBoundary =
+        CENTER +
+        halfWidth -
+        ball.radius;
+
+    if (
+        ball.x <
+        leftBoundary
+    ) {
+
+        ball.x =
+            leftBoundary;
+
+        ball.vx =
+            Math.abs(ball.vx) *
+            0.8;
+    }
+
+    if (
+        ball.x >
+        rightBoundary
+    ) {
+
+        ball.x =
+            rightBoundary;
+
+        ball.vx =
+            -Math.abs(ball.vx) *
+            0.8;
+    }
+}
+
+function createBall(bet) {
+
+    const element =
+        document.createElement("div");
+
+    element.className =
+        "ball";
+
+    board.appendChild(element);
+
+    const ball = {
+
+        element: element,
+
+        x: CENTER,
+
+        y: 48,
+
+        vx:
+            (Math.random() - 0.5) *
+            0.35,
+
+        vy: 0,
+
+        radius:
+            BALL_RADIUS,
+
+        bet: bet,
+
+        finished: false,
+
+        lastPeg: -1
+    };
+
+    element.style.left =
+        ball.x + "px";
+
+    element.style.top =
+        ball.y + "px";
+
+    balls.push(ball);
+
+    return ball;
+}
+
+function finishBall(
+    ball,
+    multiplier,
+    slotIndex
+) {
+
+    if (ball.finished) {
+        return;
+    }
+
+    ball.finished = true;
+
+    const winnings =
+        Math.round(
+            ball.bet *
+            multiplier *
+            100
+        ) / 100;
+
+    money += winnings;
+
+    updateMoney();
+
+    if (
+        slotIndex !== null
+    ) {
+
+        const slots =
+            document.querySelectorAll(
+                ".slot"
+            );
+
+        if (
+            slots[slotIndex]
+        ) {
+
+            slots[slotIndex]
+                .classList
+                .add("win");
+
+            setTimeout(
+                function() {
+
+                    if (
+                        slots[slotIndex]
+                    ) {
+
+                        slots[slotIndex]
+                            .classList
+                            .remove("win");
+                    }
+
+                },
+                600
+            );
+        }
+
+        message.textContent =
+            "×" +
+            multiplier +
+            " → $" +
+            winnings.toFixed(2);
+
+    } else {
+
+        message.textContent =
+            "×1 → $" +
+            winnings.toFixed(2);
+    }
+
+    if (
+        ball.element.parentNode
+    ) {
+
+        ball.element.remove();
+    }
+
+    const index =
+        balls.indexOf(ball);
+
+    if (
+        index !== -1
+    ) {
+
+        balls.splice(
+            index,
+            1
+        );
+    }
+}
+
+function getSlotIndex(x) {
+
+    const totalWidth =
+        (multipliers.length - 1) *
+        SLOT_WIDTH;
+
+    const startX =
+        CENTER -
+        totalWidth / 2;
+
+    let index =
+        Math.round(
+            (x - startX) /
+            SLOT_WIDTH
+        );
+
+    if (
+        index < 0 ||
+        index >=
+        multipliers.length
+    ) {
+
+        return null;
+    }
+
+    return index;
+}
+
+function updatePhysics() {
+
+    const dt = 0.9;
+
+    for (
+        let i =
+        balls.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const ball =
+            balls[i];
+
+        if (
+            ball.finished
+        ) {
+
+            continue;
+        }
+
+        ball.vy +=
+            0.16 * dt;
+
+        ball.x +=
+            ball.vx * dt;
+
+        ball.y +=
+            ball.vy * dt;
+
+        ball.vx *=
+            0.995;
+
+        for (
+            let p = 0;
+            p < pegs.length;
+            p++
+        ) {
+
+            const peg =
+                pegs[p];
+
+            const dx =
+                ball.x -
+                peg.x;
+
+            const dy =
+                ball.y -
+                peg.y;
+
+            const distance =
+                Math.sqrt(
+                    dx * dx +
+                    dy * dy
+                );
+
+            const minimum =
+                ball.radius +
+                5.5;
+
+            if (
+                distance <
+                minimum &&
+                p !==
+                ball.lastPeg
+            ) {
+
+                const safeDistance =
+                    distance ||
+                    0.001;
+
+                const nx =
+                    dx /
+                    safeDistance;
+
+                const ny =
+                    dy /
+                    safeDistance;
+
+                const overlap =
+                    minimum -
+                    safeDistance;
+
+                ball.x +=
+                    nx *
+                    overlap;
+
+                ball.y +=
+                    ny *
+                    overlap;
+
+                const speedAlongNormal =
+                    ball.vx * nx +
+                    ball.vy * ny;
+
+                if (
+                    speedAlongNormal <
+                    0
+                ) {
+
+                    ball.vx -=
+                        1.75 *
+                        speedAlongNormal *
+                        nx;
+
+                    ball.vy -=
+                        1.75 *
+                        speedAlongNormal *
+                        ny;
+                }
+
+                if (
+                    Math.abs(
+                        ball.vx
+                    ) < 0.5
+                ) {
+
+                    ball.vx +=
+                        Math.random() <
+                        0.5
+                        ? -0.7
+                        : 0.7;
+                }
+
+                ball.lastPeg =
+                    p;
+            }
+        }
+
+        for (
+            let j = 0;
+            j < balls.length;
+            j++
+        ) {
+
+            if (
+                i === j
+            ) {
+
+                continue;
+            }
+
+            const other =
+                balls[j];
+
+            if (
+                other.finished
+            ) {
+
+                continue;
+            }
+
+            const dx =
+                ball.x -
+                other.x;
+
+            const dy =
+                ball.y -
+                other.y;
+
+            const distance =
+                Math.sqrt(
+                    dx * dx +
+                    dy * dy
+                );
+
+            const minimum =
+                ball.radius +
+                other.radius;
+
+            if (
+                distance <
+                minimum &&
+                distance >
+                0
+            ) {
+
+                const nx =
+                    dx /
+                    distance;
+
+                const ny =
+                    dy /
+                    distance;
+
+                const overlap =
+                    minimum -
+                    distance;
+
+                ball.x +=
+                    nx *
+                    overlap *
+                    0.5;
+
+                ball.y +=
+                    ny *
+                    overlap *
+                    0.5;
+
+                other.x -=
+                    nx *
+                    overlap *
+                    0.5;
+
+                other.y -=
+                    ny *
+                    overlap *
+                    0.5;
+
+                const relativeVX =
+                    ball.vx -
+                    other.vx;
+
+                const relativeVY =
+                    ball.vy -
+                    other.vy;
+
+                const relativeSpeed =
+                    relativeVX *
+                    nx +
+                    relativeVY *
+                    ny;
+
+                if (
+                    relativeSpeed <
+                    0
+                ) {
+
+                    const impulse =
+                        -relativeSpeed *
+                        0.85;
+
+                    ball.vx +=
+                        nx *
+                        impulse;
+
+                    ball.vy +=
+                        ny *
+                        impulse;
+
+                    other.vx -=
+                        nx *
+                        impulse;
+
+                    other.vy -=
+                        ny *
+                        impulse;
+                }
+            }
+        }
+
+        if (
+            ball.y <
+            TRIANGLE_BOTTOM_Y
+        ) {
+
+            keepInsideTriangle(
+                ball
+            );
+        }
+
+        if (
+            ball.y >=
+            TRIANGLE_BOTTOM_Y
+        ) {
+
+            const slotIndex =
+                getSlotIndex(
+                    ball.x
+                );
+
+            if (
+                slotIndex === null
+            ) {
+
+                finishBall(
+                    ball,
+                    1,
+                    null
+                );
+
+            } else {
+
+                finishBall(
+                    ball,
+                    multipliers[
+                        slotIndex
+                    ],
+                    slotIndex
+                );
+            }
+
+            continue;
+        }
+
+        ball.element.style.left =
+            ball.x + "px";
+
+        ball.element.style.top =
+            ball.y + "px";
+    }
+
+    requestAnimationFrame(
+        updatePhysics
+    );
+}
+
+function dropBall() {
+
+    if (
+        balls.length >=
+        MAX_BALLS
+    ) {
+
+        message.textContent =
+            "MAXIMUM 100 BALLS AT ONCE.";
+
+        return;
+    }
+
+    const bet =
+        getBet();
+
+    if (
+        bet <= 0
+    ) {
+
+        message.textContent =
+            "ENTER A BET.";
+
+        return;
+    }
+
+    if (
+        bet > money
+    ) {
+
+        message.textContent =
+            "NOT ENOUGH MONEY.";
+
+        return;
+    }
+
+    money -=
+        bet;
+
+    updateMoney();
+
+    createBall(
+        bet
+    );
+
+    message.textContent =
+        "BALL DROPPED — " +
+        balls.length +
+        "/100";
+}
+
+function getBet() {
+
+    const bet =
+        Number(
+            betInput.value
+        );
+
+    if (
+        !Number.isFinite(bet) ||
+        bet <= 0
+    ) {
+
+        return 0;
+    }
+
+    return Math.round(
+        bet * 100
+    ) / 100;
+}
+
+betInput.addEventListener(
+    "change",
+    function() {
+
+        let bet =
+            Number(
+                betInput.value
+            );
+
+        if (
+            !Number.isFinite(bet) ||
+            bet < 0.01
+        ) {
+
+            bet = 0.01;
+        }
+
+        if (
+            bet > money
+        ) {
+
+            bet = money;
+        }
+
+        betInput.value =
+            bet.toFixed(2);
+    }
+);
+
+createPegs();
+createSlots();
+updateMoney();
+updatePhysics();
+
+let rCount = 0;
+let rTimer = null;
+
+document.addEventListener(
+    "keydown",
+    function(e) {
+
+        if (
+            e.key.toLowerCase() !==
+            "r"
+        ) {
+
+            return;
+        }
+
+        rCount++;
+
+        clearTimeout(
+            rTimer
+        );
+
+        rTimer =
+            setTimeout(
+                function() {
+
+                    rCount = 0;
+
+                },
+                1000
+            );
+
+        if (
+            rCount >= 3
+        ) {
+
+            rCount = 0;
+
+            window.location.href =
+                "./index.html?games=true";
+        }
+    }
+);
+
+</script>
+
+</body>
+</html>
