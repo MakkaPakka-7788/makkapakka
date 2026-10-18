@@ -374,24 +374,24 @@ header {
 <script>
 function openFlashcards() {
     window.location.href =
-        "https://makkapakka-7788.github.io/MAKKASENTPAKKING-PoRtfolio/flashcard.html";
+        "https://makkapakka-7788.github.io/makkapakka/flashcard.html";
 }
 
-let rCount = 0;
-let rTimer = null;
+let uCount = 0;
+let uTimer = null;
 
 document.addEventListener("keydown", function(e) {
-    if (e.key.toLowerCase() !== "r") return;
+    if (e.key.toLowerCase() !== "u") return;
 
-    rCount++;
-    clearTimeout(rTimer);
+    uCount++;
+    clearTimeout(uTimer);
 
-    rTimer = setTimeout(function() {
-        rCount = 0;
+    uTimer = setTimeout(function() {
+        uCount = 0;
     }, 700);
 
-    if (rCount === 3) {
-        rCount = 0;
+    if (uCount === 3) {
+        uCount = 0;
         window.location.href =
             "https://makkapakka-7788.github.io/makkapakka/flashcard.html";
     }
