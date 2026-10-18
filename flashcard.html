@@ -974,30 +974,30 @@ function escapeAttribute(value) {
 }
 
 
-let rCount = 0;
-let rTimer = null;
+let uCount = 0;
+let uTimer = null;
 
 document.addEventListener("keydown", function(event) {
 
-    if (event.key.toLowerCase() !== "r") {
+    if (event.key.toLowerCase() !== "u") {
 
         return;
 
     }
 
-    rCount++;
+    uCount++;
 
-    clearTimeout(rTimer);
+    clearTimeout(uTimer);
 
-    rTimer = setTimeout(function() {
+    uTimer = setTimeout(function() {
 
-        rCount = 0;
+        uCount = 0;
 
     }, 700);
 
-    if (rCount >= 3) {
+    if (uCount >= 3) {
 
-        rCount = 0;
+        uCount = 0;
 
         window.location.href =
             "index.html?games=true";
