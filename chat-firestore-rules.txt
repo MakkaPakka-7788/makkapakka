@@ -1,0 +1,52 @@
+// Add these match blocks INSIDE your existing
+// service cloud.firestore { match /databases/{database}/documents { ... }
+// rules in Firebase Console. Do not replace your existing user/save rules.
+//
+// Chats are private to their members. A chat starts with its creator and
+// can be joined by one other person who has the invite URL.
+
+function signedIn() {
+  return request.auth != null;
+}
+
+match /chats/{chatId} {
+  allow create: if signedIn()
+    && request.resource.data.keys().hasOnly(['members', 'createdBy', 'createdAt'])
+    && request.resource.data.members == [request.auth.uid]
+    && request.resource.data.createdBy == request.auth.uid
+    && request.resource.data.createdAt == request.time;
+
+  allow get, list: if signedIn()
+    && request.auth.uid in resource.data.members;
+
+  allow update: if signedIn()
+    && resource.data.members.size() == 1
+    && request.auth.uid in request.resource.data.members
+    && !(request.auth.uid in resource.data.members)
+    && request.resource.data.members.size() == 2
+    && request.resource.data.members[0] == resource.data.members[0]
+    && request.resource.data.members[1] == request.auth.uid
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']);
+
+  allow delete: if false;
+
+  match /messages/{messageId} {
+    function isChatMember() {
+      return signedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members;
+    }
+
+    allow get, list: if isChatMember();
+
+    allow create: if isChatMember()
+      && request.resource.data.keys().hasOnly(['text', 'senderUid', 'senderName', 'createdAt'])
+      && request.resource.data.senderUid == request.auth.uid
+      && request.resource.data.text is string
+      && request.resource.data.text.size() > 0
+      && request.resource.data.text.size() <= 1000
+      && request.resource.data.senderName is string
+      && request.resource.data.createdAt == request.time;
+
+    allow update, delete: if false;
+  }
+}
