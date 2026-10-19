@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcard.com — Chat</title>
+<style>
+*{box-sizing:border-box}
+:root{font-family:Arial,Helvetica,sans-serif;color:#eaf0f8;background:#0b1018}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#15243a 0,#0b1018 55%)}
+header{height:70px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #29364a;background:#0b1018eF;position:sticky;top:0}
+.logo{font-size:22px;font-weight:800;color:#60a5fa;text-decoration:none}.logo span{color:#f0f5ff}
+button,input{font:inherit}
+button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.55;cursor:wait}
+.primary{background:#3b82f6;color:white}.secondary{background:#202c3d;color:#eaf0f8;border:1px solid #344258}
+main{width:min(1100px,96%);margin:28px auto;padding-bottom:35px}
+.intro h1{margin:0 0 7px;font-size:30px}.muted{color:#91a2b9}
+#status{margin:16px 0;padding:11px 13px;border:1px solid #2b3a4e;border-radius:10px;background:#111a27;color:#b9c9dc;overflow-wrap:anywhere}
+.layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;min-height:520px}
+.panel{background:#101824;border:1px solid #29374b;border-radius:14px;overflow:hidden;min-width:0}
+.panel-head{padding:16px;border-bottom:1px solid #29374b;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.panel-head h2{font-size:16px;margin:0}
+#chatList{padding:8px;display:grid;gap:6px;align-content:start}
+.chat-item{width:100%;text-align:left;background:transparent;color:#eaf0f8;border:1px solid transparent;padding:12px}
+.chat-item.active,.chat-item:hover{background:#1b2a3d;border-color:#344a66}
+.chat-item small{display:block;color:#91a2b9;margin-top:4px;font-weight:400}
+#emptyList{padding:18px;color:#91a2b9;font-size:14px;line-height:1.5}
+#conversation{display:flex;flex-direction:column;min-height:520px}
+#conversationHead{padding:15px 18px;border-bottom:1px solid #29374b}
+#conversationHead h2{margin:0 0 5px;font-size:18px;overflow-wrap:anywhere}
+#conversationHead p{margin:0;font-size:12px;color:#91a2b9;overflow-wrap:anywhere}
+#messages{padding:18px;display:flex;flex:1;flex-direction:column;gap:10px;overflow:auto;max-height:58vh;min-height:260px}
+.message{max-width:min(80%,560px);align-self:flex-start;background:#1b293b;border:1px solid #304158;border-radius:12px 12px 12px 3px;padding:10px 12px;overflow-wrap:anywhere;white-space:pre-wrap}
+.message.mine{align-self:flex-end;background:#1d4d91;border-color:#2e69b5;border-radius:12px 12px 3px 12px}
+.message .meta{font-size:11px;color:#c3d2e5;margin-bottom:5px}
+.message .body{line-height:1.45}
+#messageForm{display:flex;gap:8px;padding:14px;border-top:1px solid #29374b}
+#messageInput{flex:1;min-width:0;background:#0b121d;color:#f5f8ff;border:1px solid #344258;border-radius:9px;padding:12px;outline:none}
+#messageInput:focus,#friendEmail:focus{border-color:#60a5fa}
+#messageForm button{white-space:nowrap}
+#welcome{margin:auto;text-align:center;padding:32px;color:#91a2b9;line-height:1.6}
+.invite{padding:12px 16px;border-top:1px solid #29374b;display:flex;gap:8px;flex-wrap:wrap}
+#friendEmail{width:100%;background:#0b121d;color:#f5f8ff;border:1px solid #344258;border-radius:9px;padding:11px;margin:0 0 9px}
+#inviteHelp{font-size:12px;color:#91a2b9;line-height:1.45;margin:8px 0 0}
+.hidden{display:none!important}
+footer{font-size:12px;color:#71839b;text-align:center;padding:18px}
+@media(max-width:720px){header{padding:0 14px}.layout{grid-template-columns:1fr}.panel:first-child{min-height:170px}#chatList{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}#conversation{min-height:460px}#messages{max-height:50vh}.intro h1{font-size:25px}}
+</style>
+</head>
+<body>
+<header>
+<a class="logo" href="./flashcard.html">Flashcard<span>.com</span></a>
+<button class="secondary" id="homeButton" type="button">Home</button>
+</header>
+<main>
+<div class="intro"><h1>Private chat</h1><div class="muted">Chat with friends who have a FlashAccount.</div></div>
+<div id="status" role="status" aria-live="polite">Connecting to FlashAccount…</div>
+<div id="signedOut" class="panel hidden" style="padding:24px;margin-bottom:16px">
+<h2>Sign in to chat</h2><p class="muted">Use the Google account linked to your FlashAccount.</p>
+<button id="loginButton" class="primary" type="button">Sign in with Google</button>
+</div>
+<div id="app" class="layout hidden">
+<aside class="panel">
+<div class="panel-head"><h2>Your chats</h2><button id="newChatButton" class="primary" type="button">＋ New</button></div>
+<div id="chatList"><div id="emptyList">Your chats will appear here. Start one with New.</div></div>
+<div class="invite">
+<div style="width:100%"><button id="copyInviteButton" class="secondary hidden" type="button">Copy invite link</button>
+<p id="inviteHelp">New creates a private invite link. Send it directly to your friend; anyone with the link may be able to join until the chat is filled.</p></div>
+</div>
+</aside>
+<section id="conversation" class="panel">
+<div id="welcome"><h2>Welcome to chat</h2><p>Create a chat or open an invite link from a friend.</p></div>
+<div id="conversationContent" class="hidden" style="display:flex;flex:1;flex-direction:column;min-height:0">
+<div id="conversationHead"><h2 id="conversationTitle">Conversation</h2><p id="conversationId"></p></div>
+<div id="messages" aria-live="polite"></div>
+<form id="messageForm"><input id="messageInput" maxlength="1000" autocomplete="off" placeholder="Write a message…" aria-label="Message" required><button class="primary" type="submit">Send</button></form>
+</div>
+</section>
+</div>
+</main>
+<footer>Messages are visible to chat participants. Do not share sensitive information. Invite links should only be sent to people you trust.</footer>
+<script type="module">
+const $ = id => document.getElementById(id);
+const statusBox = $("status");
+let account, db, user, firestore, authTools;
+let selectedChatId = null;
+let chatDocs = new Map();
+let stopChats = null;
+let stopMessages = null;
+let inviteFromUrl = new URLSearchParams(location.search).get("chat");
+let currentMembers = [];
+
+$("homeButton").addEventListener("click", () => location.href = "./flashcard.html");
+$("loginButton").addEventListener("click", async () => {
+  try { await account.signInWithGoogle(); }
+  catch (error) { setStatus("Sign-in failed: " + error.message, true); }
+});
+$("newChatButton").addEventListener("click", createChat);
+$("copyInviteButton").addEventListener("click", copyInvite);
+$("messageForm").addEventListener("submit", sendMessage);
+
+function setStatus(message, error = false) {
+  statusBox.textContent = message;
+  statusBox.style.color = error ? "#fca5a5" : "#b9c9dc";
+}
+function showSignedIn(isIn) {
+  $("signedOut").classList.toggle("hidden", isIn);
+  $("app").classList.toggle("hidden", !isIn);
+}
+function safeText(value) { return typeof value === "string" ? value : ""; }
+function inviteUrl(id) {
+  const url = new URL(location.href);
+  url.search = "";
+  url.hash = "";
+  url.searchParams.set("chat", id);
+  return url.toString();
+}
+async function createChat() {
+  if (!user) return;
+  const id = crypto.randomUUID().replaceAll("-", "");
+  try {
+    const ref = firestore.doc(db, "chats", id);
+    await firestore.setDoc(ref, {
+      members: [user.uid],
+      createdBy: user.uid,
+      createdAt: firestore.serverTimestamp()
+    });
+    await navigator.clipboard.writeText(inviteUrl(id)).catch(() => {});
+    await openChat(id);
+    setStatus("Chat created. Use Copy invite link to send the invite to your friend.");
+  } catch (error) {
+    console.error(error);
+    setStatus("Couldn't create chat. Check that the chat Firestore rules have been added in Firebase. " + error.message, true);
+  }
+}
+async function copyInvite() {
+  if (!selectedChatId) return;
+  try {
+    await navigator.clipboard.writeText(inviteUrl(selectedChatId));
+    setStatus("Invite link copied. Send it directly to your friend.");
+  } catch {
+    window.prompt("Copy this invite link and send it to your friend:", inviteUrl(selectedChatId));
+  }
+}
+async function joinInvite(id) {
+  const ref = firestore.doc(db, "chats", id);
+  const snap = await firestore.getDoc(ref);
+  if (!snap.exists()) throw new Error("This invite doesn't exist.");
+  const data = snap.data();
+  if (Array.isArray(data.members) && data.members.includes(user.uid)) return;
+  if (!Array.isArray(data.members) || data.members.length !== 1) throw new Error("This chat is already full.");
+  await firestore.updateDoc(ref, { members: firestore.arrayUnion(user.uid) });
+}
+function renderChatList() {
+  const list = $("chatList");
+  list.replaceChildren();
+  if (!chatDocs.size) {
+    const empty = document.createElement("div");
+    empty.id = "emptyList";
+    empty.textContent = "No chats yet. Select New or open a friend's invite link.";
+    list.append(empty);
+    return;
+  }
+  for (const [id, data] of chatDocs) {
+    const button = document.createElement("button");
+    button.className = "chat-item" + (id === selectedChatId ? " active" : "");
+    button.type = "button";
+    const title = document.createElement("span");
+    title.textContent = data.members?.length > 1 ? "Friend chat" : "Invite pending";
+    const small = document.createElement("small");
+    small.textContent = id.slice(0, 10) + "…";
+    button.append(title, small);
+    button.addEventListener("click", () => openChat(id));
+    list.append(button);
+  }
+}
+async function openChat(id) {
+  try {
+    const ref = firestore.doc(db, "chats", id);
+    const snap = await firestore.getDoc(ref);
+    if (!snap.exists()) throw new Error("Chat not found.");
+    const data = snap.data();
+    if (!Array.isArray(data.members) || !data.members.includes(user.uid)) {
+      if (!inviteFromUrl || inviteFromUrl !== id) throw new Error("You aren't a member of this chat. Open its invite link to join.");
+      await joinInvite(id);
+    }
+    const refreshed = await firestore.getDoc(ref);
+    const refreshedData = refreshed.data();
+    if (!refreshedData.members.includes(user.uid)) throw new Error("You don't have access to this chat.");
+    selectedChatId = id;
+    currentMembers = refreshedData.members;
+    inviteFromUrl = null;
+    history.replaceState({}, "", location.pathname + "?chat=" + encodeURIComponent(id));
+    $("welcome").classList.add("hidden");
+    $("conversationContent").classList.remove("hidden");
+    $("conversationTitle").textContent = currentMembers.length > 1 ? "Friend chat" : "Invite pending";
+    $("conversationId").textContent = "Chat ID: " + id;
+    $("copyInviteButton").classList.remove("hidden");
+    $("messageInput").disabled = currentMembers.length < 2;
+    $("messageForm").querySelector("button").disabled = currentMembers.length < 2;
+    $("messageInput").placeholder = currentMembers.length < 2 ? "Waiting for your friend to join…" : "Write a message…";
+    renderChatList();
+    if (stopMessages) stopMessages();
+    const messagesRef = firestore.collection(db, "chats", id, "messages");
+    const messagesQuery = firestore.query(messagesRef, firestore.orderBy("createdAt", "asc"));
+    stopMessages = firestore.onSnapshot(messagesQuery, snapshot => {
+      const area = $("messages");
+      area.replaceChildren();
+      snapshot.forEach(docSnap => {
+        const message = docSnap.data();
+        const bubble = document.createElement("article");
+        bubble.className = "message" + (message.senderUid === user.uid ? " mine" : "");
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = (message.senderUid === user.uid ? "You" : safeText(message.senderName) || "Friend") + (message.createdAt?.toDate ? " · " + message.createdAt.toDate().toLocaleString() : "");
+        const body = document.createElement("div");
+        body.className = "body";
+        body.textContent = safeText(message.text);
+        bubble.append(meta, body);
+        area.append(bubble);
+      });
+      area.scrollTop = area.scrollHeight;
+    }, error => setStatus("Couldn't load messages. Check the Firestore chat rules. " + error.message, true));
+    setStatus(currentMembers.length > 1 ? "Connected. Messages update live." : "Chat created. Copy the invite link and send it to your friend.");
+  } catch (error) {
+    console.error(error);
+    setStatus(error.message || "Couldn't open chat.", true);
+  }
+}
+async function sendMessage(event) {
+  event.preventDefault();
+  const text = $("messageInput").value.trim();
+  if (!text || !selectedChatId || currentMembers.length < 2) return;
+  const sendButton = $("messageForm").querySelector("button");
+  sendButton.disabled = true;
+  try {
+    await firestore.addDoc(
+      firestore.collection(db, "chats", selectedChatId, "messages"),
+      {
+        text: text.slice(0, 1000),
+        senderUid: user.uid,
+        senderName: safeText(user.displayName) || "Friend",
+        createdAt: firestore.serverTimestamp()
+      }
+    );
+    $("messageInput").value = "";
+  } catch (error) {
+    console.error(error);
+    setStatus("Couldn't send message. Check the Firestore chat rules. " + error.message, true);
+  } finally {
+    sendButton.disabled = currentMembers.length < 2;
+  }
+}
+async function startApp() {
+  try {
+    await import("./flashaccount.js");
+    account = window.FlashAccount;
+    if (!account) throw new Error("FlashAccount didn't initialize.");
+    db = account.db;
+    firestore = await import("https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js");
+    authTools = await import("https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js");
+    authTools.onAuthStateChanged(account.auth, async nextUser => {
+      user = nextUser;
+      if (!user) {
+        if (stopChats) stopChats();
+        if (stopMessages) stopMessages();
+        showSignedIn(false);
+        setStatus("Sign in with Google to use chat.");
+        return;
+      }
+      showSignedIn(true);
+      setStatus("Signed in as " + (user.displayName || user.email || "Google user"));
+      if (stopChats) stopChats();
+      const q = firestore.query(
+        firestore.collection(db, "chats"),
+        firestore.where("members", "array-contains", user.uid)
+      );
+      stopChats = firestore.onSnapshot(q, snapshot => {
+        chatDocs = new Map();
+        snapshot.forEach(docSnap => chatDocs.set(docSnap.id, docSnap.data()));
+        renderChatList();
+        if (selectedChatId && !chatDocs.has(selectedChatId)) {
+          selectedChatId = null;
+          if (stopMessages) stopMessages();
+          $("conversationContent").classList.add("hidden");
+          $("welcome").classList.remove("hidden");
+        }
+      }, error => setStatus("Can't load chats yet. Add the chat rules in Firebase first. " + error.message, true));
+      if (inviteFromUrl) {
+        try { await joinInvite(inviteFromUrl); await openChat(inviteFromUrl); }
+        catch (error) { setStatus(error.message || "Couldn't join invite.", true); }
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    setStatus("FlashAccount couldn't load. Check that flashaccount.js is published beside chat.html. " + error.message, true);
+    $("loginButton").disabled = true;
+  }
+}
+startApp();
+</script>
+</body>
+</html>
