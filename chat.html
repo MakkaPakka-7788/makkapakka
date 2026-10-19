@@ -65,8 +65,15 @@ footer{font-size:12px;color:#71839b;text-align:center;padding:18px}
 <div class="panel-head"><h2>Your chats</h2><button id="newChatButton" class="primary" type="button">＋ New</button></div>
 <div id="chatList"><div id="emptyList">Your chats will appear here. Start one with New.</div></div>
 <div class="invite">
-<div style="width:100%"><button id="copyInviteButton" class="secondary hidden" type="button">Copy invite link</button>
-<p id="inviteHelp">New creates a private invite link. Send it directly to your friend; anyone with the link may be able to join until the chat is filled.</p></div>
+<div style="width:100%">
+<label for="friendChatId" style="display:block;font-size:13px;font-weight:700;margin-bottom:7px">Join with a friend's Chat ID</label>
+<div style="display:flex;gap:7px">
+<input id="friendChatId" type="text" placeholder="Paste Chat ID here" autocomplete="off" aria-label="Friend's Chat ID" style="flex:1;min-width:0;background:#0b121d;color:#f5f8ff;border:1px solid #344258;border-radius:9px;padding:11px">
+<button id="joinByIdButton" class="primary" type="button">Join</button>
+</div>
+<button id="copyInviteButton" class="secondary hidden" type="button" style="margin-top:10px">Copy invite link</button>
+<p id="inviteHelp">Your friend can send you their Chat ID or invite link. Only join chats from people you trust.</p>
+</div>
 </div>
 </aside>
 <section id="conversation" class="panel">
@@ -114,6 +121,8 @@ $("loginButton").addEventListener("click", async () => {
 });
 $("newChatButton").addEventListener("click", createChat);
 $("copyInviteButton").addEventListener("click", copyInvite);
+$("joinByIdButton").addEventListener("click", joinById);
+$("friendChatId").addEventListener("keydown", event => { if (event.key === "Enter") joinById(); });
 $("messageForm").addEventListener("submit", sendMessage);
 
 function setStatus(message, error = false) {
@@ -148,6 +157,30 @@ async function createChat() {
   } catch (error) {
     console.error(error);
     setStatus("Couldn't create chat. Check that the chat Firestore rules have been added in Firebase. " + error.message, true);
+  }
+}
+async function joinById() {
+  if (!user) return;
+  const id = $("friendChatId").value.trim().replace(/\\s+/g, "");
+  if (!id) {
+    setStatus("Enter your friend's Chat ID first.", true);
+    $("friendChatId").focus();
+    return;
+  }
+  if (!/^[a-f0-9]{32}$/i.test(id)) {
+    setStatus("That Chat ID doesn't look right. Ask your friend to copy the full ID shown in their chat.", true);
+    return;
+  }
+  const button = $("joinByIdButton");
+  button.disabled = true;
+  try {
+    inviteFromUrl = id;
+    await openChat(id);
+    if (selectedChatId === id) $("friendChatId").value = "";
+  } catch (error) {
+    setStatus(error.message || "Couldn't join that chat.", true);
+  } finally {
+    button.disabled = false;
   }
 }
 async function copyInvite() {
