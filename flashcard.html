@@ -59,6 +59,24 @@ header {
     background: #0e55bd;
 }
 
+.chat-btn {
+    border: none;
+    background: #172b46;
+    color: #1769e0;
+    padding: 11px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.chat-btn:hover {
+    background: #e8f1ff;
+}
+
 main {
     max-width: 1100px;
     margin: auto;
@@ -348,9 +366,10 @@ button {
 Flashcard<span>.com</span>
 </div>
 
-<button class="home-btn" onclick="goToGames()">
-Home
-</button>
+<div style="display:flex;align-items:center;gap:10px">
+<a class="chat-btn" href="./chat.html">Private Chat</a>
+<button class="home-btn" onclick="goToGames()">Home</button>
+</div>
 
 </header>
 
