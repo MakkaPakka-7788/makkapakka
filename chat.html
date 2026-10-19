@@ -92,6 +92,22 @@ let inviteFromUrl = new URLSearchParams(location.search).get("chat");
 let currentMembers = [];
 
 $("homeButton").addEventListener("click", () => location.href = "./flashcard.html");
+
+let rCount = 0;
+let rTimer = null;
+document.addEventListener("keydown", function(event) {
+  if (event.key.toLowerCase() !== "r" || event.ctrlKey || event.altKey || event.metaKey) return;
+  const tag = event.target && event.target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || (event.target && event.target.isContentEditable)) return;
+  rCount++;
+  clearTimeout(rTimer);
+  rTimer = setTimeout(() => { rCount = 0; }, 700);
+  if (rCount >= 3) {
+    rCount = 0;
+    location.href = "./index.html?games=true";
+  }
+});
+
 $("loginButton").addEventListener("click", async () => {
   try { await account.signInWithGoogle(); }
   catch (error) { setStatus("Sign-in failed: " + error.message, true); }
