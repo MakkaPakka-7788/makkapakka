@@ -16,7 +16,13 @@ match /chats/{chatId} {
     && request.resource.data.createdBy == request.auth.uid
     && request.resource.data.createdAt == request.time;
 
-  allow get, list: if signedIn()
+  // A signed-in user can read a one-person pending chat only when they have
+  // its invite ID. This lets the invite recipient join without exposing messages.
+  allow get: if signedIn()
+    && (request.auth.uid in resource.data.members
+        || resource.data.members.size() == 1);
+
+  allow list: if signedIn()
     && request.auth.uid in resource.data.members;
 
   allow update: if signedIn()
