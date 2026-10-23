@@ -105,6 +105,17 @@ h1 {
     margin-top: 0;
 }
 
+.passcode-area {
+    max-width: 460px;
+    margin: 45px auto;
+}
+
+.passcode-error {
+    min-height: 1.25em;
+    margin-bottom: 0;
+    color: #c53030;
+}
+
 input,
 textarea {
     width: 100%;
@@ -367,7 +378,7 @@ Flashcard<span>.com</span>
 </div>
 
 <div style="display:flex;align-items:center;gap:10px">
-<button class="home-btn" onclick="goToGames()">Home</button>
+<button class="home-btn" type="button">Home</button>
 </div>
 
 </header>
@@ -512,6 +523,19 @@ Next
 
 </section>
 
+<section id="passcodeScreen" style="display:none;">
+  <div class="create-area passcode-area">
+    <h1>Home Passcode</h1>
+    <p class="subtitle">Enter the passcode to open the games home.</p>
+    <form onsubmit="submitHomePasscode(event)">
+      <label for="homePasscode">Passcode</label>
+      <input id="homePasscode" type="password" autocomplete="off" required>
+      <button class="primary-btn" type="submit">Continue</button>
+    </form>
+    <p id="homePasscodeError" class="passcode-error" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
 </main>
 
 <script>
@@ -537,10 +561,36 @@ function saveData() {
 
 function goToGames() {
 
-    const passcode = window.prompt("Enter the passcode to go to Home:");
-    if (passcode === "#makkapakka#") {
-        window.location.href = "index.html?games=true";
+    window.location.href = "index.html?games=true";
+
+}
+
+function showPasscodeScreen() {
+
+    document.getElementById("homeScreen").style.display = "none";
+    document.getElementById("editorScreen").style.display = "none";
+    document.getElementById("studyScreen").style.display = "none";
+    document.getElementById("passcodeScreen").style.display = "block";
+    document.getElementById("homePasscode").value = "";
+    document.getElementById("homePasscodeError").textContent = "";
+    document.getElementById("homePasscode").focus();
+
+}
+
+function submitHomePasscode(event) {
+
+    event.preventDefault();
+    const input = document.getElementById("homePasscode");
+
+    if (input.value === "#makkapakka#") {
+        showPasscodeScreen();
+        return;
     }
+
+    document.getElementById("homePasscodeError").textContent =
+        "Incorrect passcode. Try again.";
+    input.value = "";
+    input.focus();
 
 }
 
@@ -1004,6 +1054,12 @@ document.addEventListener("keydown", function(event) {
 
         return;
 
+    }
+
+    if (event.target instanceof Element && event.target.closest("input, textarea, [contenteditable='true']")) {
+        uCount = 0;
+        clearTimeout(uTimer);
+        return;
     }
 
     uCount++;
