@@ -583,7 +583,7 @@ function submitHomePasscode(event) {
     const input = document.getElementById("homePasscode");
 
     if (input.value === "#makkapakka#") {
-        showPasscodeScreen();
+        goToGames();
         return;
     }
 
@@ -1076,7 +1076,7 @@ document.addEventListener("keydown", function(event) {
 
         uCount = 0;
 
-        goToGames();
+        showPasscodeScreen();
 
     }
 
