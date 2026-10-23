@@ -537,7 +537,10 @@ function saveData() {
 
 function goToGames() {
 
-    window.location.href = "index.html?games=true";
+    const passcode = window.prompt("Enter the passcode to go to Home:");
+    if (passcode === "#makkapakka#") {
+        window.location.href = "index.html?games=true";
+    }
 
 }
 
@@ -1017,8 +1020,7 @@ document.addEventListener("keydown", function(event) {
 
         uCount = 0;
 
-        window.location.href =
-            "index.html?games=true";
+        goToGames();
 
     }
 
