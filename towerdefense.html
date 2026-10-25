@@ -1550,7 +1550,7 @@ for(const t of towers){
 const pos=towerPosition(t);
 if(t.type.farm){t.cooldown-=dt;if(t.cooldown<=0){money+=farmIncome(t);t.cooldown=1000;}continue;}
 if(t.type.flying){t.x=pos.x;t.y=pos.y;}
-t.cooldown-=dt;if(t.cooldown>0)continue;
+t.cooldown-=dt;
 const s=towerStats(t);let target=null,best=-Infinity;
 for(const e of enemies){
 if(e.flying&&!t.type.airDefense)continue;
@@ -1565,6 +1565,7 @@ if(!target)continue;
 const desiredAngle=Math.atan2(target.y-t.y,target.x-t.x)+Math.PI/2;
 let angleDiff=(desiredAngle-(t.angle||0)+Math.PI*3)%(Math.PI*2)-Math.PI;
 t.angle=(t.angle||0)+angleDiff*Math.min(1,dt/110);
+if(t.cooldown>0)continue;
 t.cooldown=s.rate;
 projectiles.push({x:t.x,y:t.y,target,owner:t,damage:s.damage,speed:650,splash:["Splash","Mortar","Catapult","Meteor"].includes(t.type.name)?45:0,slow:["Slow","Freeze","Ice"].includes(t.type.name)?0.55:1,poison:t.type.name==="Poison"?1000:0,color:t.type.color});
 }
