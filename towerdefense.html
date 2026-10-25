@@ -361,6 +361,103 @@ width:100%;
 </div>
 
 <script>
+let bankCash=Number(localStorage.getItem("kingdomWarBank")||1500);
+const defaultOwned=["Basic","Rapid","Heavy","Slow","Splash"];
+let ownedTowers=JSON.parse(localStorage.getItem("kingdomWarOwned")||"null")||defaultOwned.slice();
+let loadout=JSON.parse(localStorage.getItem("kingdomWarLoadout")||"null")||defaultOwned.slice();
+const modeData=[
+{name:"Easy",waves:10,scale:.75,reward:350,unlocked:true},
+{name:"Casual",waves:15,scale:1,reward:600},
+{name:"Intermediate",waves:20,scale:1.3,reward:950},
+{name:"Molten",waves:25,scale:1.65,reward:1400},
+{name:"Fallen",waves:30,scale:2.1,reward:2200}
+];
+let clearedModes=JSON.parse(localStorage.getItem("kingdomWarCleared")||"[]");
+let selectedMode="Easy";
+let activeMode=null;
+let lobbyTab="loadout";
+function persistProgress(){
+localStorage.setItem("kingdomWarBank",String(bankCash));
+localStorage.setItem("kingdomWarOwned",JSON.stringify(ownedTowers));
+localStorage.setItem("kingdomWarLoadout",JSON.stringify(loadout));
+localStorage.setItem("kingdomWarCleared",JSON.stringify(clearedModes));
+}
+function modeUnlocked(index){return index===0||clearedModes.includes(modeData[index-1].name);}
+function towerPrice(type){return Math.max(250,Math.round(type.cost*3.5));}
+function glyphColor(type){return type.color;}
+function renderLobby(){
+document.getElementById("bankDisplay").textContent="$"+bankCash.toLocaleString();
+const title=document.getElementById("lobbyTitle"), sub=document.getElementById("lobbySubtitle"), content=document.getElementById("lobbyContent");
+const sideTitle=document.getElementById("sideTitle"), sideCopy=document.getElementById("sideCopy");
+document.querySelectorAll(".lobby-nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===lobbyTab));
+content.innerHTML="";
+if(lobbyTab==="loadout"){
+title.textContent="YOUR LOADOUT";sub.textContent="Choose the towers you’ll bring into battle.";
+sideTitle.textContent="BUILD YOUR STRATEGY";sideCopy.textContent="Equip up to five towers. Every cannon has its own shape, range and attack style.";
+const equipped=towerTypes.filter(t=>loadout.includes(t.name));
+if(!equipped.length)content.innerHTML='<div class="loadout-empty">No towers equipped yet.<br>Visit the Tower Shop.</div>';
+equipped.forEach(t=>content.appendChild(makeTowerCard(t,"EQUIPPED",()=>{})));
+}else if(lobbyTab==="towers"){
+title.textContent="TOWER SHOP";sub.textContent="Buy new cannons, then add them to your loadout.";
+sideTitle.textContent="TOWER COLLECTION";sideCopy.textContent="Tower purchases are permanent and saved on this device. You can equip up to five towers.";
+towerTypes.forEach(t=>{
+const owned=ownedTowers.includes(t.name), equipped=loadout.includes(t.name);
+const label=owned?(equipped?"EQUIPPED":"EQUIP"):("BUY $"+towerPrice(t));
+content.appendChild(makeTowerCard(t,label,()=>{
+if(!owned){const price=towerPrice(t);if(bankCash<price)return;bankCash-=price;ownedTowers.push(t.name);if(loadout.length<5)loadout.push(t.name);}
+else if(equipped){loadout=loadout.filter(n=>n!==t.name);}
+else if(loadout.length<5){loadout.push(t.name);}
+persistProgress();renderLobby();
+}));
+});
+}else{
+title.textContent="GAME MODES";sub.textContent="Beat each challenge to unlock the next mode.";
+sideTitle.textContent="WIN TO ADVANCE";sideCopy.textContent="Clear every wave to claim the reward and open the next difficulty.";
+modeData.forEach((m,i)=>{
+const unlocked=modeUnlocked(i), cleared=clearedModes.includes(m.name);
+const card=document.createElement("div");card.className="lobby-card"+(m.name===selectedMode?" selected":"")+(unlocked?"":" locked");
+card.innerHTML='<div class="mode-chip">'+(cleared?"CLEARED":(unlocked?"UNLOCKED":"LOCKED"))+'</div><div><h3>'+m.name+'</h3><p>'+m.waves+' waves · '+m.reward.toLocaleString()+' reward</p></div><button '+(unlocked?"":"disabled")+'>'+(m.name===selectedMode?"SELECTED":"SELECT MODE")+'</button>';
+card.querySelector("button").onclick=()=>{if(!unlocked)return;selectedMode=m.name;renderLobby();};
+content.appendChild(card);
+});
+}
+const chosen=modeData.find(m=>m.name===selectedMode)||modeData[0];
+document.getElementById("modeSummary").textContent="Selected mode: "+chosen.name+" · "+chosen.waves+" waves";
+const start=document.getElementById("startModeBtn");start.textContent="PLAY "+chosen.name.toUpperCase();start.disabled=!modeUnlocked(modeData.indexOf(chosen));
+}
+function makeTowerCard(t,label,onClick){
+const card=document.createElement("div");card.className="lobby-card"+(loadout.includes(t.name)?" selected":"");
+card.innerHTML='<div class="tower-glyph" style="--tower-color:'+glyphColor(t)+'"><i></i></div><div><h3>'+t.name+'</h3><p>Damage '+t.damage+' · Range '+t.range+'</p></div><button>'+label+'</button>';
+card.querySelector("button").onclick=onClick;return card;
+}
+document.querySelectorAll(".lobby-nav button").forEach(b=>b.addEventListener("click",()=>{lobbyTab=b.dataset.tab;renderLobby();}));
+document.getElementById("startModeBtn").addEventListener("click",()=>{
+if(!modeUnlocked(modeData.findIndex(m=>m.name===selectedMode)))return;
+activeMode=selectedMode;resetGame();
+document.getElementById("lobby").style.display="none";
+document.getElementById("stats").style.display="flex";
+document.getElementById("gameWrap").style.display="block";
+});
+function showLobby(){
+activeMode=null;document.getElementById("lobby").style.display="flex";
+document.getElementById("stats").style.display="none";document.getElementById("gameWrap").style.display="none";
+lobbyTab="loadout";renderLobby();
+}
+function completeMode(){
+if(!activeMode||gameOver)return;
+gameOver=true;
+const completed=activeMode;
+const data=modeData.find(m=>m.name===completed);
+bankCash+=data.reward;
+if(!clearedModes.includes(completed))clearedModes.push(completed);
+persistProgress();renderLobby();
+document.getElementById("overlay").style.display="flex";
+document.getElementById("overlayTitle").textContent=completed.toUpperCase()+" CLEARED!";
+document.getElementById("overlayText").textContent="All "+data.waves+" waves defeated. +$"+data.reward+" added to your tower fund.";
+document.getElementById("retryBtn").textContent="PLAY AGAIN";
+document.getElementById("homeBtn").textContent="LOBBY";
+}
+
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 
