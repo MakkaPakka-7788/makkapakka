@@ -196,6 +196,8 @@ margin:5px;
 margin-top:8px;
 width:100%;
 }
+#roadBtn,#terrainBar,#troopBar,#terrainUpgrade,#savebar{display:none!important}
+button:disabled{opacity:.35;cursor:not-allowed}
 
 /* Lobby and progression */
 #stats,#gameWrap{display:none}
@@ -309,8 +311,9 @@ width:100%;
 <div id="controls">
 <button id="upgradeBtn">UPGRADE</button>
 <button id="sellBtn">DELETE / SELL</button>
-<button id="roadBtn">BUILD ROAD</button>
 <button id="pauseBtn">PAUSE</button>
+<button id="skipWaveBtn">START WAVE</button>
+<button id="targetBtn" disabled>TARGET: FIRST</button>
 </div>
 
 <div id="towerInfo">
@@ -347,7 +350,7 @@ width:100%;
 <button id="newBtn">NEW CITY</button>
 </div>
 
-<div id="info">Click and drag the map to move it. Scroll to zoom. Build roads, towers and terrain.</div>
+<div id="info">Place towers beside the route. Upgrade, sell or change targeting as waves get harder.</div>
 
 <div id="overlay">
 <div id="overlayBox">
@@ -1043,6 +1046,7 @@ if(!loadout.includes(type.name))return;
 if(type.unlock>wave)return;
 if(towerAt(x,y)||roadAt(x,y)||terrainAt(x,y))return;
 if(x<100&&y>400&&y<550)return;
+if(towers.length>=40)return;
 if(money<type.cost)return;
 
 money-=type.cost;
@@ -1053,7 +1057,9 @@ y,
 type,
 level:1,
 cooldown:0,
-kills:0
+kills:0,
+targetMode:"FIRST",
+angle:0
 });
 
 selectedTower=towers[towers.length-1];
@@ -1106,11 +1112,11 @@ if(targetButton){targetButton.disabled=false;targetButton.textContent="TARGET: "
 
 function updateUI(){
 document.getElementById("money").textContent="$"+Math.floor(money);
-document.getElementById("wave").textContent="WAVE "+wave;
+document.getElementById("wave").textContent="WAVE "+wave+" / "+((modeData.find(m=>m.name===activeMode)||modeData[0]).waves);
 document.getElementById("level").textContent="LEVEL "+Math.min(10,Math.floor(wave/2)+1);
 document.getElementById("kills").textContent="KILLS "+kills;
 document.getElementById("selectedText").textContent=
-"SELECT: "+(selectedTower?selectedTower.type.name:"NONE");
+"SELECT: "+(selectedTower?selectedTower.type.name:"NONE")+" · "+towers.length+"/40";
 
 document.getElementById("castleFill").style.width=
 Math.max(0,castleHP/1000*100)+"%";
@@ -1126,6 +1132,8 @@ else b.classList.remove("locked");
 b.style.display=loadout.includes(type.name)?"block":"none";
 }
 
+const skip=document.getElementById("skipWaveBtn");
+if(skip){skip.disabled=waveActive;skip.textContent=waveActive?"WAVE LIVE":"START / SKIP WAVE";}
 updateInfo();
 }
 
@@ -1199,6 +1207,13 @@ updateInfo();
 document.getElementById("pauseBtn").onclick=()=>{
 paused=!paused;
 document.getElementById("pauseBtn").textContent=paused?"RESUME":"PAUSE";
+};
+document.getElementById("skipWaveBtn").onclick=()=>{if(!waveActive&&!gameOver)waveTimer=0;};
+document.getElementById("targetBtn").onclick=()=>{
+if(!selectedTower)return;
+const modes=["FIRST","STRONGEST","CLOSEST"];
+selectedTower.targetMode=modes[(modes.indexOf(selectedTower.targetMode||"FIRST")+1)%modes.length];
+updateInfo();saveGame();
 };
 
 document.getElementById("terrainUpgrade").onclick=()=>{
@@ -1536,7 +1551,8 @@ x:t.x,
 y:t.y,
 type:t.type.name,
 level:t.level,
-kills:t.kills
+kills:t.kills,
+targetMode:t.targetMode||"FIRST"
 })),
 terrainTiles,
 roads,
@@ -1575,9 +1591,10 @@ towers.push({
 x:t.x,
 y:t.y,
 type,
-level:t.level||1,
+level:Math.min(5,t.level||1),
 cooldown:0,
-kills:t.kills||0
+kills:t.kills||0,
+targetMode:t.targetMode||"FIRST"
 });
 }
 }
