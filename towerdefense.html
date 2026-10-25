@@ -461,6 +461,7 @@ const completed=activeMode;
 const data=modeData.find(m=>m.name===completed);
 bankCash+=data.reward;
 if(!clearedModes.includes(completed))clearedModes.push(completed);
+localStorage.removeItem("kingdomWarSave");savedRunMode=null;
 persistProgress();renderLobby();
 document.getElementById("overlay").style.display="flex";
 document.getElementById("overlayTitle").textContent=completed.toUpperCase()+" CLEARED!";
