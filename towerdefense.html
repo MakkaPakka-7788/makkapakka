@@ -35,6 +35,7 @@ canvas{
 display:block;
 background:#151515;
 cursor:grab;
+touch-action:none;
 }
 canvas.dragging{cursor:grabbing}
 #towerInfo{
@@ -399,6 +400,7 @@ const defaultOwned=["Scout"];
 let ownedTowers=JSON.parse(localStorage.getItem("kingdomWarOwned")||"null")||defaultOwned.slice();
 let loadout=JSON.parse(localStorage.getItem("kingdomWarLoadout")||"null")||defaultOwned.slice();
 if(!ownedTowers.includes("Scout"))ownedTowers.unshift("Scout");
+if(!loadout.includes("Scout")){loadout=[...new Set(["Scout",...loadout])].slice(0,5);localStorage.setItem("kingdomWarLoadout",JSON.stringify(loadout));}
 if(!localStorage.getItem("kingdomWarStarterSet")){loadout=["Scout"];localStorage.setItem("kingdomWarStarterSet","scout");}
 const modeData=[
 {name:"Easy",waves:20,scale:.72,reward:450,waveBonus:100,waveStep:15,unlocked:true},
@@ -440,8 +442,9 @@ title.textContent="TOWER SHOP";sub.textContent="Buy new cannons, then add them t
 sideTitle.textContent="TOWER COLLECTION";sideCopy.textContent="Tower purchases are permanent and saved on this device. You can equip up to five towers.";
 towerTypes.forEach(t=>{
 const owned=ownedTowers.includes(t.name), equipped=loadout.includes(t.name);
-const label=owned?(equipped?"EQUIPPED":"EQUIP"):("BUY $"+towerPrice(t));
+const label=owned?(equipped?(t.name==="Scout"?"STARTER":"EQUIPPED"):"EQUIP"):("BUY $"+towerPrice(t));
 content.appendChild(makeTowerCard(t,label,()=>{
+if(equipped&&t.name==="Scout")return;
 if(!owned){const price=towerPrice(t);if(bankCash<price)return;bankCash-=price;ownedTowers.push(t.name);if(loadout.length<5)loadout.push(t.name);}
 else if(equipped){loadout=loadout.filter(n=>n!==t.name);}
 else if(loadout.length<5){loadout.push(t.name);}
@@ -1205,6 +1208,7 @@ if(!b)continue;
 if(type.unlock>wave||!loadout.includes(type.name))b.classList.add("locked");
 else b.classList.remove("locked");
 b.style.display=loadout.includes(type.name)?"flex":"none";
+b.classList.toggle("build-selected",selectedBuild===i);
 const costLabel=type.name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+type.cost;
 if(b.dataset.costLabel!==costLabel){
 b.dataset.costLabel=costLabel;
@@ -1597,7 +1601,7 @@ castleHP=1000;
 paused=false;
 gameOver=false;
 selectedTower=null;
-selectedBuild=null;
+selectedBuild=loadout.includes("Scout")?towerTypes.findIndex(t=>t.name==="Scout"):null;
 selectedTerrain=null;
 roadMode=false;
 towers=[];
@@ -1623,6 +1627,7 @@ zoom:.72
 
 document.getElementById("overlay").style.display="none";
 document.getElementById("pauseBtn").textContent="PAUSE";
+if(selectedBuild!==null)document.getElementById("buildStatus").textContent="SCOUT selected · FREE · Click an open tile beside the route to place it.";
 updateUI();
 saveGame();
 }
