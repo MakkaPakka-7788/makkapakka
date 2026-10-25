@@ -364,7 +364,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 </div>
 
 <script>
-let bankCash=Number(localStorage.getItem("kingdomWarBank")||1500);
+let bankCash=Number(localStorage.getItem("kingdomWarBank")||0);
 const defaultOwned=["Scout"];
 let ownedTowers=JSON.parse(localStorage.getItem("kingdomWarOwned")||"null")||defaultOwned.slice();
 let loadout=JSON.parse(localStorage.getItem("kingdomWarLoadout")||"null")||defaultOwned.slice();
@@ -381,6 +381,7 @@ const modeData=[
 let clearedModes=JSON.parse(localStorage.getItem("kingdomWarCleared")||"[]");
 let selectedMode="Easy";
 let activeMode=null;
+let savedRunMode=null;
 let lobbyTab="loadout";
 function persistProgress(){
 localStorage.setItem("kingdomWarBank",String(bankCash));
@@ -429,7 +430,10 @@ content.appendChild(card);
 }
 const chosen=modeData.find(m=>m.name===selectedMode)||modeData[0];
 document.getElementById("modeSummary").textContent="Selected mode: "+chosen.name+" · "+chosen.waves+" waves";
-const start=document.getElementById("startModeBtn");start.textContent="PLAY "+chosen.name.toUpperCase();start.disabled=!modeUnlocked(modeData.indexOf(chosen));
+const start=document.getElementById("startModeBtn");
+const canContinue=savedRunMode===chosen.name&&modeUnlocked(modeData.indexOf(chosen));
+start.textContent=(canContinue?"CONTINUE ":"PLAY ")+chosen.name.toUpperCase();
+start.disabled=!modeUnlocked(modeData.indexOf(chosen));
 }
 function makeTowerCard(t,label,onClick){
 const card=document.createElement("div");card.className="lobby-card"+(loadout.includes(t.name)?" selected":"");
@@ -439,7 +443,8 @@ card.querySelector("button").onclick=onClick;return card;
 document.querySelectorAll(".lobby-nav button").forEach(b=>b.addEventListener("click",()=>{lobbyTab=b.dataset.tab;renderLobby();}));
 document.getElementById("startModeBtn").addEventListener("click",()=>{
 if(!modeUnlocked(modeData.findIndex(m=>m.name===selectedMode)))return;
-activeMode=selectedMode;resetGame();
+if(savedRunMode===selectedMode){activeMode=selectedMode;loadGame();gameOver=false;updateUI();}
+else{activeMode=selectedMode;resetGame();}
 document.getElementById("lobby").style.display="none";
 document.getElementById("stats").style.display="flex";
 document.getElementById("gameWrap").style.display="block";
@@ -1048,9 +1053,10 @@ if(type.unlock>wave)return;
 if(towerAt(x,y)||roadAt(x,y)||terrainAt(x,y))return;
 if(x<100&&y>400&&y<550)return;
 if(towers.length>=40)return;
-if(money<type.cost)return;
+const placementCost=type.name==="Scout"&&towers.length===0&&wave===1?0:type.cost;
+if(money<placementCost)return;
 
-money-=type.cost;
+money-=placementCost;
 
 towers.push({
 x,
@@ -1505,7 +1511,7 @@ document.getElementById("overlayText").textContent=
 }
 
 function resetGame(){
-money=500;
+money=0;
 wave=1;
 kills=0;
 castleHP=1000;
@@ -1543,7 +1549,9 @@ saveGame();
 }
 
 function saveGame(){
+if(!activeMode)return;
 const data={
+mode:activeMode,
 money,
 wave,
 kills,
@@ -1572,8 +1580,9 @@ const raw=localStorage.getItem("kingdomWarSave");
 if(!raw)return;
 
 const data=JSON.parse(raw);
+savedRunMode=data.mode||null;
 
-money=data.money??500;
+money=data.money??0;
 wave=data.wave??1;
 kills=data.kills??0;
 castleHP=data.castleHP??1000;
@@ -1655,6 +1664,7 @@ window.location.href="index.html";
 });
 
 setInterval(saveGame,5000);
+window.addEventListener("beforeunload",()=>{if(activeMode&&!gameOver)saveGame();});
 
 loadGame();
 updateUI();
