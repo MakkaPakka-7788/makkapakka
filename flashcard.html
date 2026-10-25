@@ -587,7 +587,10 @@ function submitHomePasscode(event) {
         return;
     }
 
-    if (input.value === "#mastersentpakking#") {
+    const passcode = input.value.trim().replace(/^#+|#+$/g, "").toLowerCase();
+
+    if (passcode === "makkasentpakking") {
+        sessionStorage.setItem("makkapakkaMonitorUnlocked", "1");
         window.location.href = "monitor.html";
         return;
     }
