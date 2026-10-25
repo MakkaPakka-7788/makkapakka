@@ -222,6 +222,17 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .tower-glyph{height:52px;display:flex;align-items:center;justify-content:center}
 .tower-glyph i{display:block;position:relative;width:30px;height:24px;border:2px solid var(--tower-color);background:color-mix(in srgb,var(--tower-color) 25%,#111);border-radius:5px}
 .tower-glyph i:before{content:"";position:absolute;width:9px;height:27px;left:9px;top:-18px;background:var(--tower-color);border:2px solid #111;border-radius:5px 5px 2px 2px;transform:rotate(25deg)}
+.upgrade-preview{display:flex;align-items:center;gap:12px;margin-top:12px;padding:10px;border:1px solid #555;background:#191919;border-radius:8px;color:#ddd;line-height:1.7}
+.upgrade-shape{position:relative;flex:0 0 46px;width:46px;height:46px;display:grid;place-items:center;border:2px solid var(--tower-color);background:#222;border-radius:12px;transform:rotate(var(--shape-rotation,0deg))}
+.upgrade-shape i{width:20px;height:17px;background:var(--tower-color);border:2px solid #111;border-radius:5px;position:relative}
+.upgrade-shape i:before{content:"";position:absolute;width:7px;height:24px;left:5px;top:-17px;background:var(--tower-color);border:2px solid #111;border-radius:4px}
+.upgrade-shape b{position:absolute;inset:-5px;border:2px solid #f1ce62;border-radius:50%;opacity:0}
+.upgrade-shape.level-2 b{opacity:.85}
+.upgrade-shape.level-3{clip-path:polygon(50% 0,100% 30%,85% 100%,15% 100%,0 30%);border-radius:0}
+.upgrade-shape.level-4{transform:rotate(45deg);border-radius:4px}
+.upgrade-shape.level-5{box-shadow:0 0 12px #f1ce6288;border-color:#f1ce62}
+.upgrade-preview-copy strong{color:#f1ce62;letter-spacing:.08em}
+.upgrade-preview-copy{font-size:11px}
 .lobby-card:nth-child(3n) .tower-glyph i{width:38px;height:30px;border-radius:50%}
 .lobby-card:nth-child(3n+1) .tower-glyph i{clip-path:polygon(50% 0,100% 35%,82% 100%,18% 100%,0 35%)}
 .loadout-empty{height:145px;border:1px dashed #383838;border-radius:12px;color:#666;display:grid;place-items:center;text-align:center;font-size:12px}
@@ -619,27 +630,37 @@ for(const t of towers){
 const p=worldToScreen(t.x,t.y);
 const stats=towerStats(t);
 const index=towerTypes.indexOf(t.type);
-const size=(22+(index%5)*3)*camera.zoom;
+const level=Math.max(1,Math.min(5,t.level||1));
+const size=(22+(index%5)*3)*(1+(level-1)*.13)*camera.zoom;
+if(selectedTower===t){
+ctx.beginPath();
+ctx.fillStyle="rgba(168,217,111,.10)";
+ctx.strokeStyle="rgba(190,238,137,.95)";
+ctx.lineWidth=2.5;
+ctx.arc(p.x,p.y,stats.range*camera.zoom,0,Math.PI*2);
+ctx.fill();ctx.stroke();
+}
 ctx.save();
 ctx.translate(p.x,p.y);
 ctx.rotate(t.angle??0);
 ctx.fillStyle=t.type.color;
-ctx.strokeStyle="#111";
-ctx.lineWidth=Math.max(1,3*camera.zoom);
+ctx.strokeStyle=level>=2?"#f1ce62":"#111";
+ctx.lineWidth=Math.max(1,(level>=2?3.5:3)*camera.zoom);
 ctx.fillRect(-size*.10,-size*.74,size*.20,size*.78);
 ctx.beginPath();
-if(index%4===0){ctx.arc(0,0,size*.43,0,Math.PI*2);}
-else if(index%4===1){ctx.roundRect(-size*.42,-size*.34,size*.84,size*.68,size*.12);}
-else if(index%4===2){ctx.moveTo(0,-size*.48);ctx.lineTo(size*.48,0);ctx.lineTo(0,size*.48);ctx.lineTo(-size*.48,0);ctx.closePath();}
+const shape=(index+level-1)%4;
+if(shape===0){ctx.arc(0,0,size*.43,0,Math.PI*2);}
+else if(shape===1){ctx.roundRect(-size*.42,-size*.34,size*.84,size*.68,size*.12);}
+else if(shape===2){ctx.moveTo(0,-size*.48);ctx.lineTo(size*.48,0);ctx.lineTo(0,size*.48);ctx.lineTo(-size*.48,0);ctx.closePath();}
 else{ctx.moveTo(-size*.42,-size*.3);ctx.lineTo(0,-size*.52);ctx.lineTo(size*.42,-size*.3);ctx.lineTo(size*.34,size*.38);ctx.lineTo(-size*.34,size*.38);ctx.closePath();}
 ctx.fill();ctx.stroke();
-if(index%3===1){ctx.fillRect(-size*.28,-size*.80,size*.12,size*.43);ctx.fillRect(size*.16,-size*.80,size*.12,size*.43);}
+if(level>=2){ctx.beginPath();ctx.strokeStyle="#f1ce62";ctx.lineWidth=1.5*camera.zoom;ctx.arc(0,0,size*.49,0,Math.PI*2);ctx.stroke();}
+if(level>=3){ctx.fillStyle="#fff0a8";ctx.beginPath();ctx.moveTo(0,-size*.2);ctx.lineTo(size*.18,0);ctx.lineTo(0,size*.2);ctx.lineTo(-size*.18,0);ctx.closePath();ctx.fill();}
+if(level>=4){ctx.fillStyle=t.type.color;ctx.fillRect(-size*.4,-size*.84,size*.12,size*.35);ctx.fillRect(size*.28,-size*.84,size*.12,size*.35);}
+if(level>=5){ctx.fillStyle="#fff0a8";ctx.beginPath();ctx.moveTo(0,-size*.78);ctx.lineTo(size*.12,-size*.6);ctx.lineTo(size*.3,-size*.58);ctx.lineTo(size*.16,-size*.42);ctx.lineTo(size*.2,-size*.22);ctx.lineTo(0,-size*.32);ctx.lineTo(-size*.2,-size*.22);ctx.lineTo(-size*.16,-size*.42);ctx.lineTo(-size*.3,-size*.58);ctx.lineTo(-size*.12,-size*.6);ctx.closePath();ctx.fill();}
+if(index%3===1){ctx.fillStyle=t.type.color;ctx.fillRect(-size*.28,-size*.80,size*.12,size*.43);ctx.fillRect(size*.16,-size*.80,size*.12,size*.43);}
 ctx.restore();
-if(selectedTower===t){
-ctx.beginPath();ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=2;
-ctx.arc(p.x,p.y,stats.range*camera.zoom,0,Math.PI*2);ctx.stroke();
-}
-ctx.fillStyle="#fff";ctx.font=`${10*camera.zoom}px Courier New`;ctx.textAlign="center";ctx.fillText(t.level,p.x,p.y+4*camera.zoom);
+ctx.fillStyle=level>=5?"#fff0a8":"#fff";ctx.font=`${10*camera.zoom}px Courier New`;ctx.textAlign="center";ctx.fillText(level,p.x,p.y+4*camera.zoom);
 }
 }
 
@@ -1116,13 +1137,19 @@ function updateInfo(){
 const upgrade=document.getElementById("upgradeBtn"),targetButton=document.getElementById("targetBtn");
 if(!selectedTower){
 document.getElementById("infoTitle").textContent="KINGDOM WAR";
-document.getElementById("infoBody").innerHTML="Select one of your towers to inspect it.";
-if(upgrade)upgrade.disabled=true;if(targetButton)targetButton.disabled=true;return;
+document.getElementById("infoBody").innerHTML="Select one of your towers to inspect it. Its attack radius appears on the map.";
+if(upgrade){upgrade.disabled=true;upgrade.textContent="UPGRADE";}
+if(targetButton)targetButton.disabled=true;return;
 }
 const t=selectedTower,s=towerStats(t),maxed=t.level>=5;
+const tierNames=["Recruit","Veteran","Elite","Champion","Legend"];
+const nextLevel=Math.min(5,t.level+1);
+const nextStats=maxed?s:towerStats({...t,level:nextLevel});
 document.getElementById("infoTitle").textContent=t.type.name+" · LEVEL "+t.level+"/5";
-document.getElementById("infoBody").innerHTML="Damage: "+Math.floor(s.damage)+"<br>Range: "+Math.floor(s.range)+"<br>Fire rate: "+Math.floor(s.rate)+" ms<br>Kills: "+t.kills+"<br>Target: "+(t.targetMode||"FIRST")+"<br>"+(maxed?"MAX LEVEL":"Next upgrade: $"+upgradeCost(t));
-if(upgrade)upgrade.disabled=maxed||money<upgradeCost(t);
+const preview=maxed?'<div class="upgrade-preview-copy"><strong>MAX LEVEL · LEGEND</strong><br>This tower has reached its final form.</div>':
+'<div class="upgrade-preview"><div class="upgrade-shape level-'+nextLevel+'" style="--tower-color:'+t.type.color+'"><i></i><b></b></div><div class="upgrade-preview-copy"><strong>UPGRADE TO LEVEL '+nextLevel+' · '+tierNames[nextLevel-1].toUpperCase()+'</strong><br>Damage '+Math.floor(s.damage)+' → '+Math.floor(nextStats.damage)+'<br>Range '+Math.floor(s.range)+' → '+Math.floor(nextStats.range)+'<br>Fire rate '+Math.floor(s.rate)+' → '+Math.floor(nextStats.rate)+' ms</div></div>';
+document.getElementById("infoBody").innerHTML="Damage: "+Math.floor(s.damage)+"<br>Range: "+Math.floor(s.range)+" · RADIUS SHOWN ON MAP<br>Fire rate: "+Math.floor(s.rate)+" ms<br>Kills: "+t.kills+"<br>Target: "+(t.targetMode||"FIRST")+"<br>"+(maxed?"":("Upgrade cost: $"+upgradeCost(t)))+preview;
+if(upgrade){upgrade.disabled=maxed||money<upgradeCost(t);upgrade.textContent=maxed?"MAX LEVEL":"UPGRADE → LV "+nextLevel+" · $"+upgradeCost(t);}
 if(targetButton){targetButton.disabled=false;targetButton.textContent="TARGET: "+(t.targetMode||"FIRST");}
 }
 
