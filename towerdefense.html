@@ -878,6 +878,7 @@ ctx.fillStyle=e.boss?"#ffd34d":"#4caf50";ctx.fillRect(p.x-r,p.y-r-7*camera.zoom,
 if(e.boss){ctx.globalAlpha=1;ctx.fillStyle="#ffe68b";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText("BOSS",p.x,p.y-r-12*camera.zoom);}
 ctx.globalAlpha=1;
 }
+}
 
 function drawProjectiles(){
 for(const p of projectiles){
@@ -1656,7 +1657,7 @@ setInterval(saveGame,5000);
 
 loadGame();
 updateUI();
-renderLobby();
+showLobby();
 requestAnimationFrame(gameLoop);
 </script>
 
