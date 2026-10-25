@@ -662,13 +662,12 @@ return Math.floor(t.type.cost*1.8**t.level);
 }
 
 function towerStats(t){
-const mult=1+(t.level-1)*.55;
+const level=Math.max(1,Math.min(5,t.level||1));
+const damageScale=[1,1.35,1.85,2.55,3.5][level-1];
+const rangeScale=[1,1.05,1.1,1.16,1.23][level-1];
+const rateScale=[1,.94,.87,.79,.7][level-1];
 const buff=towerBuff(t);
-return{
-damage:t.type.damage*mult*buff,
-range:t.type.range*(1+(t.level-1)*.08),
-rate:Math.max(80,t.type.rate/(1+(t.level-1)*.12)/buff)
-};
+return{damage:t.type.damage*damageScale*buff,range:t.type.range*rangeScale,rate:Math.max(80,t.type.rate*rateScale/buff)};
 }
 
 function drawGrid(){
@@ -1068,6 +1067,7 @@ updateInfo();
 function upgradeTower(){
 if(!selectedTower)return;
 
+if(selectedTower.level>=5)return;
 const cost=upgradeCost(selectedTower);
 if(money<cost)return;
 
@@ -1093,29 +1093,17 @@ saveGame();
 }
 
 function updateInfo(){
+const upgrade=document.getElementById("upgradeBtn"),targetButton=document.getElementById("targetBtn");
 if(!selectedTower){
 document.getElementById("infoTitle").textContent="KINGDOM WAR";
-document.getElementById("infoBody").innerHTML=
-"Select a tower to see its information.<br><br>Build terrain to create tower buffs.";
-return;
+document.getElementById("infoBody").innerHTML="Select one of your towers to inspect it.";
+if(upgrade)upgrade.disabled=true;if(targetButton)targetButton.disabled=true;return;
 }
-
-const t=selectedTower;
-const s=towerStats(t);
-const cost=upgradeCost(t);
-const tile=terrainAt(t.x,t.y);
-
-document.getElementById("infoTitle").textContent=
-`${t.type.name} LV ${t.level}`;
-
-document.getElementById("infoBody").innerHTML=
-`Damage: ${Math.floor(s.damage)}<br>
-Range: ${Math.floor(s.range)}<br>
-Attack: ${Math.floor(s.rate)} ms<br>
-Kills: ${t.kills}<br>
-Upgrade: $${cost}<br>
-Terrain: ${tile?terrainTypes[tile.type].name:"None"}<br>
-Buff: ${tile&&terrainTypes[tile.type].buffs.includes(t.type.name)?"ACTIVE":"NONE"}`;
+const t=selectedTower,s=towerStats(t),maxed=t.level>=5;
+document.getElementById("infoTitle").textContent=t.type.name+" · LEVEL "+t.level+"/5";
+document.getElementById("infoBody").innerHTML="Damage: "+Math.floor(s.damage)+"<br>Range: "+Math.floor(s.range)+"<br>Fire rate: "+Math.floor(s.rate)+" ms<br>Kills: "+t.kills+"<br>Target: "+(t.targetMode||"FIRST")+"<br>"+(maxed?"MAX LEVEL":"Next upgrade: $"+upgradeCost(t));
+if(upgrade)upgrade.disabled=maxed||money<upgradeCost(t);
+if(targetButton){targetButton.disabled=false;targetButton.textContent="TARGET: "+(t.targetMode||"FIRST");}
 }
 
 function updateUI(){
