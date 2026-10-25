@@ -473,8 +473,14 @@ sideTitle.textContent="WIN TO ADVANCE";sideCopy.textContent="Clear every wave to
 modeData.forEach((m,i)=>{
 const unlocked=modeUnlocked(i), cleared=clearedModes.includes(m.name);
 const card=document.createElement("div");card.className="lobby-card"+(m.name===selectedMode?" selected":"")+(unlocked?"":" locked");
-card.innerHTML='<div class="mode-chip">'+(cleared?"CLEARED":(unlocked?(m.gemReward?"GEM MODE":"UNLOCKED"):"LOCKED"))+'</div><div><h3>'+m.name+'</h3><p>'+m.waves+' waves · 
-card.querySelector("button").onclick=()=>{if(!unlocked)return;selectedMode=m.name;renderLobby();};
+card.innerHTML="<div class='mode-chip'></div><div><h3></h3><p></p></div><button></button>";
+card.querySelector(".mode-chip").textContent=cleared?"CLEARED":(unlocked?(m.gemReward?"GEM MODE":"UNLOCKED"):"LOCKED");
+card.querySelector("h3").textContent=m.name;
+card.querySelector("p").textContent=m.waves+" waves · $"+m.reward.toLocaleString()+" max"+(m.gemReward?" · 💎 "+m.gemReward:"");
+const modeButton=card.querySelector("button");
+modeButton.disabled=!unlocked;
+modeButton.textContent=m.name===selectedMode?"SELECTED":"SELECT MODE";
+modeButton.onclick=()=>{if(!unlocked)return;selectedMode=m.name;renderLobby();};
 content.appendChild(card);
 });
 }
