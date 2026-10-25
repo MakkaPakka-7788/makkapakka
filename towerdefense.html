@@ -196,6 +196,41 @@ margin:5px;
 margin-top:8px;
 width:100%;
 }
+
+/* Lobby and progression */
+#stats,#gameWrap{display:none}
+#lobby{position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 68% 20%,#1a1a1a 0,#0b0b0b 45%,#050505 100%);color:#eee;display:flex;flex-direction:column;font-family:Inter,Arial,sans-serif}
+.lobby-top{height:78px;padding:0 34px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #242424;background:#090909d9}
+.brand{font-size:17px;letter-spacing:.22em;font-weight:800}.brand span{color:#a8d96f}
+.bank-pill{border:1px solid #343434;background:#121212;border-radius:999px;padding:11px 18px;color:#b9e986;font-weight:800}
+.lobby-layout{flex:1;min-height:0;display:grid;grid-template-columns:205px minmax(420px,1fr) 240px;gap:28px;padding:30px 34px}
+.lobby-nav{display:flex;flex-direction:column;gap:10px;padding-top:18px}
+.lobby-nav button,.lobby-action{border:1px solid #292929;background:#101010;color:#aaa;border-radius:10px;padding:16px;text-align:left;font-weight:700;letter-spacing:.06em;font-size:13px}
+.lobby-nav button.active,.lobby-nav button:hover{color:#fff;border-color:#9bc96b;background:#172015}
+.lobby-main{display:flex;flex-direction:column;min-width:0}
+.lobby-kicker{font-size:11px;letter-spacing:.24em;color:#9bc96b;font-weight:800;margin:8px 0}
+.lobby-main h1{font-size:clamp(30px,4vw,48px);margin:4px 0 8px;letter-spacing:.04em}
+.lobby-sub{color:#888;margin:0 0 24px;font-size:14px}
+#lobbyContent{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;align-content:start;overflow:auto;padding:4px 3px 14px}
+.lobby-card{position:relative;min-height:145px;border:1px solid #303030;border-radius:12px;background:linear-gradient(145deg,#171717,#0c0c0c);padding:15px;display:flex;flex-direction:column;justify-content:space-between}
+.lobby-card.selected{border-color:#9bc96b;box-shadow:0 0 0 1px #9bc96b33}
+.lobby-card h3{margin:3px 0;font-size:15px}.lobby-card p{font-size:11px;color:#888;margin:5px 0}
+.lobby-card button{border:1px solid #444;border-radius:7px;background:#202020;color:#eee;padding:8px;font-size:11px;font-weight:700}
+.lobby-card button:hover{border-color:#a8d96f}
+.tower-glyph{height:52px;display:flex;align-items:center;justify-content:center}
+.tower-glyph i{display:block;position:relative;width:30px;height:24px;border:2px solid var(--tower-color);background:color-mix(in srgb,var(--tower-color) 25%,#111);border-radius:5px}
+.tower-glyph i:before{content:"";position:absolute;width:9px;height:27px;left:9px;top:-18px;background:var(--tower-color);border:2px solid #111;border-radius:5px 5px 2px 2px;transform:rotate(25deg)}
+.lobby-card:nth-child(3n) .tower-glyph i{width:38px;height:30px;border-radius:50%}
+.lobby-card:nth-child(3n+1) .tower-glyph i{clip-path:polygon(50% 0,100% 35%,82% 100%,18% 100%,0 35%)}
+.loadout-empty{height:145px;border:1px dashed #383838;border-radius:12px;color:#666;display:grid;place-items:center;text-align:center;font-size:12px}
+.lobby-bottom{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #242424;padding-top:17px;margin-top:auto}
+.mode-summary{color:#888;font-size:12px}.lobby-action{cursor:pointer;text-align:center;background:#a8d96f;color:#111;border:0;padding:14px 22px;min-width:170px}.lobby-action:hover{background:#c0ee89}
+.lobby-side{border-left:1px solid #242424;padding:18px 0 0 22px;color:#777;font-size:12px;line-height:1.7}
+.lobby-side strong{display:block;color:#ddd;font-size:13px;margin-bottom:8px;letter-spacing:.08em}
+.mode-chip{position:absolute;right:12px;top:12px;color:#888;font-size:10px}
+.lobby-card.locked{opacity:.5}
+@media(max-width:850px){.lobby-layout{grid-template-columns:145px minmax(300px,1fr);padding:20px;gap:18px}.lobby-side{display:none}.lobby-top{padding:0 20px}}
+@media(max-width:560px){.lobby-top{height:62px;padding:0 14px}.lobby-layout{display:flex;flex-direction:column;padding:12px}.lobby-nav{padding:0;flex-direction:row}.lobby-nav button{flex:1;text-align:center;padding:12px 6px;font-size:10px}.lobby-main h1{font-size:28px}.lobby-sub{margin-bottom:12px}#lobbyContent{grid-template-columns:repeat(2,minmax(0,1fr))}.lobby-bottom{gap:8px}.lobby-action{min-width:130px}}
 </style>
 
 <script>
@@ -240,6 +275,25 @@ width:100%;
 </script>
 </head>
 <body>
+
+
+<div id="lobby">
+  <header class="lobby-top"><div class="brand">KINGDOM <span>WAR</span></div><div id="bankDisplay" class="bank-pill">$1,500</div></header>
+  <div class="lobby-layout">
+    <nav class="lobby-nav">
+      <button class="active" data-tab="loadout">YOUR LOADOUT</button>
+      <button data-tab="towers">TOWER SHOP</button>
+      <button data-tab="modes">GAME MODES</button>
+    </nav>
+    <main class="lobby-main">
+      <div class="lobby-kicker">DEFEND THE REALM</div><h1 id="lobbyTitle">YOUR LOADOUT</h1>
+      <p id="lobbySubtitle" class="lobby-sub">Choose the towers you’ll bring into battle.</p>
+      <div id="lobbyContent"></div>
+      <div class="lobby-bottom"><div id="modeSummary" class="mode-summary">Selected mode: Easy</div><button id="startModeBtn" class="lobby-action">PLAY EASY</button></div>
+    </main>
+    <aside class="lobby-side"><strong id="sideTitle">BUILD YOUR STRATEGY</strong><span id="sideCopy">Equip up to five towers. Each has a distinct role, cost, range and attack style.</span></aside>
+  </div>
+</div>
 
 <div id="stats">
 <span id="money">$5000</span>
@@ -400,47 +454,36 @@ const enemyTypes=[
 {name:"Goblin",hp:90,speed:26,damage:20,reward:15},
 {name:"Orc",hp:220,speed:20,damage:35,reward:30},
 {name:"Knight",hp:500,speed:16,damage:55,reward:55},
-{name:"Troll",hp:1000,speed:12,damage:90,reward:100},
-{name:"Demon",hp:2200,speed:10,damage:150,reward:200}
-];
-
-function resize(){
-W=window.innerWidth;
-H=window.innerHeight-42;
-canvas.width=W;
-canvas.height=H;
+{name:"Troll",hp:10function drawTowers(){
+for(const t of towers){
+const p=worldToScreen(t.x,t.y);
+const stats=towerStats(t);
+const index=towerTypes.indexOf(t.type);
+const size=(22+(index%5)*3)*camera.zoom;
+const angle=t.angle??-Math.PI/2;
+ctx.save();
+ctx.translate(p.x,p.y);
+ctx.rotate(angle);
+ctx.fillStyle=t.type.color;
+ctx.strokeStyle="#111";
+ctx.lineWidth=Math.max(1,3*camera.zoom);
+/* A shared cannon silhouette with different mounts and barrels per tower. */
+ctx.fillRect(-size*.10,-size*.74,size*.20,size*.78);
+ctx.beginPath();
+if(index%4===0){ctx.arc(0,0,size*.43,0,Math.PI*2);}
+else if(index%4===1){ctx.roundRect(-size*.42,-size*.34,size*.84,size*.68,size*.12);}
+else if(index%4===2){ctx.moveTo(0,-size*.48);ctx.lineTo(size*.48,0);ctx.lineTo(0,size*.48);ctx.lineTo(-size*.48,0);ctx.closePath();}
+else{ctx.moveTo(-size*.42,-size*.3);ctx.lineTo(0,-size*.52);ctx.lineTo(size*.42,-size*.3);ctx.lineTo(size*.34,size*.38);ctx.lineTo(-size*.34,size*.38);ctx.closePath();}
+ctx.fill();ctx.stroke();
+if(index%3===1){ctx.fillRect(-size*.28,-size*.80,size*.12,size*.43);ctx.fillRect(size*.16,-size*.80,size*.12,size*.43);}
+ctx.restore();
+if(selectedTower===t){
+ctx.beginPath();ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=2;
+ctx.arc(p.x,p.y,stats.range*camera.zoom,0,Math.PI*2);ctx.stroke();
 }
-window.addEventListener("resize",resize);
-
-function worldToScreen(x,y){
-return{
-x:(x-camera.x)*camera.zoom,
-y:(y-camera.y)*camera.zoom
-};
+ctx.fillStyle="#fff";ctx.font=`${10*camera.zoom}px Courier New`;ctx.textAlign="center";ctx.fillText(t.level,p.x,p.y+4*camera.zoom);
 }
-
-function screenToWorld(x,y){
-return{
-x:x/camera.zoom+camera.x,
-y:y/camera.zoom+camera.y
-};
-}
-
-function dist(a,b){
-return Math.hypot(a.x-b.x,a.y-b.y);
-}
-
-function snap(v){
-return Math.floor(v/grid)*grid+grid/2;
-}
-
-function towerAt(x,y){
-return towers.find(t=>dist(t,{x,y})<25);
-}
-
-function terrainAt(x,y){
-return terrainTiles.find(t=>t.x===x&&t.y===y);
-}
+}}
 
 function roadAt(x,y){
 return roads.find(r=>r.x===x&&r.y===y);
@@ -860,6 +903,7 @@ saveGame();
 
 function buildTower(x,y,index){
 const type=towerTypes[index];
+if(!loadout.includes(type.name))return;
 
 if(type.unlock>wave)return;
 if(towerAt(x,y)||roadAt(x,y)||terrainAt(x,y))return;
@@ -953,8 +997,9 @@ document.getElementById("castleText").textContent=
 for(const [i,type] of towerTypes.entries()){
 const b=document.getElementById("tower"+i);
 if(!b)continue;
-if(type.unlock>wave)b.classList.add("locked");
+if(type.unlock>wave||!loadout.includes(type.name))b.classList.add("locked");
 else b.classList.remove("locked");
+b.style.display=loadout.includes(type.name)?"block":"none";
 }
 
 updateInfo();
@@ -965,7 +1010,7 @@ const b=document.createElement("button");
 b.id="tower"+i;
 b.textContent=towerTypes[i].name+" $"+towerTypes[i].cost;
 b.onclick=()=>{
-if(towerTypes[i].unlock>wave)return;
+if(towerTypes[i].unlock>wave||!loadout.includes(towerTypes[i].name))return;
 selectedBuild=i;
 selectedTerrain=null;
 selectedTower=null;
@@ -1099,16 +1144,17 @@ if(wave>=8&&r>.88)index=3;
 if(wave>=12&&r>.95)index=4;
 
 const base=enemyTypes[index];
+const modeScale=(modeData.find(m=>m.name===activeMode)||modeData[0]).scale;
 
 return{
 type:base.name,
 x:1740,
 y:475,
 path:0,
-hp:base.hp*(1+wave*.22),
-maxHp:base.hp*(1+wave*.22),
+hp:base.hp*(1+wave*.22)*modeScale,
+maxHp:base.hp*(1+wave*.22)*modeScale,
 speed:base.speed,
-damage:base.damage*(1+wave*.08),
+damage:base.damage*(1+wave*.08)*modeScale,
 reward:Math.floor(base.reward*(1+wave*.06)),
 color:index===0?"#7bc96f":index===1?"#b47b42":index===2?"#aaa":index===3?"#8b6748":"#a33",
 slow:1,
@@ -1310,11 +1356,13 @@ spawnTimer=Math.max(350,900-wave*25);
 }else if(enemies.length===0){
 waveActive=false;
 wave++;
-waveTimer=3000;
 nextEnemy=0;
 money+=100+wave*20;
 updateUI();
 saveGame();
+const selected=modeData.find(m=>m.name===activeMode);
+if(selected&&wave>selected.waves){completeMode();}
+else{waveTimer=3000;}
 }
 }
 }else{
@@ -1479,11 +1527,20 @@ resetGame();
 };
 
 document.getElementById("retryBtn").onclick=()=>{
-resetGame();
+document.getElementById("overlay").style.display="none";
+document.getElementById("retryBtn").textContent="RETRY";
+document.getElementById("homeBtn").textContent="HOME";
+activeMode=selectedMode;resetGame();
+document.getElementById("lobby").style.display="none";
+document.getElementById("stats").style.display="flex";
+document.getElementById("gameWrap").style.display="block";
 };
 
 document.getElementById("homeBtn").onclick=()=>{
-window.location.href="index.html";
+document.getElementById("overlay").style.display="none";
+document.getElementById("retryBtn").textContent="RETRY";
+document.getElementById("homeBtn").textContent="HOME";
+showLobby();
 };
 
 document.addEventListener("keydown",e=>{
@@ -1504,6 +1561,7 @@ setInterval(saveGame,5000);
 
 loadGame();
 updateUI();
+renderLobby();
 requestAnimationFrame(gameLoop);
 </script>
 </body>
