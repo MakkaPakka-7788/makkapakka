@@ -866,16 +866,14 @@ ctx.fillRect(p.x-7*camera.zoom,p.y-7*camera.zoom,14*camera.zoom,14*camera.zoom);
 
 function drawEnemies(){
 for(const e of enemies){
-const p=worldToScreen(e.x,e.y);
-const r=(e.boss?17:10)*camera.zoom;
-ctx.fillStyle=e.color;
-ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
+const p=worldToScreen(e.x,e.y),r=(e.boss?17:10)*camera.zoom;
+ctx.globalAlpha=e.hidden ? .55 : 1;
+ctx.fillStyle=e.color;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
 if(e.boss){ctx.strokeStyle="#fff0a8";ctx.lineWidth=2;ctx.stroke();}
-ctx.fillStyle="#222";
-ctx.fillRect(p.x-r,p.y-r-7*camera.zoom,r*2,4*camera.zoom);
-ctx.fillStyle=e.boss?"#ffd34d":"#4caf50";
-ctx.fillRect(p.x-r,p.y-r-7*camera.zoom,r*2*Math.max(0,e.hp/e.maxHp),4*camera.zoom);
-if(e.boss){ctx.fillStyle="#ffe68b";ctx.font=`bold ${10*camera.zoom}px Arial`;ctx.textAlign="center";ctx.fillText("BOSS",p.x,p.y-r-12*camera.zoom);}
+ctx.fillStyle="#222";ctx.fillRect(p.x-r,p.y-r-7*camera.zoom,r*2,4*camera.zoom);
+ctx.fillStyle=e.boss?"#ffd34d":"#4caf50";ctx.fillRect(p.x-r,p.y-r-7*camera.zoom,r*2*Math.max(0,e.hp/e.maxHp),4*camera.zoom);
+if(e.boss){ctx.globalAlpha=1;ctx.fillStyle="#ffe68b";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText("BOSS",p.x,p.y-r-12*camera.zoom);}
+ctx.globalAlpha=1;
 }
 
 function drawProjectiles(){
@@ -1338,41 +1336,20 @@ enemies.splice(i,1);
 }
 
 function updateTowers(dt){
+const hiddenDetectors=["Scout","Sniper","Tesla","Crystal","Guardian","King"];
 for(const t of towers){
-t.cooldown-=dt;
-if(t.cooldown>0)continue;
-
-const s=towerStats(t);
-
-let target=null;
-let best=-Infinity;
-
+t.cooldown-=dt;if(t.cooldown>0)continue;
+const s=towerStats(t);let target=null,best=-Infinity;
 for(const e of enemies){
 const d=dist(t,e);
-if(d<=s.range&&(e.pathProgress??e.path)>best){
-best=e.pathProgress??e.path;
-target=e;
+if(d>s.range||(e.hidden&&!hiddenDetectors.includes(t.type.name)))continue;
+const mode=t.targetMode||"FIRST";
+const score=mode==="STRONGEST"?e.hp:mode==="CLOSEST"?-d:(e.pathProgress??e.path);
+if(score>best){best=score;target=e;}
 }
-}
-
 if(!target)continue;
-t.angle=Math.atan2(target.y-t.y,target.x-t.x)+Math.PI/2;
-t.cooldown=s.rate;
-
-const p={
-x:t.x,
-y:t.y,
-target,
-damage:s.damage,
-speed:650,
-splash:["Splash","Mortar","Catapult","Meteor"].includes(t.type.name)?45:0,
-slow:["Slow","Freeze","Ice"].includes(t.type.name)?0.55:1,
-poison:t.type.name==="Poison"?1000:0,
-color:t.type.color,
-owner:t
-};
-
-projectiles.push(p);
+t.angle=Math.atan2(target.y-t.y,target.x-t.x)+Math.PI/2;t.cooldown=s.rate;
+projectiles.push({x:t.x,y:t.y,target,owner:t,damage:s.damage,speed:650,splash:["Splash","Mortar","Catapult","Meteor"].includes(t.type.name)?45:0,slow:["Slow","Freeze","Ice"].includes(t.type.name)?0.55:1,poison:t.type.name==="Poison"?1000:0,color:t.type.color});
 }
 }
 
@@ -1401,28 +1378,12 @@ p.y+=dy/d*p.speed*dt/1000;
 }
 
 function hitEnemy(p){
-const e=p.target;
-e.hp-=p.damage;
-
+const e=p.target;e.hp-=p.damage*(1-(e.armor||0));
 if(p.slow){e.slow=Math.min(e.slow,p.slow);e.slowTimer=1500;}
 if(p.poison)e.poison=p.poison;
-
 if(p.owner)p.owner.kills++;
-
-for(const other of enemies){
-if(p.splash&&other!==e&&dist(e,other)<p.splash){
-other.hp-=p.damage*.35;
-}
-}
-
-for(let i=0;i<5;i++){
-particles.push({
-x:e.x+(Math.random()-.5)*15,
-y:e.y+(Math.random()-.5)*15,
-life:1,
-color:p.color
-});
-}
+for(const other of enemies){if(p.splash&&other!==e&&dist(e,other)<p.splash)other.hp-=p.damage*.35*(1-(other.armor||0));}
+for(let i=0;i<5;i++)particles.push({x:e.x+(Math.random()-.5)*15,y:e.y+(Math.random()-.5)*15,life:1,color:p.color});
 }
 
 function updateTroops(dt){
