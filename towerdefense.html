@@ -216,6 +216,12 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .tower-button-icon{position:relative;display:grid;place-items:center;width:23px;height:23px;flex:0 0 23px;border:2px solid var(--tower-color);border-radius:7px;background:#222}
 .tower-button-icon i{position:relative;display:block;width:12px;height:9px;border-radius:4px;background:var(--tower-color)}
 .tower-button-icon i:before{content:"";position:absolute;width:5px;height:12px;left:3px;top:-8px;border-radius:3px;background:var(--tower-color);border:1px solid #111}
+.tower-button-icon.shape-0{border-radius:50%}
+.tower-button-icon.shape-1{border-radius:4px}
+.tower-button-icon.shape-2{transform:rotate(45deg);border-radius:4px}
+.tower-button-icon.shape-2 i{transform:rotate(-45deg)}
+.tower-button-icon.shape-3{clip-path:polygon(50% 0,100% 30%,85% 100%,15% 100%,0 30%);border-radius:0}
+#towerbar small{display:block;color:#bbb;font-size:8px}
 .lobby-nav button.active,.lobby-nav button:hover{color:#fff;border-color:#9bc96b;background:#172015}
 .lobby-main{display:flex;flex-direction:column;min-width:0;min-height:0}
 .lobby-kicker{font-size:11px;letter-spacing:.24em;color:#9bc96b;font-weight:800;margin:8px 0}
@@ -1202,7 +1208,7 @@ b.style.display=loadout.includes(type.name)?"block":"none";
 const costLabel=type.name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+type.cost;
 if(b.dataset.costLabel!==costLabel){
 b.dataset.costLabel=costLabel;
-b.innerHTML='<span class="tower-button-icon" style="--tower-color:'+type.color+'"><i></i></span><span>'+type.name+'<small>'+costLabel+'</small></span>';
+b.innerHTML='<span class="tower-button-icon shape-'+(i%4)+'" style="--tower-color:'+type.color+'"><i></i></span><span>'+type.name+'<small>'+costLabel+'</small></span>';
 }
 }
 
@@ -1247,7 +1253,7 @@ document.getElementById("gameWrap").appendChild(towerBar);
 for(let i=0;i<towerTypes.length;i++){
 const b=document.createElement("button");
 b.id="tower"+i;
-b.innerHTML='<span class="tower-button-icon" style="--tower-color:'+towerTypes[i].color+'"><i></i></span><span>'+towerTypes[i].name+'<small>'+(towerTypes[i].name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+towerTypes[i].cost)+'</small></span>';
+b.innerHTML='<span class="tower-button-icon shape-'+(i%4)+'" style="--tower-color:'+towerTypes[i].color+'"><i></i></span><span>'+towerTypes[i].name+'<small>'+(towerTypes[i].name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+towerTypes[i].cost)+'</small></span>';
 b.onclick=()=>{
 if(towerTypes[i].unlock>wave)return;
 selectedBuild=i;
