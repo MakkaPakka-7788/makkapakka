@@ -1197,7 +1197,8 @@ updateInfo();
 document.getElementById("upgradeBtn").onclick=upgradeTower;
 document.getElementById("sellBtn").onclick=sellTower;
 
-document.getElementById("roadBtn").onclick=()=>{
+const roadBuildButton=document.getElementById("roadBtn");
+if(roadBuildButton)roadBuildButton.onclick=()=>{
 roadMode=!roadMode;
 selectedBuild=null;
 selectedTerrain=null;
