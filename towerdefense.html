@@ -957,9 +957,14 @@ ctx.fillRect(p.x-7*camera.zoom,p.y-7*camera.zoom,14*camera.zoom,14*camera.zoom);
 }
 }
 
+function towerDetectsHidden(t){
+if(t.type.name==="Scout")return t.level>=4;
+return ["Sniper","Tesla","Crystal","Guardian","King"].includes(t.type.name);
+}
+
 function isEnemyDetected(e){
 if(!e.hidden)return true;
-return towers.some(t=>t.type.name==="Scout"&&t.level>=4&&dist(t,e)<=towerStats(t).range);
+return towers.some(t=>towerDetectsHidden(t)&&dist(t,e)<=towerStats(t).range);
 }
 
 function drawEnemies(){
@@ -1486,7 +1491,7 @@ t.cooldown-=dt;if(t.cooldown>0)continue;
 const s=towerStats(t);let target=null,best=-Infinity;
 for(const e of enemies){
 const d=dist(t,e);
-if(d>s.range||(e.hidden&&!isEnemyDetected(e)))continue;
+if(d>s.range||(e.hidden&&!towerDetectsHidden(t)))continue;
 const mode=t.targetMode||"FIRST";
 const score=mode==="STRONGEST"?e.hp:mode==="CLOSEST"?-d:(e.pathProgress??e.path);
 if(score>best){best=score;target=e;}
