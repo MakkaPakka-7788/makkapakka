@@ -494,7 +494,8 @@ start.disabled=!modeUnlocked(modeData.indexOf(chosen));
 }
 function makeTowerCard(t,label,onClick){
 const card=document.createElement("div");card.className="lobby-card"+(lobbyTab==="loadout"?" loadout-card":"")+(loadout.includes(t.name)?" selected":"");
-card.innerHTML='<div class="tower-glyph" style="--tower-color:'+glyphColor(t)+'"><i></i></div><div><h3>'+t.name+'</h3><p>Damage '+t.damage+' · Range '+t.range+'</p></div><button>'+label+'</button>';
+const details=t.farm?"Earns $20/sec at level 1":t.flying?(t.name==="Pursuit"?"Air defence · Orbit + vertical waves":"Air defence · Figure-eight flight"):"Damage "+t.damage+" · Range "+t.range;
+card.innerHTML='<div class="tower-glyph" style="--tower-color:'+glyphColor(t)+'"><i></i></div><div><h3>'+t.name+'</h3><p>'+details+'</p></div><button>'+label+'</button>';
 card.querySelector("button").onclick=onClick;return card;
 }
 document.querySelectorAll(".lobby-nav button").forEach(b=>b.addEventListener("click",()=>{lobbyTab=b.dataset.tab;renderLobby();}));
@@ -707,6 +708,10 @@ ctx.fillStyle="#285e31";ctx.strokeStyle="#a5e68a";ctx.lineWidth=2*camera.zoom;
 ctx.fillRect(-size*.5,-size*.38,size,size*.76);ctx.strokeRect(-size*.5,-size*.38,size,size*.76);
 ctx.fillStyle="#73c66b";ctx.beginPath();ctx.arc(-size*.16,-size*.12,size*.19,0,Math.PI*2);ctx.arc(size*.16,-size*.12,size*.19,0,Math.PI*2);ctx.fill();
 ctx.strokeStyle="#e1f5d5";ctx.beginPath();ctx.moveTo(0,size*.2);ctx.lineTo(0,-size*.2);ctx.stroke();
+if(level>=2){ctx.strokeStyle=t.type.color;ctx.lineWidth=2*camera.zoom;ctx.beginPath();ctx.arc(0,0,size*.6,0,Math.PI*2);ctx.stroke();}
+if(level>=3){ctx.fillStyle="#b4f08d";for(let j=0;j<level-1;j++){ctx.beginPath();ctx.arc((j-(level-2)/2)*size*.2,-size*.5,size*.07,0,Math.PI*2);ctx.fill();}}
+if(level>=4){ctx.strokeStyle="#e1f5d5";ctx.lineWidth=1.5*camera.zoom;ctx.beginPath();ctx.moveTo(-size*.42,size*.45);ctx.lineTo(-size*.42,-size*.45);ctx.moveTo(size*.42,size*.45);ctx.lineTo(size*.42,-size*.45);ctx.stroke();}
+if(level>=5){ctx.fillStyle="#e1f5d5";ctx.beginPath();ctx.moveTo(0,-size*.65);ctx.lineTo(size*.12,-size*.48);ctx.lineTo(0,-size*.3);ctx.lineTo(-size*.12,-size*.48);ctx.closePath();ctx.fill();}
 ctx.restore();
 ctx.fillStyle="#d9ffd0";ctx.font=`${9*camera.zoom}px Courier New`;ctx.textAlign="center";ctx.fillText("+$"+farmIncome(t),p.x,p.y-size*.62);
 continue;
