@@ -53,6 +53,7 @@
     #authGate { max-width:470px;margin:90px auto;padding:30px;text-align:center; }
     #authGate h1 { font-size:29px; }
     #authGate p { color:#94a4b8; }
+    .passcode-input { width:min(100%,320px);margin:10px 8px 10px 0;padding:11px 13px;border:1px solid #395575;border-radius:10px;background:#080d14;color:var(--text);font:inherit; }
     .auth-button { border:1px solid #395575;background:#13243a;color:#dceaff;border-radius:10px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer; }
     .auth-status { min-height:24px;color:#ffafb5!important;font-size:13px; }
     .footnote { color:#627287;font-size:11px;margin-top:16px; }
@@ -77,10 +78,13 @@
     <section id="authGate" class="panel">
       <div class="brand-mark" style="margin:0 auto 16px">◉</div>
       <h1>Live Player Monitor</h1>
-      <p>Sign in with the monitor owner’s Google account to view live player counts.</p>
-      <button id="signInButton" class="auth-button" type="button">Sign in with Google</button>
+      <p>Enter the monitor passcode to view current player counts.</p>
+      <form id="monitorPasscodeForm">
+        <input id="monitorPasscode" class="passcode-input" type="password" autocomplete="off" aria-label="Monitor passcode" placeholder="Passcode" required>
+        <button id="unlockMonitorButton" class="auth-button" type="submit">Open monitor</button>
+      </form>
       <p id="authStatus" class="auth-status" role="status" aria-live="polite"></p>
-      <p class="footnote">Only the owner account can read presence data. Players are counted anonymously; this page shows totals by game, not names or screens.</p>
+      <p class="footnote">The dashboard shows anonymous totals by game, not names or screens.</p>
     </section>
 
     <section id="dashboard" hidden>
@@ -143,7 +147,7 @@
   </main>
 
   <script type="module">
-    const OWNER_EMAIL = "makkasentpakking@gmail.com";
+    const MONITOR_SESSION_KEY = "makkapakkaMonitorUnlocked";
     const HUB_URL = "https://makkapakka-7788.github.io/makkapakka/?games=true";
     const FLASHCARDS_URL = "https://makkapakka-7788.github.io/makkapakka/flashcard.html";
     const RANGE_DEFAULT = 15 * 60 * 1000;
@@ -159,7 +163,8 @@
     const authGate = document.getElementById("authGate");
     const dashboard = document.getElementById("dashboard");
     const statusEl = document.getElementById("authStatus");
-    const signInButton = document.getElementById("signInButton");
+    const passcodeForm = document.getElementById("monitorPasscodeForm");
+    const passcodeInput = document.getElementById("monitorPasscode");
     const canvas = document.getElementById("onlineChart");
     const ctx = canvas.getContext("2d");
     const rangeButtons = [...document.querySelectorAll("[data-range]")];
@@ -293,15 +298,7 @@
 
     function showMonitor(user) {
       if (!user) {
-        authGate.hidden = false;
-        dashboard.hidden = true;
-        statusEl.textContent = "Sign in with the monitor owner’s Google account.";
-        return;
-      }
-      if ((user.email || "").toLowerCase() !== OWNER_EMAIL) {
-        authGate.hidden = false;
-        dashboard.hidden = true;
-        statusEl.textContent = "This Google account does not have monitor access.";
+        statusEl.textContent = "Connecting anonymously to live player data…";
         return;
       }
 
@@ -310,9 +307,9 @@
       statusEl.textContent = "";
       if (unsubscribe) return;
 
-      import("https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js").then(({ collection, limit, onSnapshot, query }) => {
+      import("https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js").then(({ collection, limit, onSnapshot, orderBy, query }) => {
         const db = window.FlashAccount.db;
-        const presenceQuery = query(collection(db, "presence"), limit(1000));
+        const presenceQuery = query(collection(db, "presence"), orderBy("lastSeen", "desc"), limit(1000));
         unsubscribe = onSnapshot(presenceQuery, snapshot => {
           presenceDocs = snapshot.docs.map(item => {
             const data = item.data();
@@ -324,31 +321,58 @@
           connected = false;
           document.getElementById("connectedLabel").textContent = "Connection issue";
           console.error("Live monitor read failed:", error);
-          statusEl.textContent = "Could not load live player data. Check Firestore rules.";
-          authGate.hidden = false;
-          dashboard.hidden = true;
+          document.getElementById("onlineCount").textContent = "—";
+          statusEl.textContent = "Live counts could not load. Firebase may still need its presence rules enabled.";
         });
       }).catch(error => {
         console.error("Could not load Firestore:", error);
+        document.getElementById("connectedLabel").textContent = "Connection issue";
         statusEl.textContent = "Could not connect to live player data.";
-        authGate.hidden = false;
-        dashboard.hidden = true;
       });
     }
 
-    signInButton.addEventListener("click", async () => {
+    async function openMonitor() {
+      authGate.hidden = true;
+      dashboard.hidden = false;
+      statusEl.textContent = "";
       try {
-        await window.FlashAccount.signInWithGoogle();
+        await import("https://makkapakka-7788.github.io/makkapakka/flashaccount.js");
+        const account = window.FlashAccount;
+        if (!account) throw new Error("FlashAccount did not initialize.");
+        const { onAuthStateChanged, signInAnonymously } =
+          await import("https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js");
+        onAuthStateChanged(account.auth, user => {
+          if (user) {
+            showMonitor(user);
+          } else {
+            signInAnonymously(account.auth).catch(error => {
+              console.error("Anonymous monitor sign-in failed:", error);
+              document.getElementById("connectedLabel").textContent = "Sign-in unavailable";
+              statusEl.textContent = "Anonymous Firebase sign-in is not enabled yet.";
+            });
+          }
+        });
       } catch (error) {
-        statusEl.textContent = "Google sign-in failed. Please try again.";
+        console.error("Could not initialize monitor:", error);
+        document.getElementById("connectedLabel").textContent = "Connection issue";
+        statusEl.textContent = "Could not initialize live player monitoring.";
       }
+    }
+
+    passcodeForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const code = passcodeInput.value.trim().replace(/^#+|#+$/g, "").toLowerCase();
+      if (code !== "makkasentpakking") {
+        statusEl.textContent = "Incorrect passcode. Try again.";
+        passcodeInput.value = "";
+        passcodeInput.focus();
+        return;
+      }
+      sessionStorage.setItem(MONITOR_SESSION_KEY, "1");
+      openMonitor();
     });
 
-    await import("https://makkapakka-7788.github.io/makkapakka/flashaccount.js");
-    const account = window.FlashAccount;
-    import("https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js").then(({ onAuthStateChanged }) => {
-      onAuthStateChanged(account.auth, showMonitor);
-    });
+    if (sessionStorage.getItem(MONITOR_SESSION_KEY) === "1") openMonitor();
 
     for (const button of rangeButtons) {
       button.addEventListener("click", () => {
