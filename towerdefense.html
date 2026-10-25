@@ -494,7 +494,8 @@ start.disabled=!modeUnlocked(modeData.indexOf(chosen));
 }
 function makeTowerCard(t,label,onClick){
 const card=document.createElement("div");card.className="lobby-card"+(lobbyTab==="loadout"?" loadout-card":"")+(loadout.includes(t.name)?" selected":"");
-const details=t.farm?"Earns $20/sec at level 1":t.flying?(t.name==="Pursuit"?"Air defence · Orbit + vertical waves":"Air defence · Figure-eight flight"):"Damage "+t.damage+" · Range "+t.range;
+const detection=hiddenDetectionLevel(t);
+const details=(t.farm?"Earns $20/sec at level 1":t.flying?(t.name==="Pursuit"?"Air defence · Orbit + vertical waves":"Air defence · Figure-eight flight"):"Damage "+t.damage+" · Range "+t.range)+" · "+(detection?"Hidden detection available":"No hidden detection");
 card.innerHTML='<div class="tower-glyph" style="--tower-color:'+glyphColor(t)+'"><i></i></div><div><h3>'+t.name+'</h3><p>'+details+'</p></div><button>'+label+'</button>';
 card.querySelector("button").onclick=onClick;return card;
 }
@@ -689,9 +690,10 @@ if(!t.type.flying)return {x:t.x,y:t.y};
 const time=gameTime/1000;
 if(t.type.name==="Pursuit"){
 const radius=58;
-return {x:(t.homeX??t.x)+Math.cos(time*1.25)*radius,y:(t.homeY??t.y)+Math.sin(time*1.25)*radius+Math.sin(time*2.6)*18};
+return {x:(t.homeX??t.x)+Math.cos(time*1.25)*radius,y:(t.homeY??t.y)+Math.sin(time*1.25)*radius+Math.sin(time*2.6)*25};
 }
-return {x:1740+Math.sin(time*1.25)*105,y:475+Math.sin(time*2.5)*42};
+const a=time*1.15;
+return {x:1740+Math.sin(a)*115,y:475+Math.sin(a*2)*48};
 }
 
 function drawTowers(){
@@ -726,7 +728,7 @@ ctx.fill();ctx.stroke();
 }
 ctx.save();
 ctx.translate(p.x,p.y);
-ctx.rotate(t.angle??0);
+if(t.type.flying)ctx.rotate(t.angle??0);
 ctx.fillStyle=t.type.color;
 if(t.type.flying){
 ctx.beginPath();ctx.moveTo(0,-size*.8);ctx.lineTo(size*.28,-size*.12);ctx.lineTo(size*.8,size*.28);ctx.lineTo(size*.7,size*.45);ctx.lineTo(0,size*.22);ctx.lineTo(-size*.7,size*.45);ctx.lineTo(-size*.8,size*.28);ctx.lineTo(-size*.28,-size*.12);ctx.closePath();ctx.fill();ctx.stroke();
@@ -734,7 +736,6 @@ ctx.fillStyle="#eaf8ff";ctx.fillRect(-size*.09,-size*.4,size*.18,size*.75);
 }else{
 ctx.strokeStyle=level>=2?"#f1ce62":"#111";
 ctx.lineWidth=Math.max(1,(level>=2?3.5:3)*camera.zoom);
-ctx.fillRect(-size*.10,-size*.74,size*.20,size*.78);
 ctx.beginPath();
 const shape=(index+level-1)%4;
 if(shape===0){ctx.arc(0,0,size*.43,0,Math.PI*2);}
@@ -742,14 +743,28 @@ else if(shape===1){ctx.roundRect(-size*.42,-size*.34,size*.84,size*.68,size*.12)
 else if(shape===2){ctx.moveTo(0,-size*.48);ctx.lineTo(size*.48,0);ctx.lineTo(0,size*.48);ctx.lineTo(-size*.48,0);ctx.closePath();}
 else{ctx.moveTo(-size*.42,-size*.3);ctx.lineTo(0,-size*.52);ctx.lineTo(size*.42,-size*.3);ctx.lineTo(size*.34,size*.38);ctx.lineTo(-size*.34,size*.38);ctx.closePath();}
 ctx.fill();ctx.stroke();
+ctx.save();
+ctx.rotate(t.angle??0);
+ctx.fillStyle=t.type.color;
+ctx.strokeStyle="#101010";
+ctx.lineWidth=Math.max(1,2*camera.zoom);
+ctx.fillRect(-size*.105,-size*.78,size*.21,size*.82);
+ctx.strokeRect(-size*.105,-size*.78,size*.21,size*.82);
+ctx.fillStyle=level>=3?"#fff0a8":"#d9e4eb";
+ctx.beginPath();ctx.arc(0,-size*.48,size*.105,0,Math.PI*2);ctx.fill();
+ctx.restore();
 }
-if(level>=2){ctx.beginPath();ctx.strokeStyle="#f1ce62";ctx.lineWidth=1.5*camera.zoom;ctx.arc(0,0,size*.49,0,Math.PI*2);ctx.stroke();}
+if(level>=2){ctx.beginPath();ctx.strokeStyle="#f1ce62";ctx.lineWidth=2.5*camera.zoom;ctx.arc(0,0,size*.57,0,Math.PI*2);ctx.stroke();}
 if(level>=3){ctx.fillStyle="#fff0a8";ctx.beginPath();ctx.moveTo(0,-size*.2);ctx.lineTo(size*.18,0);ctx.lineTo(0,size*.2);ctx.lineTo(-size*.18,0);ctx.closePath();ctx.fill();}
 if(level>=4){ctx.fillStyle=t.type.color;ctx.fillRect(-size*.4,-size*.84,size*.12,size*.35);ctx.fillRect(size*.28,-size*.84,size*.12,size*.35);}
 if(level>=5){ctx.fillStyle="#fff0a8";ctx.beginPath();ctx.moveTo(0,-size*.78);ctx.lineTo(size*.12,-size*.6);ctx.lineTo(size*.3,-size*.58);ctx.lineTo(size*.16,-size*.42);ctx.lineTo(size*.2,-size*.22);ctx.lineTo(0,-size*.32);ctx.lineTo(-size*.2,-size*.22);ctx.lineTo(-size*.16,-size*.42);ctx.lineTo(-size*.3,-size*.58);ctx.lineTo(-size*.12,-size*.6);ctx.closePath();ctx.fill();}
 if(index%3===1){ctx.fillStyle=t.type.color;ctx.fillRect(-size*.28,-size*.80,size*.12,size*.43);ctx.fillRect(size*.16,-size*.80,size*.12,size*.43);}
 ctx.restore();
-ctx.fillStyle=level>=5?"#fff0a8":"#fff";ctx.font=`${10*camera.zoom}px Courier New`;ctx.textAlign="center";ctx.fillText(level,p.x,p.y+4*camera.zoom);
+ctx.fillStyle=level>=5?"#fff0a8":"#fff";ctx.font="bold "+Math.max(10,12*camera.zoom)+"px Courier New";ctx.textAlign="center";ctx.fillText("LV "+level,p.x,p.y+size*.92);
+if(level>=2){
+ctx.fillStyle="#f1ce62";
+for(let star=0;star<level-1;star++){ctx.beginPath();const sx=p.x+(star-(level-2)/2)*size*.22,sy=p.y-size*.98;ctx.moveTo(sx,sy-size*.09);ctx.lineTo(sx+size*.07,sy);ctx.lineTo(sx,sy+size*.09);ctx.lineTo(sx-size*.07,sy);ctx.closePath();ctx.fill();}
+}
 }
 }
 
@@ -1354,7 +1369,7 @@ document.getElementById("gameWrap").appendChild(towerBar);
 for(let i=0;i<towerTypes.length;i++){
 const b=document.createElement("button");
 b.id="tower"+i;
-b.innerHTML='<span class="tower-button-icon shape-'+(i%4)+'" style="--tower-color:'+towerTypes[i].color+'"><i></i></span><span>'+towerTypes[i].name+'<small>'+(towerTypes[i].name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+towerTypes[i].cost)+'</small></span>';
+b.innerHTML='<span class="tower-button-icon shape-'+(i%4)+'" style="--tower-color:'+towerTypes[i].color+'"><i></i></span><span>'+towerTypes[i].name+'<small>'+(towerTypes[i].name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+towerTypes[i].cost)+'</small><small style="color:'+(hiddenDetectionLevel(towerTypes[i])?'#a8e88a':'#999')+'">'+(hiddenDetectionLevel(towerTypes[i])?'HIDDEN DETECTION':'NO DETECTION')+'</small></span>';
 b.onclick=()=>{
 if(towerTypes[i].unlock>wave)return;
 selectedBuild=i;
