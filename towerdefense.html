@@ -390,7 +390,8 @@ button:disabled{opacity:.35;cursor:not-allowed}
 <div id="overlayText">The castle has fallen.</div>
 <br>
 <button id="retryBtn">RETRY</button>
-<button id="homeBtn">HOME</button>
+<button id="shopBtn">TOWER SHOP</button>
+<button id="homeBtn">LOBBY</button>
 </div>
 </div>
 </div>
@@ -531,6 +532,7 @@ document.getElementById("overlayTitle").textContent=completed.toUpperCase()+" CL
 document.getElementById("overlayText").textContent="All "+data.waves+" waves defeated. +$"+(payout?.cash||0)+(payout?.gems?" and 💎 "+payout.gems:"")+" added to your tower fund.";
 document.getElementById("retryBtn").textContent="PLAY AGAIN";
 document.getElementById("homeBtn").textContent="LOBBY";
+document.getElementById("shopBtn").textContent="TOWER SHOP";
 }
 
 const canvas=document.getElementById("game");
@@ -1622,7 +1624,10 @@ const payout=settleRun(false);
 renderLobby();
 document.getElementById("overlay").style.display="flex";
 document.getElementById("overlayTitle").textContent="KINGDOM LOST";
-document.getElementById("overlayText").textContent="You cleared "+(payout?.waves||0)+" waves and earned $"+(payout?.cash||0)+(payout?.gems?" and 💎 "+payout.gems:"")+" for your tower fund.";
+document.getElementById("overlayText").textContent="You cleared "+(payout?.waves||0)+" waves · cash reward: $"+(payout?.cash||0)+(payout?.gems?" · gem reward: 💎 "+payout.gems:"");
+document.getElementById("retryBtn").textContent="RETRY";
+document.getElementById("shopBtn").textContent="TOWER SHOP";
+document.getElementById("homeBtn").textContent="LOBBY";
 }
 
 function resetGame(){
@@ -1763,8 +1768,17 @@ document.getElementById("gameWrap").style.display="block";
 document.getElementById("homeBtn").onclick=()=>{
 document.getElementById("overlay").style.display="none";
 document.getElementById("retryBtn").textContent="RETRY";
-document.getElementById("homeBtn").textContent="HOME";
+document.getElementById("shopBtn").textContent="TOWER SHOP";
+document.getElementById("homeBtn").textContent="LOBBY";
 showLobby();
+};
+document.getElementById("shopBtn").onclick=()=>{
+document.getElementById("overlay").style.display="none";
+document.getElementById("retryBtn").textContent="RETRY";
+document.getElementById("homeBtn").textContent="LOBBY";
+showLobby();
+lobbyTab="towers";
+renderLobby();
 };
 
 document.addEventListener("keydown",e=>{
