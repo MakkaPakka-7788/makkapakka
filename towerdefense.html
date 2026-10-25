@@ -1204,7 +1204,7 @@ const b=document.getElementById("tower"+i);
 if(!b)continue;
 if(type.unlock>wave||!loadout.includes(type.name))b.classList.add("locked");
 else b.classList.remove("locked");
-b.style.display=loadout.includes(type.name)?"block":"none";
+b.style.display=loadout.includes(type.name)?"flex":"none";
 const costLabel=type.name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+type.cost;
 if(b.dataset.costLabel!==costLabel){
 b.dataset.costLabel=costLabel;
