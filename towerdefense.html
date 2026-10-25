@@ -209,11 +209,11 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .lobby-nav{display:flex;flex-direction:column;gap:10px;padding-top:18px}
 .lobby-nav button,.lobby-action{border:1px solid #292929;background:#101010;color:#aaa;border-radius:10px;padding:16px;text-align:left;font-weight:700;letter-spacing:.06em;font-size:13px}
 .lobby-nav button.active,.lobby-nav button:hover{color:#fff;border-color:#9bc96b;background:#172015}
-.lobby-main{display:flex;flex-direction:column;min-width:0}
+.lobby-main{display:flex;flex-direction:column;min-width:0;min-height:0}
 .lobby-kicker{font-size:11px;letter-spacing:.24em;color:#9bc96b;font-weight:800;margin:8px 0}
 .lobby-main h1{font-size:clamp(30px,4vw,48px);margin:4px 0 8px;letter-spacing:.04em}
 .lobby-sub{color:#888;margin:0 0 24px;font-size:14px}
-#lobbyContent{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;align-content:start;overflow:auto;padding:4px 3px 14px}
+#lobbyContent{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;align-content:start;overflow:auto;min-height:0;flex:1;padding:4px 3px 14px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .lobby-card{position:relative;min-height:145px;border:1px solid #303030;border-radius:12px;background:linear-gradient(145deg,#171717,#0c0c0c);padding:15px;display:flex;flex-direction:column;justify-content:space-between}
 .lobby-card.selected{border-color:#9bc96b;box-shadow:0 0 0 1px #9bc96b33}
 .lobby-card h3{margin:3px 0;font-size:15px}.lobby-card p{font-size:11px;color:#888;margin:5px 0}
