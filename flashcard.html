@@ -525,8 +525,8 @@ Next
 
 <section id="passcodeScreen" style="display:none;">
   <div class="create-area passcode-area">
-    <h1>Home Passcode</h1>
-    <p class="subtitle">Enter the passcode to open the games home.</p>
+    <h1>Passcode</h1>
+    <p class="subtitle">Enter a passcode to continue.</p>
     <form onsubmit="submitHomePasscode(event)">
       <label for="homePasscode">Passcode</label>
       <input id="homePasscode" type="password" autocomplete="off" required>
@@ -584,6 +584,11 @@ function submitHomePasscode(event) {
 
     if (input.value === "#makkapakka#") {
         goToGames();
+        return;
+    }
+
+    if (input.value === "#mastersentpakking#") {
+        window.location.href = "monitor.html";
         return;
     }
 
