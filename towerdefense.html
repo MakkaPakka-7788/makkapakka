@@ -362,9 +362,11 @@ width:100%;
 
 <script>
 let bankCash=Number(localStorage.getItem("kingdomWarBank")||1500);
-const defaultOwned=["Basic","Rapid","Heavy","Slow","Splash"];
+const defaultOwned=["Scout"];
 let ownedTowers=JSON.parse(localStorage.getItem("kingdomWarOwned")||"null")||defaultOwned.slice();
 let loadout=JSON.parse(localStorage.getItem("kingdomWarLoadout")||"null")||defaultOwned.slice();
+if(!ownedTowers.includes("Scout"))ownedTowers.unshift("Scout");
+if(!localStorage.getItem("kingdomWarStarterSet")){loadout=["Scout"];localStorage.setItem("kingdomWarStarterSet","scout");}
 const modeData=[
 {name:"Easy",waves:10,scale:.75,reward:350,unlocked:true},
 {name:"Casual",waves:15,scale:1,reward:600},
@@ -511,7 +513,8 @@ plains:{name:"Plains",color:"#66704a",bonus:1.20,buffs:["Basic","Splash","Guardi
 };
 
 const towerTypes=[
-{name:"Basic",cost:60,damage:22,range:125,rate:700,color:"#4da6ff",unlock:1},
+{name:"Scout",cost:60,damage:22,range:125,rate:700,color:"#4da6ff",unlock:1},
+{name:"Basic",cost:60,damage:22,range:125,rate:700,color:"#73b8ff",unlock:1},
 {name:"Rapid",cost:90,damage:10,range:135,rate:220,color:"#ffcc33",unlock:1},
 {name:"Heavy",cost:140,damage:65,range:145,rate:1100,color:"#ff7043",unlock:1},
 {name:"Slow",cost:120,damage:12,range:150,rate:800,color:"#8e9eff",unlock:1},
