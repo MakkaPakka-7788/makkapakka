@@ -1,11 +1,49 @@
 import { signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
-import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+import {
+  collection,
+  doc,
+  runTransaction,
+  serverTimestamp,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 
+const ACTIVE_WINDOW_MS = 120000;
 const game = new URL(import.meta.url).searchParams.get("game") || "game";
 let account = null;
 let auth = null;
 let heartbeat = null;
 let currentUid = null;
+let lastSuccessfulHeartbeatAt = 0;
+
+async function recordJoinIfNeeded(uid) {
+  if (!account?.db || !uid) return;
+  const presenceRef = doc(account.db, "presence", uid);
+  const joinEventRef = doc(collection(account.db, "presenceEvents"));
+  const observedAt = Date.now();
+
+  await runTransaction(account.db, async transaction => {
+    const current = await transaction.get(presenceRef);
+    const lastSeen = current.exists()
+      ? current.data().lastSeen?.toMillis?.() || 0
+      : 0;
+    const needsJoinEvent = !lastSeen || observedAt - lastSeen > ACTIVE_WINDOW_MS;
+
+    transaction.set(presenceRef, {
+      game,
+      lastSeen: serverTimestamp()
+    }, { merge: true });
+
+    if (needsJoinEvent) {
+      transaction.set(joinEventRef, {
+        uid,
+        game,
+        joinedAt: serverTimestamp()
+      });
+    }
+  });
+
+  lastSuccessfulHeartbeatAt = Date.now();
+}
 
 async function heartbeatNow(uid) {
   if (!account?.db || !uid) return;
@@ -13,6 +51,7 @@ async function heartbeatNow(uid) {
     game,
     lastSeen: serverTimestamp()
   }, { merge: true });
+  lastSuccessfulHeartbeatAt = Date.now();
 }
 
 function startHeartbeat(user) {
@@ -20,12 +59,20 @@ function startHeartbeat(user) {
   if (currentUid === user.uid && heartbeat !== null) return;
   if (heartbeat !== null) clearInterval(heartbeat);
   currentUid = user.uid;
+  lastSuccessfulHeartbeatAt = 0;
 
-  heartbeatNow(currentUid).catch(error => {
-    console.warn("Live player heartbeat unavailable:", error);
+  recordJoinIfNeeded(currentUid).catch(error => {
+    console.warn("Live player join tracking unavailable:", error);
   });
+
   heartbeat = setInterval(() => {
-    heartbeatNow(currentUid).catch(error => {
+    const uid = currentUid;
+    const shouldCheckForNewJoin =
+      Date.now() - lastSuccessfulHeartbeatAt > ACTIVE_WINDOW_MS;
+    const update = shouldCheckForNewJoin
+      ? recordJoinIfNeeded(uid)
+      : heartbeatNow(uid);
+    update.catch(error => {
       console.warn("Live player heartbeat failed:", error);
     });
   }, 45000);
