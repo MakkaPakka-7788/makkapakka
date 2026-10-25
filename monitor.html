@@ -50,14 +50,14 @@
     .games-list li:last-child { border-bottom:0; }
     .game-name { color:#d2deed;font-size:13px; }
     .game-count { min-width:32px;text-align:center;border:1px solid #253345;border-radius:8px;padding:3px 8px;color:#a8f0ec;background:#0b151c;font-variant-numeric:tabular-nums; }
-    #authGate { max-width:470px;margin:90px auto;padding:30px;text-align:center; }
-    #authGate h1 { font-size:29px; }
-    #authGate p { color:#94a4b8; }
+    #authGate,#passcodeGate { max-width:470px;margin:90px auto;padding:30px;text-align:center; }
+    #authGate h1,#passcodeGate h1 { font-size:29px; }
+    #authGate p,#passcodeGate p { color:#94a4b8; }
     .passcode-input { width:min(100%,320px);margin:10px 8px 10px 0;padding:11px 13px;border:1px solid #395575;border-radius:10px;background:#080d14;color:var(--text);font:inherit; }
     .auth-button { border:1px solid #395575;background:#13243a;color:#dceaff;border-radius:10px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer; }
     .auth-status { min-height:24px;color:#ffafb5!important;font-size:13px; }
     .footnote { color:#627287;font-size:11px;margin-top:16px; }
-    #dashboard[hidden],#authGate[hidden] { display:none; }
+    #dashboard[hidden],#authGate[hidden],#passcodeGate[hidden] { display:none; }
     @media (max-width:800px) { .stat-grid {grid-template-columns:1fr 1fr;} .content-grid {grid-template-columns:1fr;} }
     @media (max-width:540px) { header {padding:18px 16px 8px;align-items:flex-start;} main {padding:18px 16px 32px;} .nav {flex-direction:column;align-items:flex-end;} .hero {align-items:flex-start;flex-direction:column;} .stat-grid {grid-template-columns:1fr;} .stat {min-height:112px;} .panel-head {flex-direction:column;} canvas {height:220px;} }
   </style>
@@ -75,19 +75,27 @@
   </header>
 
   <main>
-    <section id="authGate" class="panel">
+    <section id="passcodeGate" class="panel">
       <div class="brand-mark" style="margin:0 auto 16px">◉</div>
       <h1>Live Player Monitor</h1>
-      <p>Enter the monitor passcode to view current player counts.</p>
+      <p>Enter the monitor passcode to continue to owner sign-in.</p>
       <form id="monitorPasscodeForm">
         <input id="monitorPasscode" class="passcode-input" type="password" autocomplete="off" aria-label="Monitor passcode" placeholder="Passcode" required>
-        <button id="unlockMonitorButton" class="auth-button" type="submit">Open monitor</button>
+        <button id="unlockMonitorButton" class="auth-button" type="submit">Continue</button>
       </form>
+      <p id="passcodeStatus" class="auth-status" role="status" aria-live="polite"></p>
+      <p class="footnote">The dashboard shows counts only. Owner Google sign-in is still required.</p>
+    </section>
+    <section id="authGate" class="panel" hidden>
+      <div class="brand-mark" style="margin:0 auto 16px">◉</div>
+      <h1>Owner sign-in</h1>
+      <p>Sign in with the monitor owner’s Google account to see player counts.</p>
+      <button id="signInButton" class="auth-button" type="button">Sign in with Google</button>
       <p id="authStatus" class="auth-status" role="status" aria-live="polite"></p>
-      <p class="footnote">The dashboard shows anonymous totals by game, not names or screens.</p>
     </section>
 
     <section id="dashboard" hidden>
+      <p id="dashboardStatus" class="auth-status" role="status" aria-live="polite"></p>
       <div class="hero">
         <div>
           <div class="live-badge"><span class="live-dot"></span> Live monitoring</div>
@@ -148,6 +156,7 @@
 
   <script type="module">
     const MONITOR_SESSION_KEY = "makkapakkaMonitorUnlocked";
+    const OWNER_EMAIL = "makkasentpakking@gmail.com";
     const HUB_URL = "https://makkapakka-7788.github.io/makkapakka/?games=true";
     const FLASHCARDS_URL = "https://makkapakka-7788.github.io/makkapakka/flashcard.html";
     const RANGE_DEFAULT = 15 * 60 * 1000;
@@ -160,9 +169,13 @@
       "dr-doom": "Doom", clicker: "Antimatter Dimensions", balatro: "Poker",
       polytrack: "Poly Track", fishing: "Tiny Fishing", ironcrown: "Ironcrown"
     };
+    const passcodeGate = document.getElementById("passcodeGate");
     const authGate = document.getElementById("authGate");
     const dashboard = document.getElementById("dashboard");
     const statusEl = document.getElementById("authStatus");
+    const passcodeStatus = document.getElementById("passcodeStatus");
+    const dashboardStatus = document.getElementById("dashboardStatus");
+    const signInButton = document.getElementById("signInButton");
     const passcodeForm = document.getElementById("monitorPasscodeForm");
     const passcodeInput = document.getElementById("monitorPasscode");
     const canvas = document.getElementById("onlineChart");
@@ -298,7 +311,15 @@
 
     function showMonitor(user) {
       if (!user) {
-        statusEl.textContent = "Connecting anonymously to live player data…";
+        authGate.hidden = false;
+        dashboard.hidden = true;
+        statusEl.textContent = "Sign in with the monitor owner’s Google account.";
+        return;
+      }
+      if ((user.email || "").toLowerCase() !== OWNER_EMAIL) {
+        authGate.hidden = false;
+        dashboard.hidden = true;
+        statusEl.textContent = "This Google account does not have monitor access.";
         return;
       }
 
@@ -322,40 +343,39 @@
           document.getElementById("connectedLabel").textContent = "Connection issue";
           console.error("Live monitor read failed:", error);
           document.getElementById("onlineCount").textContent = "—";
-          statusEl.textContent = "Live counts could not load. Firebase may still need its presence rules enabled.";
+          dashboardStatus.textContent = "Live counts could not load. Firebase presence access may still need to be deployed.";
         });
       }).catch(error => {
         console.error("Could not load Firestore:", error);
         document.getElementById("connectedLabel").textContent = "Connection issue";
-        statusEl.textContent = "Could not connect to live player data.";
+        dashboardStatus.textContent = "Could not connect to live player data.";
       });
     }
 
     async function openMonitor() {
-      authGate.hidden = true;
-      dashboard.hidden = false;
+      passcodeGate.hidden = true;
+      authGate.hidden = false;
+      dashboard.hidden = true;
       statusEl.textContent = "";
       try {
         await import("https://makkapakka-7788.github.io/makkapakka/flashaccount.js");
         const account = window.FlashAccount;
         if (!account) throw new Error("FlashAccount did not initialize.");
-        const { onAuthStateChanged, signInAnonymously } =
-          await import("https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js");
-        onAuthStateChanged(account.auth, user => {
-          if (user) {
-            showMonitor(user);
-          } else {
-            signInAnonymously(account.auth).catch(error => {
-              console.error("Anonymous monitor sign-in failed:", error);
-              document.getElementById("connectedLabel").textContent = "Sign-in unavailable";
-              statusEl.textContent = "Anonymous Firebase sign-in is not enabled yet.";
-            });
+        signInButton.addEventListener("click", async () => {
+          signInButton.disabled = true;
+          statusEl.textContent = "Opening Google sign-in…";
+          try {
+            await account.signInWithGoogle();
+          } finally {
+            signInButton.disabled = false;
           }
         });
+        const { onAuthStateChanged } =
+          await import("https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js");
+        onAuthStateChanged(account.auth, showMonitor);
       } catch (error) {
-        console.error("Could not initialize monitor:", error);
-        document.getElementById("connectedLabel").textContent = "Connection issue";
-        statusEl.textContent = "Could not initialize live player monitoring.";
+        console.error("Could not initialize monitor sign-in:", error);
+        statusEl.textContent = "Could not initialize owner sign-in.";
       }
     }
 
@@ -363,7 +383,7 @@
       event.preventDefault();
       const code = passcodeInput.value.trim().replace(/^#+|#+$/g, "").toLowerCase();
       if (code !== "makkasentpakking") {
-        statusEl.textContent = "Incorrect passcode. Try again.";
+        passcodeStatus.textContent = "Incorrect passcode. Try again.";
         passcodeInput.value = "";
         passcodeInput.focus();
         return;
