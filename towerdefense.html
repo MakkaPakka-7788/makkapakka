@@ -210,6 +210,12 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .lobby-layout{flex:1;min-height:0;display:grid;grid-template-columns:205px minmax(420px,1fr) 240px;gap:28px;padding:30px 34px}
 .lobby-nav{display:flex;flex-direction:column;gap:10px;padding-top:18px}
 .lobby-nav button,.lobby-action{border:1px solid #292929;background:#101010;color:#aaa;border-radius:10px;padding:16px;text-align:left;font-weight:700;letter-spacing:.06em;font-size:13px}
+.build-status{position:absolute;left:10px;bottom:230px;z-index:5;background:#111e;border:1px solid #555;border-radius:7px;padding:8px 10px;color:#ddd;font-size:11px;max-width:min(620px,calc(100vw - 20px))}
+#towerbar button{display:flex;align-items:center;gap:5px;min-height:42px;text-align:left;padding:4px;font-size:9px;white-space:nowrap}
+#towerbar button.build-selected{border-color:#a8d96f;background:#26331d;box-shadow:0 0 0 1px #a8d96f}
+.tower-button-icon{position:relative;display:grid;place-items:center;width:23px;height:23px;flex:0 0 23px;border:2px solid var(--tower-color);border-radius:7px;background:#222}
+.tower-button-icon i{position:relative;display:block;width:12px;height:9px;border-radius:4px;background:var(--tower-color)}
+.tower-button-icon i:before{content:"";position:absolute;width:5px;height:12px;left:3px;top:-8px;border-radius:3px;background:var(--tower-color);border:1px solid #111}
 .lobby-nav button.active,.lobby-nav button:hover{color:#fff;border-color:#9bc96b;background:#172015}
 .lobby-main{display:flex;flex-direction:column;min-width:0;min-height:0}
 .lobby-kicker{font-size:11px;letter-spacing:.24em;color:#9bc96b;font-weight:800;margin:8px 0}
@@ -218,6 +224,10 @@ button:disabled{opacity:.35;cursor:not-allowed}
 #lobbyContent{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;align-content:start;overflow:auto;min-height:0;flex:1;padding:4px 3px 14px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .lobby-card{position:relative;min-height:145px;border:1px solid #303030;border-radius:12px;background:linear-gradient(145deg,#171717,#0c0c0c);padding:15px;display:flex;flex-direction:column;justify-content:space-between}
 .lobby-card.selected{border-color:#9bc96b;box-shadow:0 0 0 1px #9bc96b33}
+#lobbyContent.loadout-grid{grid-template-columns:repeat(auto-fit,minmax(220px,300px))}
+.loadout-card{min-height:235px;padding:18px}
+.loadout-card .tower-glyph{height:100px}
+.loadout-card .tower-glyph i{transform:scale(1.8)}
 .lobby-card h3{margin:3px 0;font-size:15px}.lobby-card p{font-size:11px;color:#888;margin:5px 0}
 .lobby-card button{border:1px solid #444;border-radius:7px;background:#202020;color:#eee;padding:8px;font-size:11px;font-weight:700}
 .lobby-card button:hover{border-color:#a8d96f}
@@ -320,6 +330,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 
 <div id="gameWrap">
 <canvas id="game"></canvas>
+<div id="buildStatus" class="build-status">Choose a tower below, then click an open tile beside the route.</div>
 
 <div id="controls">
 <button id="upgradeBtn">UPGRADE</button>
@@ -411,6 +422,7 @@ const title=document.getElementById("lobbyTitle"), sub=document.getElementById("
 const sideTitle=document.getElementById("sideTitle"), sideCopy=document.getElementById("sideCopy");
 document.querySelectorAll(".lobby-nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===lobbyTab));
 content.innerHTML="";
+content.classList.toggle("loadout-grid",lobbyTab==="loadout");
 if(lobbyTab==="loadout"){
 title.textContent="YOUR LOADOUT";sub.textContent="Choose the towers you’ll bring into battle.";
 sideTitle.textContent="BUILD YOUR STRATEGY";sideCopy.textContent="Equip up to five towers. Every cannon has its own shape, range and attack style.";
@@ -449,7 +461,7 @@ start.textContent=(canContinue?"CONTINUE ":"PLAY ")+chosen.name.toUpperCase();
 start.disabled=!modeUnlocked(modeData.indexOf(chosen));
 }
 function makeTowerCard(t,label,onClick){
-const card=document.createElement("div");card.className="lobby-card"+(loadout.includes(t.name)?" selected":"");
+const card=document.createElement("div");card.className="lobby-card"+(lobbyTab==="loadout"?" loadout-card":"")+(loadout.includes(t.name)?" selected":"");
 card.innerHTML='<div class="tower-glyph" style="--tower-color:'+glyphColor(t)+'"><i></i></div><div><h3>'+t.name+'</h3><p>Damage '+t.damage+' · Range '+t.range+'</p></div><button>'+label+'</button>';
 card.querySelector("button").onclick=onClick;return card;
 }
@@ -982,7 +994,7 @@ const dx=e.clientX-lastMouse.x;
 const dy=e.clientY-lastMouse.y;
 
 if(dragging){
-if(Math.abs(dx)+Math.abs(dy)>3)dragMoved=true;
+if(Math.abs(dx)+Math.abs(dy)>8)dragMoved=true;
 camera.x-=dx/camera.zoom;
 camera.y-=dy/camera.zoom;
 camera.x=Math.max(0,Math.min(world.w-W/camera.zoom,camera.x));
@@ -1078,15 +1090,17 @@ saveGame();
 
 function buildTower(x,y,index){
 const type=towerTypes[index];
-if(!loadout.includes(type.name))return;
-
-if(type.unlock>wave)return;
-if(towerAt(x,y)||roadAt(x,y)||terrainAt(x,y))return;
-if(x<100&&y>400&&y<550)return;
-if(towers.length>=40)return;
+const status=document.getElementById("buildStatus");
+const fail=message=>{if(status)status.textContent=message;};
+if(!type||!loadout.includes(type.name)){fail("That tower is not in your loadout. Equip it from the lobby first.");return;}
+if(type.unlock>wave){fail(type.name+" unlocks at wave "+type.unlock+".");return;}
+if(towerAt(x,y)){fail("That tile is occupied. Choose an empty tile.");return;}
+if(roadAt(x,y)){fail("Towers cannot go on a built road. Choose a clear tile beside it.");return;}
+if(terrainAt(x,y)){fail("That tile has terrain on it. Choose a clear tile.");return;}
+if(x<100&&y>400&&y<550){fail("That tile is inside the castle keep. Place towers beside the route.");return;}
+if(towers.length>=40){fail("You have reached the 40 tower limit.");return;}
 const placementCost=type.name==="Scout"&&towers.length===0&&wave===1?0:type.cost;
-if(money<placementCost){document.getElementById("infoBody").innerHTML="Need $"+placementCost+" to place "+type.name+".";
-return;}
+if(money<placementCost){fail("Need $"+placementCost+" for "+type.name+". The first Scout is free.");return;}
 
 money-=placementCost;
 
@@ -1103,8 +1117,11 @@ angle:0
 
 selectedTower=towers[towers.length-1];
 selectedBuild=null;
+document.querySelectorAll("#towerbar button").forEach(button=>button.classList.remove("build-selected"));
+if(status)status.textContent=type.name+" placed. Click it to inspect or upgrade, or select another tower.";
 updateUI();
 updateInfo();
+saveGame();
 }
 
 function upgradeTower(){
@@ -1218,13 +1235,17 @@ document.getElementById("gameWrap").appendChild(towerBar);
 for(let i=0;i<towerTypes.length;i++){
 const b=document.createElement("button");
 b.id="tower"+i;
-b.textContent=towerTypes[i].name+" $"+towerTypes[i].cost;
+b.innerHTML='<span class="tower-button-icon" style="--tower-color:'+towerTypes[i].color+'"><i></i></span><span>'+towerTypes[i].name+'<small>'+(towerTypes[i].name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+towerTypes[i].cost)+'</small></span>';
 b.onclick=()=>{
 if(towerTypes[i].unlock>wave)return;
 selectedBuild=i;
 selectedTerrain=null;
 selectedTower=null;
 roadMode=false;
+document.querySelectorAll("#towerbar button").forEach(button=>button.classList.remove("build-selected"));
+b.classList.add("build-selected");
+const freeScout=towerTypes[i].name==="Scout"&&towers.length===0&&wave===1;
+document.getElementById("buildStatus").textContent=towerTypes[i].name+" selected · "+(freeScout?"FREE":"$"+towerTypes[i].cost)+" · Click an open tile beside the route to place it.";
 updateInfo();
 };
 towerBar.appendChild(b);
