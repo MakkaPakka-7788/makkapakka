@@ -112,9 +112,9 @@
           <div class="stat-hint">Active within the last 2 minutes</div>
         </article>
         <article class="panel stat">
-          <div class="stat-label">Joined in range</div>
+          <div class="stat-label">Joined in selected range</div>
           <div id="joinedCount" class="stat-value small-value legend-up">0</div>
-          <div class="stat-hint">Since this monitor opened</div>
+          <div class="stat-hint">Saved join history during selected range</div>
         </article>
         <article class="panel stat">
           <div class="stat-label">Left in range</div>
@@ -182,8 +182,10 @@
     const ctx = canvas.getContext("2d");
     const rangeButtons = [...document.querySelectorAll("[data-range]")];
     let rangeMs = RANGE_DEFAULT;
-    let unsubscribe = null;
+    let unsubscribePresence = null;
+    let unsubscribeJoinEvents = null;
     let presenceDocs = [];
+    let joinEvents = [];
     let history = [];
     let events = [];
     let previousIds = null;
@@ -213,7 +215,7 @@
       document.getElementById("onlineCount").textContent = String(active.length);
       const windowStart = now - rangeMs;
       const rangeEvents = events.filter(event => event.time >= windowStart);
-      document.getElementById("joinedCount").textContent = String(rangeEvents.filter(e => e.delta > 0).length);
+      document.getElementById("joinedCount").textContent = String(joinEvents.filter(event => event.time >= windowStart && event.time <= now).length);
       document.getElementById("leftCount").textContent = String(rangeEvents.filter(e => e.delta < 0).length);
 
       const counts = new Map();
@@ -326,12 +328,12 @@
       authGate.hidden = true;
       dashboard.hidden = false;
       statusEl.textContent = "";
-      if (unsubscribe) return;
+      if (unsubscribePresence || unsubscribeJoinEvents) return;
 
       import("https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js").then(({ collection, limit, onSnapshot, orderBy, query }) => {
         const db = window.FlashAccount.db;
         const presenceQuery = query(collection(db, "presence"), orderBy("lastSeen", "desc"), limit(1000));
-        unsubscribe = onSnapshot(presenceQuery, snapshot => {
+        unsubscribePresence = onSnapshot(presenceQuery, snapshot => {
           presenceDocs = snapshot.docs.map(item => {
             const data = item.data();
             return { id: item.id, game: data.game || "unknown", lastSeen: data.lastSeen?.toMillis?.() || 0 };
@@ -344,6 +346,18 @@
           console.error("Live monitor read failed:", error);
           document.getElementById("onlineCount").textContent = "—";
           dashboardStatus.textContent = "Live counts could not load. Firebase presence access may still need to be deployed.";
+        });
+
+        const joinEventsQuery = query(collection(db, "presenceEvents"), orderBy("joinedAt", "desc"), limit(1000));
+        unsubscribeJoinEvents = onSnapshot(joinEventsQuery, snapshot => {
+          joinEvents = snapshot.docs.map(item => {
+            const data = item.data();
+            return { time: data.joinedAt?.toMillis?.() || 0 };
+          });
+          sample();
+        }, error => {
+          console.error("Historical join read failed:", error);
+          dashboardStatus.textContent = "Live counts are connected, but saved join history could not load.";
         });
       }).catch(error => {
         console.error("Could not load Firestore:", error);
