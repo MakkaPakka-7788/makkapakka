@@ -957,10 +957,16 @@ ctx.fillRect(p.x-7*camera.zoom,p.y-7*camera.zoom,14*camera.zoom,14*camera.zoom);
 }
 }
 
+function isEnemyDetected(e){
+if(!e.hidden)return true;
+return towers.some(t=>t.type.name==="Scout"&&t.level>=4&&dist(t,e)<=towerStats(t).range);
+}
+
 function drawEnemies(){
 for(const e of enemies){
+if(!isEnemyDetected(e))continue;
 const p=worldToScreen(e.x,e.y),r=(e.boss?17:10)*camera.zoom;
-ctx.globalAlpha=e.hidden ? .55 : 1;
+ctx.globalAlpha=1;
 ctx.fillStyle=e.color;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
 if(e.boss){ctx.strokeStyle="#fff0a8";ctx.lineWidth=2;ctx.stroke();}
 ctx.fillStyle="#222";ctx.fillRect(p.x-r,p.y-r-7*camera.zoom,r*2,4*camera.zoom);
@@ -1475,13 +1481,12 @@ enemies.splice(i,1);
 }
 
 function updateTowers(dt){
-const hiddenDetectors=["Scout","Sniper","Tesla","Crystal","Guardian","King"];
 for(const t of towers){
 t.cooldown-=dt;if(t.cooldown>0)continue;
 const s=towerStats(t);let target=null,best=-Infinity;
 for(const e of enemies){
 const d=dist(t,e);
-if(d>s.range||(e.hidden&&!hiddenDetectors.includes(t.type.name)))continue;
+if(d>s.range||(e.hidden&&!isEnemyDetected(e)))continue;
 const mode=t.targetMode||"FIRST";
 const score=mode==="STRONGEST"?e.hp:mode==="CLOSEST"?-d:(e.pathProgress??e.path);
 if(score>best){best=score;target=e;}
