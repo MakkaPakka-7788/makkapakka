@@ -1287,7 +1287,7 @@ return{
 type:boss?"WAVE "+wave+" BOSS":base.name,
 x:1740,y:475,path:0,pathProgress:0,
 hp,maxHp:hp,
-speed:base.speed*(boss?.72:1),
+speed:base.speed*(boss ? 0.72 : 1),
 damage:base.damage*(1+wave*.08)*modeScale*(boss?3:1),
 reward:Math.floor(base.reward*(1+wave*.06)*(boss?5:1)),
 color:boss?"#e2b84d":index===0?"#7bc96f":index===1?"#b47b42":index===2?"#aaa":index===3?"#8b6748":"#a33",
@@ -1307,6 +1307,7 @@ if(e.poison>0){
 e.poison-=dt;
 e.hp-=dt*.02;
 }
+if(e.slowTimer>0){e.slowTimer-=dt;if(e.slowTimer<=0)e.slow=1;}
 
 const from=roadPoints[Math.min(e.path,roadPoints.length-1)];
 const target=roadPoints[Math.min(e.path+1,roadPoints.length-1)];
@@ -1375,7 +1376,8 @@ speed:650,
 splash:["Splash","Mortar","Catapult","Meteor"].includes(t.type.name)?45:0,
 slow:["Slow","Freeze","Ice"].includes(t.type.name)?0.55:1,
 poison:t.type.name==="Poison"?1000:0,
-color:t.type.color
+color:t.type.color,
+owner:t
 };
 
 projectiles.push(p);
@@ -1410,11 +1412,10 @@ function hitEnemy(p){
 const e=p.target;
 e.hp-=p.damage;
 
-if(p.slow)e.slow=Math.min(e.slow,p.slow);
+if(p.slow){e.slow=Math.min(e.slow,p.slow);e.slowTimer=1500;}
 if(p.poison)e.poison=p.poison;
 
-const owner=towers.find(t=>Math.abs(t.x-p.x)<2&&Math.abs(t.y-p.y)<2);
-if(owner)owner.kills++;
+if(p.owner)p.owner.kills++;
 
 for(const other of enemies){
 if(p.splash&&other!==e&&dist(e,other)<p.splash){
