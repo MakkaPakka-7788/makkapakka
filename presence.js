@@ -1,4 +1,4 @@
-/* Anonymous game presence is not recorded until a player signs in and opts in. */
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
 import { doc, deleteDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 
 const game = new URL(import.meta.url).searchParams.get("game") || "game";
@@ -24,11 +24,11 @@ const gameNames = {
   ironcrown: "Ironcrown"
 };
 const displayGame = gameNames[game] || "Game";
-const consentKey = "makkapakkaPresenceConsent";
+const optOutKey = "makkapakkaPresenceOptOut";
 let account = null;
+let auth = null;
 let activeUid = null;
 let heartbeat = null;
-let presenceRef = null;
 
 const style = document.createElement("style");
 style.textContent = `
@@ -37,7 +37,7 @@ style.textContent = `
     z-index: 100000;
     right: 14px;
     bottom: 14px;
-    width: min(330px, calc(100vw - 28px));
+    width: min(340px, calc(100vw - 28px));
     padding: 13px 15px;
     border: 1px solid #cbd8e8;
     border-radius: 12px;
@@ -49,10 +49,9 @@ style.textContent = `
   #mp-presence strong { display:block; margin-bottom:4px; color:#1769e0; }
   #mp-presence p { margin:0 0 9px; color:#53657a; }
   #mp-presence button {
-    border:0; border-radius:7px; padding:8px 11px; margin:0 7px 0 0;
-    background:#1769e0; color:white; font-weight:700; cursor:pointer;
+    border:0; border-radius:7px; padding:8px 11px;
+    background:#e8f1ff; color:#1769e0; font-weight:700; cursor:pointer;
   }
-  #mp-presence button.secondary { background:#e8f1ff; color:#1769e0; }
   #mp-presence .mp-error { color:#b42318; }
   @media (max-width: 520px) {
     #mp-presence { right:10px; bottom:10px; width:calc(100vw - 20px); }
@@ -65,20 +64,19 @@ widget.id = "mp-presence";
 widget.setAttribute("aria-live", "polite");
 document.body.appendChild(widget);
 
-function render(message, actions = [], isError = false) {
+function show(message, buttonLabel, onClick, error = false) {
   widget.replaceChildren();
   const title = document.createElement("strong");
   title.textContent = "Live player count";
   const text = document.createElement("p");
   text.textContent = message;
-  if (isError) text.className = "mp-error";
+  if (error) text.className = "mp-error";
   widget.append(title, text);
-  for (const action of actions) {
+  if (buttonLabel && onClick) {
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = action.label;
-    if (action.secondary) button.className = "secondary";
-    button.addEventListener("click", action.onClick);
+    button.textContent = buttonLabel;
+    button.addEventListener("click", onClick);
     widget.appendChild(button);
   }
 }
@@ -100,7 +98,7 @@ async function removePresence(uid = activeUid) {
   }
 }
 
-async function writeHeartbeat(uid) {
+async function sendHeartbeat(uid) {
   if (!account?.db || !uid) return;
   await setDoc(doc(account.db, "presence", uid), {
     game,
@@ -108,89 +106,57 @@ async function writeHeartbeat(uid) {
   }, { merge: true });
 }
 
-async function startSharing(user) {
-  if (!user?.uid || !account?.db) return;
-  clearHeartbeat();
+function beginPresence(user) {
+  if (!user?.uid || !account?.db || localStorage.getItem(optOutKey) === "yes") return;
   activeUid = user.uid;
-  presenceRef = doc(account.db, "presence", activeUid);
-  try {
-    await writeHeartbeat(activeUid);
-    render(`Sharing your online status and ${displayGame} with the live count. Your screen, name, and email are not shown.`, [
-      { label: "Stop sharing", secondary: true, onClick: stopSharing }
-    ]);
-    heartbeat = setInterval(() => {
-      writeHeartbeat(activeUid).catch(error => {
-        console.warn("Live player heartbeat failed:", error);
-      });
-    }, 45000);
-  } catch (error) {
+  sendHeartbeat(activeUid).then(() => {
+    show(`Counted online in ${displayGame}. The site owner sees your game and active status only—no screen, name, or email.`, "Stop sharing", stopSharing);
+  }).catch(error => {
     console.error("Could not start live player presence:", error);
-    render("The live count is temporarily unavailable. Please try again later.", [], true);
-  }
+    show("The live player count is temporarily unavailable.", null, null, true);
+  });
+  clearHeartbeat();
+  heartbeat = setInterval(() => {
+    sendHeartbeat(activeUid).catch(error => {
+      console.warn("Live player heartbeat failed:", error);
+    });
+  }, 45000);
 }
 
 async function stopSharing() {
+  localStorage.setItem(optOutKey, "yes");
   const uid = activeUid;
-  localStorage.setItem(consentKey, "no");
   activeUid = null;
-  presenceRef = null;
   await removePresence(uid);
-  render("You are not included in the live player count.", [
-    { label: "Join the count", onClick: joinSharing }
-  ]);
+  show("You are no longer included in the live player count.", "Resume sharing", resumeSharing);
 }
 
-async function joinSharing() {
-  localStorage.setItem(consentKey, "yes");
-  const user = account?.auth?.currentUser;
-  if (user) {
-    await startSharing(user);
-    return;
+async function resumeSharing() {
+  localStorage.removeItem(optOutKey);
+  if (auth?.currentUser) {
+    beginPresence(auth.currentUser);
+  } else {
+    show("Reconnecting to the live player count…", null, null);
+    try {
+      await signInAnonymously(auth);
+    } catch (error) {
+      show("Could not reconnect to the live player count.", null, null, true);
+    }
   }
-  render("Sign in with Google to join the live player count.", [
-    { label: "Sign in with Google", onClick: async () => {
-      try {
-        await account.signInWithGoogle();
-      } catch (error) {
-        render("Google sign-in failed. Please try again.", [], true);
-      }
-    } },
-    { label: "Not now", secondary: true, onClick: () => {
-      localStorage.setItem(consentKey, "no");
-      render("You are not included in the live player count.", [
-        { label: "Join the count", onClick: joinSharing }
-      ]);
-    } }
-  ]);
 }
 
 function handleAuth(user) {
   if (!user) {
-    const oldUid = activeUid;
     activeUid = null;
-    presenceRef = null;
     clearHeartbeat();
-    if (oldUid) removePresence(oldUid);
-    render("Sign in with Google and choose to join if you want to appear in the live player count.", [
-      { label: "Sign in with Google", onClick: joinSharing }
-    ]);
+    show("Connecting to the anonymous live player count…", null, null);
     return;
   }
-
-  if (localStorage.getItem(consentKey) === "yes") {
-    startSharing(user);
+  if (localStorage.getItem(optOutKey) === "yes") {
+    show("You are not included in the live player count.", "Resume sharing", resumeSharing);
     return;
   }
-
-  render("Share only your game and online status with the live count. No screen, name, or email is shown.", [
-    { label: "Join the count", onClick: joinSharing },
-    { label: "Not now", secondary: true, onClick: () => {
-      localStorage.setItem(consentKey, "no");
-      render("You are not included in the live player count.", [
-        { label: "Join the count", onClick: joinSharing }
-      ]);
-    } }
-  ]);
+  beginPresence(user);
 }
 
 window.addEventListener("pagehide", () => {
@@ -205,17 +171,23 @@ try {
   await import("https://makkapakka-7788.github.io/makkapakka/flashaccount.js");
   account = window.FlashAccount;
   if (!account) throw new Error("FlashAccount did not initialize.");
-  window.addEventListener("flashaccount-auth", event => {
-    handleAuth(event.detail);
+  auth = account.auth;
+
+  onAuthStateChanged(auth, user => {
+    if (!user) {
+      if (localStorage.getItem(optOutKey) === "yes") {
+        show("You are not included in the live player count.", "Resume sharing", resumeSharing);
+      } else {
+        signInAnonymously(auth).catch(error => {
+          console.error("Anonymous presence sign-in failed:", error);
+          show("The live player count is temporarily unavailable.", null, null, true);
+        });
+      }
+      return;
+    }
+    handleAuth(user);
   });
-  if (account.auth.currentUser) {
-    handleAuth(account.auth.currentUser);
-  } else {
-    render("Sign in with Google and choose to join if you want to appear in the live player count.", [
-      { label: "Sign in with Google", onClick: joinSharing }
-    ]);
-  }
 } catch (error) {
   console.error("Live player count could not initialize:", error);
-  render("The live player count is temporarily unavailable.", [], true);
+  show("The live player count is temporarily unavailable.", null, null, true);
 }
