@@ -495,7 +495,7 @@ start.disabled=!modeUnlocked(modeData.indexOf(chosen));
 function makeTowerCard(t,label,onClick){
 const card=document.createElement("div");card.className="lobby-card"+(lobbyTab==="loadout"?" loadout-card":"")+(loadout.includes(t.name)?" selected":"");
 const detection=hiddenDetectionLevel(t);
-const details=(t.farm?"Earns $20/sec at level 1":t.flying?(t.name==="Pursuit"?"Air defence · Orbit + vertical waves":"Air defence · Figure-eight flight"):"Damage "+t.damage+" · Range "+t.range)+" · "+(detection?"Hidden detection available":"No hidden detection");
+const details=(t.farm?"Earns $20/sec at level 1":t.flying?(t.name==="Pursuit"?"Air defence · Orbit + vertical waves":"Air defence · Figure-eight flight"):"Damage "+t.damage+" · Range "+t.range)+" · "+(detection?"Hidden detection available at level "+detection:"No hidden detection");
 card.innerHTML='<div class="tower-glyph" style="--tower-color:'+glyphColor(t)+'"><i></i></div><div><h3>'+t.name+'</h3><p>'+details+'</p></div><button>'+label+'</button>';
 card.querySelector("button").onclick=onClick;return card;
 }
@@ -755,6 +755,11 @@ ctx.beginPath();ctx.arc(0,-size*.48,size*.105,0,Math.PI*2);ctx.fill();
 ctx.restore();
 }
 if(level>=2){ctx.beginPath();ctx.strokeStyle="#f1ce62";ctx.lineWidth=2.5*camera.zoom;ctx.arc(0,0,size*.57,0,Math.PI*2);ctx.stroke();}
+if(t.upgradeFlash>0){
+const pulse=1+Math.sin(gameTime/45)*.12;
+ctx.beginPath();ctx.strokeStyle="rgba(255,232,120,"+Math.min(1,t.upgradeFlash)+")";ctx.lineWidth=4*camera.zoom;
+ctx.arc(0,0,size*.72*pulse,0,Math.PI*2);ctx.stroke();
+}
 if(level>=3){ctx.fillStyle="#fff0a8";ctx.beginPath();ctx.moveTo(0,-size*.2);ctx.lineTo(size*.18,0);ctx.lineTo(0,size*.2);ctx.lineTo(-size*.18,0);ctx.closePath();ctx.fill();}
 if(level>=4){ctx.fillStyle=t.type.color;ctx.fillRect(-size*.4,-size*.84,size*.12,size*.35);ctx.fillRect(size*.28,-size*.84,size*.12,size*.35);}
 if(level>=5){ctx.fillStyle="#fff0a8";ctx.beginPath();ctx.moveTo(0,-size*.78);ctx.lineTo(size*.12,-size*.6);ctx.lineTo(size*.3,-size*.58);ctx.lineTo(size*.16,-size*.42);ctx.lineTo(size*.2,-size*.22);ctx.lineTo(0,-size*.32);ctx.lineTo(-size*.2,-size*.22);ctx.lineTo(-size*.16,-size*.42);ctx.lineTo(-size*.3,-size*.58);ctx.lineTo(-size*.12,-size*.6);ctx.closePath();ctx.fill();}
@@ -1250,10 +1255,13 @@ if(!selectedTower)return;
 
 if(selectedTower.level>=5)return;
 const cost=upgradeCost(selectedTower);
-if(money<cost)return;
+if(money<cost){const status=document.getElementById("buildStatus");if(status)status.textContent="Need $"+cost+" to upgrade "+selectedTower.type.name+".";return;}
 
 money-=cost;
 selectedTower.level++;
+selectedTower.upgradeFlash=1.5;
+const status=document.getElementById("buildStatus");
+if(status)status.textContent=selectedTower.type.name+" upgraded to level "+selectedTower.level+"!";
 updateUI();
 updateInfo();
 saveGame();
@@ -1567,6 +1575,7 @@ enemies.splice(i,1);
 
 function updateTowers(dt){
 for(const t of towers){
+if(t.upgradeFlash>0)t.upgradeFlash=Math.max(0,t.upgradeFlash-dt/1000);
 const pos=towerPosition(t);
 if(t.type.farm){t.cooldown-=dt;if(t.cooldown<=0){money+=farmIncome(t);t.cooldown=1000;}continue;}
 if(t.type.flying){t.x=pos.x;t.y=pos.y;}
