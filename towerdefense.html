@@ -957,9 +957,21 @@ ctx.fillRect(p.x-7*camera.zoom,p.y-7*camera.zoom,14*camera.zoom,14*camera.zoom);
 }
 }
 
+function hiddenDetectionLevel(type){
+const levels={Scout:1,King:1,Sniper:3,Tesla:3,Void:4,Crystal:4,Guardian:4};
+return levels[type.name]||0;
+}
+
 function towerDetectsHidden(t){
-if(t.type.name==="Scout")return t.level>=4;
-return ["Sniper","Tesla","Crystal","Guardian","King"].includes(t.type.name);
+const level=hiddenDetectionLevel(t.type);
+return level>0&&t.level>=level;
+}
+
+function hiddenDetectionLabel(type,level=1){
+const required=hiddenDetectionLevel(type);
+if(!required)return "Hidden detection: NONE";
+if(level>=required)return "Hidden detection: YES";
+return "Hidden detection: LEVEL "+required;
 }
 
 function isEnemyDetected(e){
@@ -1210,7 +1222,7 @@ const upgrade=document.getElementById("upgradeBtn"),targetButton=document.getEle
 if(selectedBuild!==null){
 const type=towerTypes[selectedBuild],freeScout=type.name==="Scout"&&towers.length===0&&wave===1;
 document.getElementById("infoTitle").textContent="PLACE "+type.name.toUpperCase();
-document.getElementById("infoBody").innerHTML="Click an open tile beside the route to place this tower.<br>Cost: "+(freeScout?"FREE":"$"+type.cost)+"<br>Current cash: $"+Math.floor(money);
+document.getElementById("infoBody").innerHTML="Click an open tile beside the route to place this tower.<br>Cost: "+(freeScout?"FREE":"$"+type.cost)+"<br>Current cash: $"+Math.floor(money)+"<br><strong>"+hiddenDetectionLabel(type,1)+"</strong>"+(hiddenDetectionLevel(type)?"<br>Detection unlocks at tower level "+hiddenDetectionLevel(type)+".":"<br>This tower can never reveal hidden enemies.");
 if(upgrade){upgrade.disabled=true;upgrade.textContent="UPGRADE";}
 if(targetButton)targetButton.disabled=true;return;
 }
@@ -1227,7 +1239,7 @@ const nextStats=maxed?s:towerStats({...t,level:nextLevel});
 document.getElementById("infoTitle").textContent=t.type.name+" · LEVEL "+t.level+"/5";
 const preview=maxed?'<div class="upgrade-preview-copy"><strong>MAX LEVEL · LEGEND</strong><br>This tower has reached its final form.</div>':
 '<div class="upgrade-preview"><div class="upgrade-shape level-'+nextLevel+'" style="--tower-color:'+t.type.color+'"><i></i><b></b></div><div class="upgrade-preview-copy"><strong>UPGRADE TO LEVEL '+nextLevel+' · '+tierNames[nextLevel-1].toUpperCase()+'</strong><br>Damage '+Math.floor(s.damage)+' → '+Math.floor(nextStats.damage)+'<br>Range '+Math.floor(s.range)+' → '+Math.floor(nextStats.range)+'<br>Fire rate '+Math.floor(s.rate)+' → '+Math.floor(nextStats.rate)+' ms</div></div>';
-document.getElementById("infoBody").innerHTML="Damage: "+Math.floor(s.damage)+"<br>Range: "+Math.floor(s.range)+" · RADIUS SHOWN ON MAP<br>Fire rate: "+Math.floor(s.rate)+" ms<br>Kills: "+t.kills+"<br>Target: "+(t.targetMode||"FIRST")+"<br>"+(maxed?"":("Upgrade cost: $"+upgradeCost(t)))+preview;
+document.getElementById("infoBody").innerHTML="Damage: "+Math.floor(s.damage)+"<br>Range: "+Math.floor(s.range)+" · RADIUS SHOWN ON MAP<br>Fire rate: "+Math.floor(s.rate)+" ms<br>"+hiddenDetectionLabel(t.type,t.level)+"<br>Kills: "+t.kills+"<br>Target: "+(t.targetMode||"FIRST")+"<br>"+(maxed?"":("Upgrade cost: $"+upgradeCost(t)))+preview;
 if(upgrade){upgrade.disabled=maxed||money<upgradeCost(t);upgrade.textContent=maxed?"MAX LEVEL":"UPGRADE → LV "+nextLevel+" · $"+upgradeCost(t);}
 if(targetButton){targetButton.disabled=false;targetButton.textContent="TARGET: "+(t.targetMode||"FIRST");}
 }
