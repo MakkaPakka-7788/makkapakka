@@ -451,10 +451,10 @@ if(!equipped.length)content.innerHTML='<div class="loadout-empty">No towers equi
 equipped.forEach(t=>content.appendChild(makeTowerCard(t,"EQUIPPED",()=>{})));
 }else if(lobbyTab==="towers"){
 title.textContent="TOWER SHOP";sub.textContent="Buy new cannons, then add them to your loadout.";
-sideTitle.textContent="TOWER COLLECTION";sideCopy.textContent="Tower purchases are permanent and saved on this device. You can equip up to five towers.";
+sideTitle.textContent="TOWER COLLECTION";sideCopy.textContent="Cash buys most towers. Clear the special hard modes for gems and buy the Accelerator for 150 gems.";
 towerTypes.forEach(t=>{
 const owned=ownedTowers.includes(t.name), equipped=loadout.includes(t.name);
-const label=owned?(equipped?(t.name==="Scout"?"STARTER":"EQUIPPED"):"EQUIP"):(t.gemCost?"BUY "+t.gemCost+" GEMS":"BUY $"+towerPrice(t));
+const label=owned?(equipped?(t.name==="Scout"?"STARTER":"EQUIPPED"):"EQUIP"):(t.gemCost?(gems>=t.gemCost?"BUY "+t.gemCost+" GEMS":t.gemCost+" GEMS NEEDED"):"BUY $"+towerPrice(t));
 content.appendChild(makeTowerCard(t,label,()=>{
 if(equipped&&t.name==="Scout")return;
 if(!owned){
