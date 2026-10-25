@@ -208,6 +208,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .lobby-top{height:78px;padding:0 34px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #242424;background:#090909d9}
 .brand{font-size:17px;letter-spacing:.22em;font-weight:800}.brand span{color:#a8d96f}
 .bank-pill{border:1px solid #343434;background:#121212;border-radius:999px;padding:11px 18px;color:#b9e986;font-weight:800}
+.currency-wrap{display:flex;gap:10px;align-items:center}.gem-pill{border:1px solid #41405b;background:#171624;border-radius:999px;padding:11px 16px;color:#c8a8ff;font-weight:800}
 .lobby-layout{flex:1;min-height:0;display:grid;grid-template-columns:205px minmax(420px,1fr) 240px;gap:28px;padding:30px 34px}
 .lobby-nav{display:flex;flex-direction:column;gap:10px;padding-top:18px}
 .lobby-nav button,.lobby-action{border:1px solid #292929;background:#101010;color:#aaa;border-radius:10px;padding:16px;text-align:left;font-weight:700;letter-spacing:.06em;font-size:13px}
@@ -310,7 +311,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 
 
 <div id="lobby">
-  <header class="lobby-top"><div class="brand">KINGDOM <span>WAR</span></div><div id="bankDisplay" class="bank-pill">$1,500</div></header>
+  <header class="lobby-top"><div class="brand">KINGDOM <span>WAR</span></div><div class="currency-wrap"><div id="bankDisplay" class="bank-pill">$0</div><div id="gemDisplay" class="gem-pill">💎 0</div></div></header>
   <div class="lobby-layout">
     <nav class="lobby-nav">
       <button class="active" data-tab="loadout">YOUR LOADOUT</button>
@@ -396,6 +397,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 
 <script>
 let bankCash=Number(localStorage.getItem("kingdomWarBank")||0);
+let gems=Number(localStorage.getItem("kingdomWarGems")||0);
 const defaultOwned=["Scout"];
 let ownedTowers=JSON.parse(localStorage.getItem("kingdomWarOwned")||"null")||defaultOwned.slice();
 let loadout=JSON.parse(localStorage.getItem("kingdomWarLoadout")||"null")||defaultOwned.slice();
@@ -404,28 +406,38 @@ if(!loadout.includes("Scout")){loadout=[...new Set(["Scout",...loadout])].slice(
 if(!localStorage.getItem("kingdomWarStarterSet")){loadout=["Scout"];localStorage.setItem("kingdomWarStarterSet","scout");}
 const modeData=[
 {name:"Easy",waves:20,scale:.72,reward:450,waveBonus:100,waveStep:15,unlocked:true},
-{name:"Casual",waves:25,scale:1,reward:700,waveBonus:125,waveStep:20},
-{name:"Intermediate",waves:30,scale:1.25,reward:1050,waveBonus:150,waveStep:25},
-{name:"Molten",waves:35,scale:1.55,reward:1550,waveBonus:175,waveStep:30},
-{name:"Fallen",waves:40,scale:1.9,reward:2300,waveBonus:200,waveStep:35},
-{name:"Hardcore",waves:50,scale:2.35,reward:3600,waveBonus:225,waveStep:40}
+{name:"Casual",waves:25,scale:1,reward:550,waveBonus:125,waveStep:20},
+{name:"Intermediate",waves:30,scale:1.25,reward:650,waveBonus:150,waveStep:25},
+{name:"Molten",waves:35,scale:1.55,reward:750,waveBonus:175,waveStep:30},
+{name:"Fallen",waves:40,scale:1.9,reward:900,waveBonus:200,waveStep:35},
+{name:"Hardcore",waves:50,scale:2.35,reward:1000,waveBonus:225,waveStep:40},
+{name:"Nightmare",waves:60,scale:2.9,reward:1250,gemReward:80,waveBonus:300,waveStep:50},
+{name:"Void",waves:75,scale:3.6,reward:1500,gemReward:200,waveBonus:400,waveStep:60}
 ];
 let clearedModes=JSON.parse(localStorage.getItem("kingdomWarCleared")||"[]");
 let selectedMode="Easy";
 let activeMode=null;
 let savedRunMode=null;
+let runSettled=false;
 let lobbyTab="loadout";
 function persistProgress(){
 localStorage.setItem("kingdomWarBank",String(bankCash));
 localStorage.setItem("kingdomWarOwned",JSON.stringify(ownedTowers));
 localStorage.setItem("kingdomWarLoadout",JSON.stringify(loadout));
 localStorage.setItem("kingdomWarCleared",JSON.stringify(clearedModes));
+localStorage.setItem("kingdomWarGems",String(gems));
 }
 function modeUnlocked(index){return index===0||clearedModes.includes(modeData[index-1].name);}
 function towerPrice(type){return Math.max(250,Math.round(type.cost*3.5));}
+function modePayout(mode,cleared){
+const waves=Math.max(0,Math.min(mode.waves,cleared));
+const ratio=waves/mode.waves;
+return{cash:waves?Math.max(waves,Math.floor(mode.reward*ratio*ratio)):0,gems:mode.gemReward&&waves?Math.max(1,Math.floor(mode.gemReward*ratio*ratio)):0,waves};
+}
 function glyphColor(type){return type.color;}
 function renderLobby(){
 document.getElementById("bankDisplay").textContent="$"+bankCash.toLocaleString();
+document.getElementById("gemDisplay").textContent="💎 "+gems.toLocaleString();
 const title=document.getElementById("lobbyTitle"), sub=document.getElementById("lobbySubtitle"), content=document.getElementById("lobbyContent");
 const sideTitle=document.getElementById("sideTitle"), sideCopy=document.getElementById("sideCopy");
 document.querySelectorAll(".lobby-nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===lobbyTab));
@@ -442,7 +454,7 @@ title.textContent="TOWER SHOP";sub.textContent="Buy new cannons, then add them t
 sideTitle.textContent="TOWER COLLECTION";sideCopy.textContent="Tower purchases are permanent and saved on this device. You can equip up to five towers.";
 towerTypes.forEach(t=>{
 const owned=ownedTowers.includes(t.name), equipped=loadout.includes(t.name);
-const label=owned?(equipped?(t.name==="Scout"?"STARTER":"EQUIPPED"):"EQUIP"):("BUY $"+towerPrice(t));
+(equipped?(t.name==="Scout"?"STARTER":"EQUIPPED"):"EQUIP"):("BUY $"+towerPrice(t));
 content.appendChild(makeTowerCard(t,label,()=>{
 if(equipped&&t.name==="Scout")return;
 if(!owned){const price=towerPrice(t);if(bankCash<price)return;bankCash-=price;ownedTowers.push(t.name);if(loadout.length<5)loadout.push(t.name);}
@@ -457,7 +469,7 @@ sideTitle.textContent="WIN TO ADVANCE";sideCopy.textContent="Clear every wave to
 modeData.forEach((m,i)=>{
 const unlocked=modeUnlocked(i), cleared=clearedModes.includes(m.name);
 const card=document.createElement("div");card.className="lobby-card"+(m.name===selectedMode?" selected":"")+(unlocked?"":" locked");
-card.innerHTML='<div class="mode-chip">'+(cleared?"CLEARED":(unlocked?"UNLOCKED":"LOCKED"))+'</div><div><h3>'+m.name+'</h3><p>'+m.waves+' waves · '+m.reward.toLocaleString()+' reward</p></div><button '+(unlocked?"":"disabled")+'>'+(m.name===selectedMode?"SELECTED":"SELECT MODE")+'</button>';
+card.innerHTML='<div class="mode-chip">'+(cleared?"CLEARED":(unlocked?(m.gemReward?"GEM MODE":"UNLOCKED"):"LOCKED"))+'</div><div><h3>'+m.name+'</h3><p>'+m.waves+' waves · 
 card.querySelector("button").onclick=()=>{if(!unlocked)return;selectedMode=m.name;renderLobby();};
 content.appendChild(card);
 });
@@ -488,18 +500,25 @@ activeMode=null;document.getElementById("lobby").style.display="flex";
 document.getElementById("stats").style.display="none";document.getElementById("gameWrap").style.display="none";
 lobbyTab="loadout";renderLobby();
 }
+function settleRun(won){
+if(!activeMode||runSettled)return null;
+runSettled=true;gameOver=true;
+const data=modeData.find(m=>m.name===activeMode)||modeData[0];
+const payout=modePayout(data,won?data.waves:wave-1);
+bankCash+=payout.cash;gems+=payout.gems;
+if(won&&!clearedModes.includes(data.name))clearedModes.push(data.name);
+localStorage.removeItem("kingdomWarSave");savedRunMode=null;
+persistProgress();
+return{...payout,mode:data.name};
+}
 function completeMode(){
 if(!activeMode||gameOver)return;
-gameOver=true;
-const completed=activeMode;
-const data=modeData.find(m=>m.name===completed);
-bankCash+=data.reward;
-if(!clearedModes.includes(completed))clearedModes.push(completed);
-localStorage.removeItem("kingdomWarSave");savedRunMode=null;
-persistProgress();renderLobby();
+const completed=activeMode,data=modeData.find(m=>m.name===completed);
+const payout=settleRun(true);
+renderLobby();
 document.getElementById("overlay").style.display="flex";
 document.getElementById("overlayTitle").textContent=completed.toUpperCase()+" CLEARED!";
-document.getElementById("overlayText").textContent="All "+data.waves+" waves defeated. +$"+data.reward+" added to your tower fund.";
+document.getElementById("overlayText").textContent="All "+data.waves+" waves defeated. +$"+(payout?.cash||0)+(payout?.gems?" and 💎 "+payout.gems:"")+" added to your tower fund.";
 document.getElementById("retryBtn").textContent="PLAY AGAIN";
 document.getElementById("homeBtn").textContent="LOBBY";
 }
@@ -576,7 +595,8 @@ const towerTypes=[
 {name:"Meteor",cost:950,damage:250,range:290,rate:2600,color:"#ff452e",unlock:7},
 {name:"Crystal",cost:1100,damage:70,range:240,rate:500,color:"#e8aaff",unlock:7},
 {name:"Guardian",cost:1400,damage:120,range:200,rate:700,color:"#59d98e",unlock:8},
-{name:"King",cost:2000,damage:300,range:350,rate:1800,color:"#ffd700",unlock:9}
+{name:"King",cost:2000,damage:300,range:350,rate:1800,color:"#ffd700",unlock:9},
+{name:"Accelerator",cost:1200,damage:45,range:220,rate:140,color:"#82eaff",unlock:1,gemCost:150}
 ];
 
 const roadPoints=[
@@ -727,7 +747,1317 @@ const damageScale=[1,1.35,1.85,2.55,3.5][level-1];
 const rangeScale=[1,1.05,1.1,1.16,1.23][level-1];
 const rateScale=[1,.94,.87,.79,.7][level-1];
 const buff=towerBuff(t);
-return{damage:t.type.damage*damageScale*buff,range:t.type.range*rangeScale,rate:Math.max(80,t.type.rate*rateScale/buff)};
+const acceleratorBonus=t.type.name==="Accelerator"?1.35:1;
+return{damage:t.type.damage*damageScale*buff*acceleratorBonus,range:t.type.range*rangeScale,rate:Math.max(80,t.type.rate*rateScale/buff)};
+}
+
+function drawGrid(){
+ctx.fillStyle="#161616";
+ctx.fillRect(0,0,W,H);
+
+const startX=Math.floor(camera.x/grid)*grid-grid;
+const endX=camera.x+W/camera.zoom+grid;
+const startY=Math.floor(camera.y/grid)*grid-grid;
+const endY=camera.y+H/camera.zoom+grid;
+
+ctx.strokeStyle="rgba(255,255,255,.045)";
+ctx.lineWidth=1;
+
+for(let x=startX;x<endX;x+=grid){
+const a=worldToScreen(x,0);
+ctx.beginPath();
+ctx.moveTo(a.x,0);
+ctx.lineTo(a.x,H);
+ctx.stroke();
+}
+
+for(let y=startY;y<endY;y+=grid){
+const a=worldToScreen(0,y);
+ctx.beginPath();
+ctx.moveTo(0,a.y);
+ctx.lineTo(W,a.y);
+ctx.stroke();
+}
+}
+
+function drawTerrain(){
+for(const tile of terrainTiles){
+const p=worldToScreen(tile.x,tile.y);
+const s=grid*camera.zoom;
+const type=terrainTypes[tile.type];
+
+ctx.fillStyle=type.color;
+ctx.fillRect(p.x-s/2+1,p.y-s/2+1,s-2,s-2);
+
+ctx.strokeStyle="rgba(255,255,255,.15)";
+ctx.strokeRect(p.x-s/2+1,p.y-s/2+1,s-2,s-2);
+
+ctx.fillStyle="rgba(255,255,255,.15)";
+if(tile.type==="forest"){
+for(let i=-15;i<=15;i+=15){
+ctx.beginPath();
+ctx.arc(p.x+i*.6,p.y-5,5*camera.zoom,0,Math.PI*2);
+ctx.fill();
+}
+}else if(tile.type==="hills"){
+ctx.beginPath();
+ctx.moveTo(p.x-s*.35,p.y+s*.25);
+ctx.lineTo(p.x,p.y-s*.25);
+ctx.lineTo(p.x+s*.35,p.y+s*.25);
+ctx.fill();
+}else if(tile.type==="crystal"){
+ctx.beginPath();
+ctx.moveTo(p.x,p.y-s*.3);
+ctx.lineTo(p.x+s*.12,p.y);
+ctx.lineTo(p.x,p.y+s*.3);
+ctx.lineTo(p.x-s*.12,p.y);
+ctx.closePath();
+ctx.fill();
+}else if(tile.type==="mountain"){
+ctx.beginPath();
+ctx.moveTo(p.x-s*.35,p.y+s*.3);
+ctx.lineTo(p.x-s*.05,p.y-s*.3);
+ctx.lineTo(p.x+s*.3,p.y+s*.3);
+ctx.fill();
+}else if(tile.type==="swamp"){
+ctx.beginPath();
+ctx.arc(p.x,p.y,8*camera.zoom,0,Math.PI*2);
+ctx.fill();
+}else if(tile.type==="ice"){
+ctx.beginPath();
+ctx.moveTo(p.x-s*.3,p.y);
+ctx.lineTo(p.x,p.y-s*.3);
+ctx.lineTo(p.x+s*.3,p.y);
+ctx.lineTo(p.x,p.y+s*.3);
+ctx.closePath();
+ctx.fill();
+}else if(tile.type==="desert"){
+ctx.fillRect(p.x-10*camera.zoom,p.y-2*camera.zoom,20*camera.zoom,4*camera.zoom);
+}else{
+ctx.beginPath();
+ctx.arc(p.x,p.y,3*camera.zoom,0,Math.PI*2);
+ctx.fill();
+}
+}
+}
+
+function drawRoads(){
+for(const r of roads){
+const p=worldToScreen(r.x,r.y);
+const s=grid*camera.zoom;
+ctx.fillStyle="#373737";
+ctx.fillRect(p.x-s/2,p.y-s/2,s,s);
+ctx.strokeStyle="#666";
+ctx.strokeRect(p.x-s/2,p.y-s/2,s,s);
+ctx.fillStyle="#bda94d";
+ctx.fillRect(p.x-s*.08,p.y-s*.5,s*.16,s);
+}
+}
+
+function drawPath(){
+ctx.strokeStyle="#555";
+ctx.lineWidth=grid*camera.zoom*.72;
+ctx.lineCap="round";
+ctx.beginPath();
+for(let i=0;i<roadPoints.length;i++){
+const p=worldToScreen(roadPoints[i].x,roadPoints[i].y);
+if(i===0)ctx.moveTo(p.x,p.y);
+else ctx.lineTo(p.x,p.y);
+}
+ctx.stroke();
+
+ctx.strokeStyle="#aaa";
+ctx.lineWidth=2;
+ctx.setLineDash([12,12]);
+ctx.beginPath();
+for(let i=0;i<roadPoints.length;i++){
+const p=worldToScreen(roadPoints[i].x,roadPoints[i].y);
+if(i===0)ctx.moveTo(p.x,p.y);
+else ctx.lineTo(p.x,p.y);
+}
+ctx.stroke();
+ctx.setLineDash([]);
+}
+
+function drawCastle(){
+const p=worldToScreen(250,475);
+const s=70*camera.zoom;
+
+ctx.fillStyle="#666";
+ctx.fillRect(p.x-s/2,p.y-s/2,s,s);
+
+ctx.fillStyle="#888";
+ctx.fillRect(p.x-s*.42,p.y-s*.65,s*.18,s*.35);
+ctx.fillRect(p.x+s*.24,p.y-s*.65,s*.18,s*.35);
+
+ctx.fillStyle="#222";
+ctx.fillRect(p.x-s*.12,p.y+s*.05,s*.24,s*.45);
+
+ctx.fillStyle="#c33";
+ctx.fillRect(p.x-s*.13,p.y-s*.78,s*.26,s*.13);
+}
+
+function drawEnemyBase(){
+const p=worldToScreen(1740,475);
+const s=70*camera.zoom;
+ctx.fillStyle="#4b2525";
+ctx.fillRect(p.x-s/2,p.y-s/2,s,s);
+ctx.fillStyle="#b33";
+ctx.fillRect(p.x-s*.15,p.y-s*.65,s*.3,s*.3);
+}
+
+function drawTowers(){
+for(const t of towers){
+const p=worldToScreen(t.x,t.y);
+const s=34*camera.zoom;
+const stats=towerStats(t);
+
+ctx.fillStyle=t.type.color;
+ctx.fillRect(p.x-s/2,p.y-s/2,s,s);
+
+ctx.strokeStyle="#111";
+ctx.lineWidth=3;
+ctx.strokeRect(p.x-s/2,p.y-s/2,s,s);
+
+ctx.fillStyle="#111";
+ctx.fillRect(p.x-3*camera.zoom,p.y-18*camera.zoom,6*camera.zoom,12*camera.zoom);
+
+if(selectedTower===t){
+ctx.beginPath();
+ctx.strokeStyle="rgba(255,255,255,.45)";
+ctx.lineWidth=2;
+ctx.arc(p.x,p.y,stats.range*camera.zoom,0,Math.PI*2);
+ctx.stroke();
+}
+
+ctx.fillStyle="#fff";
+ctx.font=`${10*camera.zoom}px Courier New`;
+ctx.textAlign="center";
+ctx.fillText(t.level,p.x,p.y+4*camera.zoom);
+}
+}
+
+function drawTroops(){
+for(const t of troops){
+const p=worldToScreen(t.x,t.y);
+ctx.fillStyle=t.type==="Knight"?"#ddd":t.type==="Archer"?"#7fc":"#aaa";
+ctx.fillRect(p.x-7*camera.zoom,p.y-7*camera.zoom,14*camera.zoom,14*camera.zoom);
+}
+}
+
+function drawEnemies(){
+for(const e of enemies){
+const p=worldToScreen(e.x,e.y),r=(e.boss?17:10)*camera.zoom;
+ctx.globalAlpha=e.hidden ? .55 : 1;
+ctx.fillStyle=e.color;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
+if(e.boss){ctx.strokeStyle="#fff0a8";ctx.lineWidth=2;ctx.stroke();}
+ctx.fillStyle="#222";ctx.fillRect(p.x-r,p.y-r-7*camera.zoom,r*2,4*camera.zoom);
+ctx.fillStyle=e.boss?"#ffd34d":"#4caf50";ctx.fillRect(p.x-r,p.y-r-7*camera.zoom,r*2*Math.max(0,e.hp/e.maxHp),4*camera.zoom);
+if(e.boss){ctx.globalAlpha=1;ctx.fillStyle="#ffe68b";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText("BOSS",p.x,p.y-r-12*camera.zoom);}
+ctx.globalAlpha=1;
+}
+}
+
+function drawProjectiles(){
+for(const p of projectiles){
+const a=worldToScreen(p.x,p.y);
+ctx.fillStyle=p.color||"#fff";
+ctx.beginPath();
+ctx.arc(a.x,a.y,3*camera.zoom,0,Math.PI*2);
+ctx.fill();
+}
+}
+
+function drawParticles(){
+for(const p of particles){
+const a=worldToScreen(p.x,p.y);
+ctx.globalAlpha=p.life;
+ctx.fillStyle=p.color;
+ctx.fillRect(a.x-2,a.y-2,4,4);
+ctx.globalAlpha=1;
+}
+}
+
+function draw(){
+drawGrid();
+drawTerrain();
+drawRoads();
+drawPath();
+drawCastle();
+drawEnemyBase();
+drawTowers();
+drawTroops();
+drawEnemies();
+drawProjectiles();
+drawParticles();
+
+if(selectedBuild!==null){
+const m=mouseWorld;
+if(m){
+const x=snap(m.x);
+const y=snap(m.y);
+const p=worldToScreen(x,y);
+ctx.strokeStyle="#fff";
+ctx.lineWidth=2;
+ctx.strokeRect(
+p.x-grid*camera.zoom/2,
+p.y-grid*camera.zoom/2,
+grid*camera.zoom,
+grid*camera.zoom
+);
+}
+}
+}
+
+let mouseWorld=null;
+
+canvas.addEventListener("pointerdown",e=>{
+dragging=true;
+dragMoved=false;
+lastMouse={x:e.clientX,y:e.clientY};
+canvas.classList.add("dragging");
+canvas.setPointerCapture(e.pointerId);
+});
+
+canvas.addEventListener("pointermove",e=>{
+const dx=e.clientX-lastMouse.x;
+const dy=e.clientY-lastMouse.y;
+
+if(dragging){
+if(Math.abs(dx)+Math.abs(dy)>8)dragMoved=true;
+camera.x-=dx/camera.zoom;
+camera.y-=dy/camera.zoom;
+camera.x=Math.max(0,Math.min(world.w-W/camera.zoom,camera.x));
+camera.y=Math.max(0,Math.min(world.h-H/camera.zoom,camera.y));
+lastMouse={x:e.clientX,y:e.clientY};
+}
+
+const point=canvasPoint(e);mouseWorld=screenToWorld(point.x,point.y);
+});
+
+canvas.addEventListener("pointerup",e=>{
+dragging=false;
+canvas.classList.remove("dragging");
+
+if(!dragMoved){const point=canvasPoint(e);handleMapClick(point.x,point.y);}
+});
+
+canvas.addEventListener("pointerleave",()=>{
+mouseWorld=null;
+});
+
+canvas.addEventListener("wheel",e=>{
+e.preventDefault();
+
+const before=screenToWorld(e.offsetX,e.offsetY);
+const factor=e.deltaY<0?1.12:.89;
+camera.zoom=Math.max(.35,Math.min(1.5,camera.zoom*factor));
+const after=screenToWorld(e.offsetX,e.offsetY);
+
+camera.x+=before.x-after.x;
+camera.y+=before.y-after.y;
+
+camera.x=Math.max(0,Math.min(world.w-W/camera.zoom,camera.x));
+camera.y=Math.max(0,Math.min(world.h-H/camera.zoom,camera.y));
+},{passive:false});
+
+function handleMapClick(sx,sy){
+const p=screenToWorld(sx,sy);
+const x=snap(p.x);
+const y=snap(p.y);
+
+if(x<25||x>world.w-25||y<25||y>world.h-25)return;
+
+if(roadMode){
+buildRoad(x,y);
+return;
+}
+
+if(selectedTerrain){
+buildTerrain(x,y,selectedTerrain);
+return;
+}
+
+if(selectedBuild!==null){
+buildTower(x,y,selectedBuild);
+return;
+}
+
+const t=towerAt(x,y);
+if(t){
+selectedTower=t;
+selectedBuild=null;
+selectedTerrain=null;
+updateInfo();
+return;
+}
+
+selectedTower=null;
+updateInfo();
+}
+
+function buildRoad(x,y){
+if(roadAt(x,y))return;
+if(towerAt(x,y))return;
+if(terrainAt(x,y))return;
+
+if(money<20)return;
+
+money-=20;
+roads.push({x,y});
+updateUI();
+}
+
+function buildTerrain(x,y,type){
+if(terrainAt(x,y)||roadAt(x,y)||towerAt(x,y))return;
+if(money<150)return;
+
+money-=150;
+terrainTiles.push({x,y,type});
+updateUI();
+saveGame();
+}
+
+function buildTower(x,y,index){
+const type=towerTypes[index];
+const status=document.getElementById("buildStatus");
+const fail=message=>{if(status)status.textContent=message;};
+if(!type||!loadout.includes(type.name)){fail("That tower is not in your loadout. Equip it from the lobby first.");return;}
+if(type.unlock>wave){fail(type.name+" unlocks at wave "+type.unlock+".");return;}
+if(towerAt(x,y)){fail("That tile is occupied. Choose an empty tile.");return;}
+if(roadAt(x,y)){fail("Towers cannot go on a built road. Choose a clear tile beside it.");return;}
+if(terrainAt(x,y)){fail("That tile has terrain on it. Choose a clear tile.");return;}
+if(x<100&&y>400&&y<550){fail("That tile is inside the castle keep. Place towers beside the route.");return;}
+if(towers.length>=40){fail("You have reached the 40 tower limit.");return;}
+const placementCost=type.name==="Scout"&&towers.length===0&&wave===1?0:type.cost;
+if(money<placementCost){fail("Need $"+placementCost+" for "+type.name+". The first Scout is free.");return;}
+
+money-=placementCost;
+
+towers.push({
+x,
+y,
+type,
+level:1,
+cooldown:0,
+kills:0,
+targetMode:"FIRST",
+angle:0
+});
+
+selectedTower=towers[towers.length-1];
+selectedBuild=null;
+document.querySelectorAll("#towerbar button").forEach(button=>button.classList.remove("build-selected"));
+if(status)status.textContent=type.name+" placed. Click it to inspect or upgrade, or select another tower.";
+updateUI();
+updateInfo();
+saveGame();
+}
+
+function upgradeTower(){
+if(!selectedTower)return;
+
+if(selectedTower.level>=5)return;
+const cost=upgradeCost(selectedTower);
+if(money<cost)return;
+
+money-=cost;
+selectedTower.level++;
+updateUI();
+updateInfo();
+saveGame();
+}
+
+function sellTower(){
+if(!selectedTower)return;
+
+const value=Math.floor(selectedTower.type.cost*(.65+.2*(selectedTower.level-1)));
+money+=value;
+
+towers=towers.filter(t=>t!==selectedTower);
+selectedTower=null;
+
+updateUI();
+updateInfo();
+saveGame();
+}
+
+function updateInfo(){
+const upgrade=document.getElementById("upgradeBtn"),targetButton=document.getElementById("targetBtn");
+if(selectedBuild!==null){
+const type=towerTypes[selectedBuild],freeScout=type.name==="Scout"&&towers.length===0&&wave===1;
+document.getElementById("infoTitle").textContent="PLACE "+type.name.toUpperCase();
+document.getElementById("infoBody").innerHTML="Click an open tile beside the route to place this tower.<br>Cost: "+(freeScout?"FREE":"$"+type.cost)+"<br>Current cash: $"+Math.floor(money);
+if(upgrade){upgrade.disabled=true;upgrade.textContent="UPGRADE";}
+if(targetButton)targetButton.disabled=true;return;
+}
+if(!selectedTower){
+document.getElementById("infoTitle").textContent="KINGDOM WAR";
+document.getElementById("infoBody").innerHTML="Select a tower below, then click an open tile beside the route. Select a placed tower to view its radius and upgrades.";
+if(upgrade){upgrade.disabled=true;upgrade.textContent="UPGRADE";}
+if(targetButton)targetButton.disabled=true;return;
+}
+const t=selectedTower,s=towerStats(t),maxed=t.level>=5;
+const tierNames=["Recruit","Veteran","Elite","Champion","Legend"];
+const nextLevel=Math.min(5,t.level+1);
+const nextStats=maxed?s:towerStats({...t,level:nextLevel});
+document.getElementById("infoTitle").textContent=t.type.name+" · LEVEL "+t.level+"/5";
+const preview=maxed?'<div class="upgrade-preview-copy"><strong>MAX LEVEL · LEGEND</strong><br>This tower has reached its final form.</div>':
+'<div class="upgrade-preview"><div class="upgrade-shape level-'+nextLevel+'" style="--tower-color:'+t.type.color+'"><i></i><b></b></div><div class="upgrade-preview-copy"><strong>UPGRADE TO LEVEL '+nextLevel+' · '+tierNames[nextLevel-1].toUpperCase()+'</strong><br>Damage '+Math.floor(s.damage)+' → '+Math.floor(nextStats.damage)+'<br>Range '+Math.floor(s.range)+' → '+Math.floor(nextStats.range)+'<br>Fire rate '+Math.floor(s.rate)+' → '+Math.floor(nextStats.rate)+' ms</div></div>';
+document.getElementById("infoBody").innerHTML="Damage: "+Math.floor(s.damage)+"<br>Range: "+Math.floor(s.range)+" · RADIUS SHOWN ON MAP<br>Fire rate: "+Math.floor(s.rate)+" ms<br>Kills: "+t.kills+"<br>Target: "+(t.targetMode||"FIRST")+"<br>"+(maxed?"":("Upgrade cost: $"+upgradeCost(t)))+preview;
+if(upgrade){upgrade.disabled=maxed||money<upgradeCost(t);upgrade.textContent=maxed?"MAX LEVEL":"UPGRADE → LV "+nextLevel+" · $"+upgradeCost(t);}
+if(targetButton){targetButton.disabled=false;targetButton.textContent="TARGET: "+(t.targetMode||"FIRST");}
+}
+
+function updateUI(){
+document.getElementById("money").textContent="$"+Math.floor(money);
+document.getElementById("wave").textContent="WAVE "+wave+" / "+((modeData.find(m=>m.name===activeMode)||modeData[0]).waves);
+document.getElementById("level").textContent="LEVEL "+Math.min(10,Math.floor(wave/2)+1);
+document.getElementById("kills").textContent="KILLS "+kills;
+document.getElementById("selectedText").textContent=
+"SELECT: "+(selectedTower?selectedTower.type.name:"NONE")+" · "+towers.length+"/40";
+
+document.getElementById("castleFill").style.width=
+Math.max(0,castleHP/1000*100)+"%";
+
+document.getElementById("castleText").textContent=
+"CASTLE "+Math.max(0,Math.floor(castleHP))+" / 1000";
+
+for(const [i,type] of towerTypes.entries()){
+const b=document.getElementById("tower"+i);
+if(!b)continue;
+if(type.unlock>wave||!loadout.includes(type.name))b.classList.add("locked");
+else b.classList.remove("locked");
+b.style.display=loadout.includes(type.name)?"flex":"none";
+b.classList.toggle("build-selected",selectedBuild===i);
+const costLabel=type.name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+type.cost;
+if(b.dataset.costLabel!==costLabel){
+b.dataset.costLabel=costLabel;
+b.innerHTML='<span class="tower-button-icon shape-'+(i%4)+'" style="--tower-color:'+type.color+'"><i></i></span><span>'+type.name+'<small>'+costLabel+'</small></span>';
+}
+}
+
+const skip=document.getElementById("skipWaveBtn");
+if(skip){skip.disabled=waveActive;skip.textContent=waveActive?"WAVE LIVE":"START / SKIP WAVE";}
+updateInfo();
+}
+
+for(let i=0;i<towerTypes.length;i++){
+const b=document.createElement("button");
+b.id="tower"+i;
+b.textContent=towerTypes[i].name+" $"+towerTypes[i].cost;
+b.onclick=()=>{
+if(towerTypes[i].unlock>wave||!loadout.includes(towerTypes[i].name))return;
+selectedBuild=i;
+selectedTerrain=null;
+selectedTower=null;
+roadMode=false;
+updateInfo();
+};
+document.getElementById("towerbar")?.appendChild(b);
+}
+
+const bar=document.getElementById("terrainBar");
+document.getElementById("towerInfo").appendChild(document.createElement("div"));
+const towerBar=document.createElement("div");
+towerBar.id="towerbar";
+towerBar.style.position="absolute";
+towerBar.style.left="10px";
+towerBar.style.bottom="165px";
+towerBar.style.background="#111";
+towerBar.style.border="2px solid #444";
+towerBar.style.padding="7px";
+towerBar.style.zIndex="5";
+towerBar.style.display="grid";
+towerBar.style.gridTemplateColumns="repeat(10,74px)";
+towerBar.style.maxWidth="calc(100vw - 20px)";
+towerBar.style.overflowX="auto";
+towerBar.style.gap="5px";
+document.getElementById("gameWrap").appendChild(towerBar);
+
+for(let i=0;i<towerTypes.length;i++){
+const b=document.createElement("button");
+b.id="tower"+i;
+b.innerHTML='<span class="tower-button-icon shape-'+(i%4)+'" style="--tower-color:'+towerTypes[i].color+'"><i></i></span><span>'+towerTypes[i].name+'<small>'+(towerTypes[i].name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+towerTypes[i].cost)+'</small></span>';
+b.onclick=()=>{
+if(towerTypes[i].unlock>wave)return;
+selectedBuild=i;
+selectedTerrain=null;
+selectedTower=null;
+roadMode=false;
+document.querySelectorAll("#towerbar button").forEach(button=>button.classList.remove("build-selected"));
+b.classList.add("build-selected");
+const freeScout=towerTypes[i].name==="Scout"&&towers.length===0&&wave===1;
+document.getElementById("buildStatus").textContent=towerTypes[i].name+" selected · "+(freeScout?"FREE":"$"+towerTypes[i].cost)+" · Click an open tile beside the route to place it.";
+updateInfo();
+};
+towerBar.appendChild(b);
+}
+
+document.querySelectorAll("[data-terrain]").forEach(b=>{
+b.onclick=()=>{
+selectedTerrain=b.dataset.terrain;
+selectedBuild=null;
+selectedTower=null;
+roadMode=false;
+updateInfo();
+};
+});
+
+document.getElementById("upgradeBtn").onclick=upgradeTower;
+document.getElementById("sellBtn").onclick=sellTower;
+
+const roadBuildButton=document.getElementById("roadBtn");
+if(roadBuildButton)roadBuildButton.onclick=()=>{
+roadMode=!roadMode;
+selectedBuild=null;
+selectedTerrain=null;
+selectedTower=null;
+updateInfo();
+};
+
+document.getElementById("pauseBtn").onclick=()=>{
+paused=!paused;
+document.getElementById("pauseBtn").textContent=paused?"RESUME":"PAUSE";
+};
+document.getElementById("skipWaveBtn").onclick=()=>{if(!waveActive&&!gameOver)waveTimer=0;};
+document.getElementById("targetBtn").onclick=()=>{
+if(!selectedTower)return;
+const modes=["FIRST","STRONGEST","CLOSEST"];
+selectedTower.targetMode=modes[(modes.indexOf(selectedTower.targetMode||"FIRST")+1)%modes.length];
+updateInfo();saveGame();
+};
+
+document.getElementById("terrainUpgrade").onclick=()=>{
+if(!selectedTerrain)return;
+
+const cost=zoneUpgradeCost(selectedTerrain);
+if(cost===Infinity||money<cost)return;
+
+money-=cost;
+terrainLevels[selectedTerrain]++;
+updateUI();
+saveGame();
+};
+
+document.getElementById("soldierBtn").onclick=()=>{
+if(money<120)return;
+money-=120;
+troops.push({
+type:"Soldier",
+x:300,
+y:520,
+hp:180,
+maxHp:180,
+damage:18,
+speed:28,
+cooldown:0
+});
+};
+
+document.getElementById("knightBtn").onclick=()=>{
+if(money<300)return;
+money-=300;
+troops.push({
+type:"Knight",
+x:300,
+y:520,
+hp:500,
+maxHp:500,
+damage:45,
+speed:22,
+cooldown:0
+});
+};
+
+document.getElementById("archerBtn").onclick=()=>{
+if(money<180)return;
+money-=180;
+troops.push({
+type:"Archer",
+x:300,
+y:520,
+hp:130,
+maxHp:130,
+damage:30,
+speed:25,
+cooldown:800
+});
+};
+
+function enemyForWave(){
+const selected=modeData.find(m=>m.name===activeMode)||modeData[0];
+const modeIndex=modeData.indexOf(selected),r=Math.random();
+let index=0;
+const shift=Math.floor(modeIndex/2);
+if(wave>=Math.max(2,3-shift)&&r>.58)index=1;
+if(wave>=Math.max(4,6-shift)&&r>.72)index=2;
+if(wave>=Math.max(7,9-shift)&&r>.84)index=3;
+if(wave>=Math.max(10,13-shift)&&r>.93)index=4;
+if(wave>=Math.max(14,17-shift)&&r>.975)index=5;
+const count=4+Math.floor(wave*1.25);
+const boss=wave===selected.waves&&nextEnemy===count-1;
+if(boss)index=5;
+const base=enemyTypes[index],modeScale=selected.scale;
+const hp=base.hp*(1+wave*.13)*modeScale*(boss?8:1);
+return{
+type:boss?"WAVE "+wave+" BOSS":base.name,
+x:1740,y:475,path:0,pathProgress:0,
+hp,maxHp:hp,
+speed:base.speed*(boss ? 0.72 : 1),
+damage:base.damage*(1+wave*.035)*modeScale*(boss?3:1),
+reward:Math.floor(base.reward*(1+wave*.045)*(boss?5:1)),
+color:boss?"#e2b84d":base.color,
+boss,hidden:!!base.hidden,armor:base.armor||0,slow:1,slowTimer:0,poison:0
+};
+}
+
+function spawnEnemy(){
+enemies.push(enemyForWave());
+}
+
+function updateEnemies(dt){
+for(let i=enemies.length-1;i>=0;i--){
+const e=enemies[i];
+
+if(e.poison>0){
+e.poison-=dt;
+e.hp-=dt*.02;
+}
+if(e.slowTimer>0){e.slowTimer-=dt;if(e.slowTimer<=0)e.slow=1;}
+
+const from=roadPoints[Math.min(e.path,roadPoints.length-1)];
+const target=roadPoints[Math.min(e.path+1,roadPoints.length-1)];
+
+if(!target){
+castleHP-=e.damage*dt/1000;
+enemies.splice(i,1);
+continue;
+}
+
+const dx=target.x-e.x;
+const dy=target.y-e.y;
+const d=Math.hypot(dx,dy);
+e.pathProgress=e.path+1-d/Math.max(1,dist(from,target));
+
+if(d<8){
+e.path++;
+
+if(e.path>=roadPoints.length-1){
+castleHP-=e.damage;
+enemies.splice(i,1);
+continue;
+}
+}else{
+const speed=e.speed*e.slow;
+e.x+=dx/d*speed*dt/1000;
+e.y+=dy/d*speed*dt/1000;
+}
+
+if(e.hp<=0){
+money+=e.reward;
+kills++;
+enemies.splice(i,1);
+}
+}
+}
+
+function updateTowers(dt){
+const hiddenDetectors=["Scout","Sniper","Tesla","Crystal","Guardian","King"];
+for(const t of towers){
+t.cooldown-=dt;if(t.cooldown>0)continue;
+const s=towerStats(t);let target=null,best=-Infinity;
+for(const e of enemies){
+const d=dist(t,e);
+if(d>s.range||(e.hidden&&!hiddenDetectors.includes(t.type.name)))continue;
+const mode=t.targetMode||"FIRST";
+const score=mode==="STRONGEST"?e.hp:mode==="CLOSEST"?-d:(e.pathProgress??e.path);
+if(score>best){best=score;target=e;}
+}
+if(!target)continue;
+t.angle=Math.atan2(target.y-t.y,target.x-t.x)+Math.PI/2;t.cooldown=s.rate;
+projectiles.push({x:t.x,y:t.y,target,owner:t,damage:s.damage,speed:650,splash:["Splash","Mortar","Catapult","Meteor"].includes(t.type.name)?45:0,slow:["Slow","Freeze","Ice"].includes(t.type.name)?0.55:1,poison:t.type.name==="Poison"?1000:0,color:t.type.color});
+}
+}
+
+function updateProjectiles(dt){
+for(let i=projectiles.length-1;i>=0;i--){
+const p=projectiles[i];
+
+if(!p.target||!enemies.includes(p.target)){
+projectiles.splice(i,1);
+continue;
+}
+
+const dx=p.target.x-p.x;
+const dy=p.target.y-p.y;
+const d=Math.hypot(dx,dy);
+
+if(d<12){
+hitEnemy(p);
+projectiles.splice(i,1);
+continue;
+}
+
+p.x+=dx/d*p.speed*dt/1000;
+p.y+=dy/d*p.speed*dt/1000;
+}
+}
+
+function hitEnemy(p){
+const e=p.target;e.hp-=p.damage*(1-(e.armor||0));
+if(p.slow){e.slow=Math.min(e.slow,p.slow);e.slowTimer=1500;}
+if(p.poison)e.poison=p.poison;
+if(p.owner)p.owner.kills++;
+for(const other of enemies){if(p.splash&&other!==e&&dist(e,other)<p.splash)other.hp-=p.damage*.35*(1-(other.armor||0));}
+for(let i=0;i<5;i++)particles.push({x:e.x+(Math.random()-.5)*15,y:e.y+(Math.random()-.5)*15,life:1,color:p.color});
+}
+
+function updateTroops(dt){
+for(let i=troops.length-1;i>=0;i--){
+const t=troops[i];
+
+if(t.hp<=0){
+troops.splice(i,1);
+continue;
+}
+
+let target=null;
+let best=Infinity;
+
+for(const e of enemies){
+const d=dist(t,e);
+if(d<best){
+best=d;
+target=e;
+}
+}
+
+if(!target)continue;
+
+if(best>25){
+const dx=target.x-t.x;
+const dy=target.y-t.y;
+const d=Math.hypot(dx,dy);
+t.x+=dx/d*t.speed*dt/1000;
+t.y+=dy/d*t.speed*dt/1000;
+}else{
+t.cooldown-=dt;
+if(t.cooldown<=0){
+target.hp-=t.damage;
+t.cooldown=t.type==="Archer"?900:700;
+}
+}
+}
+}
+
+function updateParticles(dt){
+for(let i=particles.length-1;i>=0;i--){
+particles[i].life-=dt/500;
+if(particles[i].life<=0)particles.splice(i,1);
+}
+}
+
+function updateWave(dt){
+if(waveActive){
+spawnTimer-=dt;
+if(spawnTimer<=0){
+const count=4+Math.floor(wave*1.25);
+if(nextEnemy<count){
+spawnEnemy();nextEnemy++;
+spawnTimer=Math.max(350,1000-wave*16);
+}else if(enemies.length===0){
+waveActive=false;wave++;nextEnemy=0;
+const selected=modeData.find(m=>m.name===activeMode)||modeData[0];
+money+=Math.max(25,Math.floor(selected.waveBonus+(wave-2)*selected.waveStep));
+updateUI();saveGame();
+if(wave>selected.waves){completeMode();}
+else{waveTimer=3000;}
+}
+}
+}else{
+waveTimer-=dt;
+if(waveTimer<=0){waveActive=true;nextEnemy=0;spawnTimer=0;}
+}
+}
+
+function gameLoop(now){
+const dt=Math.min(40,now-lastTime);
+lastTime=now;
+
+if(!paused&&!gameOver){
+gameTime+=dt;
+updateWave(dt);
+updateEnemies(dt/1000*1000);
+updateTowers(dt);
+updateProjectiles(dt);
+updateTroops(dt);
+updateParticles(dt);
+
+if(castleHP<=0){
+castleHP=0;
+gameOver=true;
+showGameOver();
+}
+
+updateUI();
+}
+
+draw();
+requestAnimationFrame(gameLoop);
+}
+
+function showGameOver(){
+const payout=settleRun(false);
+renderLobby();
+document.getElementById("overlay").style.display="flex";
+document.getElementById("overlayTitle").textContent="KINGDOM LOST";
+document.getElementById("overlayText").textContent="You cleared "+(payout?.waves||0)+" waves and earned $"+(payout?.cash||0)+(payout?.gems?" and 💎 "+payout.gems:"")+" for your tower fund.";
+}
+
+function resetGame(){
+runSettled=false;
+money=0;
+wave=1;
+kills=0;
+castleHP=1000;
+paused=false;
+gameOver=false;
+selectedTower=null;
+selectedBuild=loadout.includes("Scout")?towerTypes.findIndex(t=>t.name==="Scout"):null;
+selectedTerrain=null;
+roadMode=false;
+towers=[];
+enemies=[];
+projectiles=[];
+particles=[];
+troops=[];
+terrainTiles=[];
+roads=[];
+terrainLevels={
+forest:1,hills:1,crystal:1,mountain:1,
+swamp:1,ice:1,desert:1,plains:1
+};
+waveTimer=0;
+waveActive=false;
+nextEnemy=0;
+
+camera={
+x:0,
+y:0,
+zoom:.72
+};
+
+document.getElementById("overlay").style.display="none";
+document.getElementById("pauseBtn").textContent="PAUSE";
+if(selectedBuild!==null)document.getElementById("buildStatus").textContent="SCOUT selected · FREE · Click an open tile beside the route to place it.";
+updateUI();
+saveGame();
+}
+
+function saveGame(){
+if(!activeMode||runSettled)return;
+const data={
+mode:activeMode,
+money,
+wave,
+kills,
+castleHP,
+towers:towers.map(t=>({
+x:t.x,
+y:t.y,
+type:t.type.name,
+level:t.level,
+kills:t.kills,
+targetMode:t.targetMode||"FIRST"
+})),
+terrainTiles,
+roads,
+terrainLevels
+};
+
+try{
+localStorage.setItem("kingdomWarSave",JSON.stringify(data));
+}catch(e){}
+}
+
+function loadGame(){
+try{
+const raw=localStorage.getItem("kingdomWarSave");
+if(!raw)return;
+
+const data=JSON.parse(raw);
+savedRunMode=data.mode||"Easy";
+runSettled=false;
+
+money=data.money??0;
+wave=data.wave??1;
+kills=data.kills??0;
+castleHP=data.castleHP??1000;
+terrainTiles=data.terrainTiles||[];
+roads=data.roads||[];
+terrainLevels=data.terrainLevels||{
+forest:1,hills:1,crystal:1,mountain:1,
+swamp:1,ice:1,desert:1,plains:1
+};
+
+towers=[];
+
+for(const t of data.towers||[]){
+const type=towerTypes.find(x=>x.name===t.type);
+if(type){
+towers.push({
+x:t.x,
+y:t.y,
+type,
+level:Math.min(5,t.level||1),
+cooldown:0,
+kills:t.kills||0,
+targetMode:t.targetMode||"FIRST"
+});
+}
+}
+
+selectedTower=null;
+enemies=[];
+projectiles=[];
+troops=[];
+particles=[];
+waveActive=false;
+waveTimer=2000;
+nextEnemy=0;
+
+updateUI();
+}catch(e){}
+}
+
+document.getElementById("saveBtn").onclick=saveGame;
+document.getElementById("loadBtn").onclick=loadGame;
+
+document.getElementById("newBtn").onclick=()=>{
+if(confirm("Start a completely new kingdom?")){
+resetGame();
+}
+};
+
+document.getElementById("retryBtn").onclick=()=>{
+document.getElementById("overlay").style.display="none";
+document.getElementById("retryBtn").textContent="RETRY";
+document.getElementById("homeBtn").textContent="HOME";
+activeMode=selectedMode;resetGame();
+document.getElementById("lobby").style.display="none";
+document.getElementById("stats").style.display="flex";
+document.getElementById("gameWrap").style.display="block";
+};
+
+document.getElementById("homeBtn").onclick=()=>{
+document.getElementById("overlay").style.display="none";
+document.getElementById("retryBtn").textContent="RETRY";
+document.getElementById("homeBtn").textContent="HOME";
+showLobby();
+};
+
+document.addEventListener("keydown",e=>{
+if(e.key.toLowerCase()==="r"){
+window.__rDown=(window.__rDown||"")+"r";
+
+if(window.__rDown.length>3){
+window.__rDown=window.__rDown.slice(-3);
+}
+
+if(window.__rDown==="rrr"){
+window.location.href="index.html";
+}
+}
+});
+
+setInterval(saveGame,5000);
+const forfeitActiveRun=()=>{if(activeMode&&!runSettled)settleRun(false);};
+window.addEventListener("beforeunload",forfeitActiveRun);
+window.addEventListener("pagehide",forfeitActiveRun);
+
+loadGame();
+updateUI();
+showLobby();
+requestAnimationFrame(gameLoop);
+</script>
+
+<script type="module" src="https://makkapakka-7788.github.io/makkapakka/presence.js?game=towerdefense"></script>
+</body>
+</html>
++m.reward.toLocaleString()+' max'+(m.gemReward?" · 💎 "+m.gemReward:"")+'</p></div><button '+(unlocked?"":"disabled")+'>'+(m.name===selectedMode?"SELECTED":"SELECT MODE")+'</button>';
+card.querySelector("button").onclick=()=>{if(!unlocked)return;selectedMode=m.name;renderLobby();};
+content.appendChild(card);
+});
+}
+const chosen=modeData.find(m=>m.name===selectedMode)||modeData[0];
+document.getElementById("modeSummary").textContent="Selected mode: "+chosen.name+" · "+chosen.waves+" waves";
+const start=document.getElementById("startModeBtn");
+const canContinue=savedRunMode===chosen.name&&modeUnlocked(modeData.indexOf(chosen));
+start.textContent=(canContinue?"CONTINUE ":"PLAY ")+chosen.name.toUpperCase();
+start.disabled=!modeUnlocked(modeData.indexOf(chosen));
+}
+function makeTowerCard(t,label,onClick){
+const card=document.createElement("div");card.className="lobby-card"+(lobbyTab==="loadout"?" loadout-card":"")+(loadout.includes(t.name)?" selected":"");
+card.innerHTML='<div class="tower-glyph" style="--tower-color:'+glyphColor(t)+'"><i></i></div><div><h3>'+t.name+'</h3><p>Damage '+t.damage+' · Range '+t.range+'</p></div><button>'+label+'</button>';
+card.querySelector("button").onclick=onClick;return card;
+}
+document.querySelectorAll(".lobby-nav button").forEach(b=>b.addEventListener("click",()=>{lobbyTab=b.dataset.tab;renderLobby();}));
+document.getElementById("startModeBtn").addEventListener("click",()=>{
+if(!modeUnlocked(modeData.findIndex(m=>m.name===selectedMode)))return;
+if(savedRunMode===selectedMode){activeMode=selectedMode;loadGame();gameOver=false;updateUI();}
+else{activeMode=selectedMode;resetGame();}
+document.getElementById("lobby").style.display="none";
+document.getElementById("stats").style.display="flex";
+document.getElementById("gameWrap").style.display="block";
+});
+function showLobby(){
+activeMode=null;document.getElementById("lobby").style.display="flex";
+document.getElementById("stats").style.display="none";document.getElementById("gameWrap").style.display="none";
+lobbyTab="loadout";renderLobby();
+}
+function completeMode(){
+if(!activeMode||gameOver)return;
+gameOver=true;
+const completed=activeMode;
+const data=modeData.find(m=>m.name===completed);
+bankCash+=data.reward;
+if(!clearedModes.includes(completed))clearedModes.push(completed);
+localStorage.removeItem("kingdomWarSave");savedRunMode=null;
+persistProgress();renderLobby();
+document.getElementById("overlay").style.display="flex";
+document.getElementById("overlayTitle").textContent=completed.toUpperCase()+" CLEARED!";
+document.getElementById("overlayText").textContent="All "+data.waves+" waves defeated. +$"+data.reward+" added to your tower fund.";
+document.getElementById("retryBtn").textContent="PLAY AGAIN";
+document.getElementById("homeBtn").textContent="LOBBY";
+}
+
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let W=window.innerWidth;
+let H=window.innerHeight-42;
+resize();
+
+const world={w:2200,h:1200};
+const grid=50;
+
+let camera={x:0,y:0,zoom:.72};
+let dragging=false;
+let dragMoved=false;
+let lastMouse={x:0,y:0};
+
+let money=5000;
+let wave=1;
+let kills=0;
+let castleHP=1000;
+let paused=false;
+let gameOver=false;
+let selectedTower=null;
+let selectedBuild=null;
+let selectedTerrain=null;
+let roadMode=false;
+
+let towers=[];
+let enemies=[];
+let projectiles=[];
+let particles=[];
+let troops=[];
+let terrainTiles=[];
+let roads=[];
+let nextEnemy=0;
+let spawnTimer=0;
+let waveTimer=0;
+let waveActive=false;
+let gameTime=0;
+let lastTime=performance.now();
+
+const terrainTypes={
+forest:{name:"Forest",color:"#315c38",bonus:1.25,buffs:["Rapid","Poison","Flame"]},
+hills:{name:"Hills",color:"#75633c",bonus:1.25,buffs:["Heavy","Sniper","Ballista"]},
+crystal:{name:"Crystal",color:"#704f91",bonus:1.30,buffs:["Crystal","Tesla","Laser"]},
+mountain:{name:"Mountain",color:"#555962",bonus:1.25,buffs:["King","Mortar","Catapult"]},
+swamp:{name:"Swamp",color:"#3d6351",bonus:1.30,buffs:["Poison","Slow","Void"]},
+ice:{name:"Ice",color:"#507b88",bonus:1.30,buffs:["Ice","Freeze","Guardian"]},
+desert:{name:"Desert",color:"#876b3f",bonus:1.25,buffs:["Flame","Meteor","Catapult"]},
+plains:{name:"Plains",color:"#66704a",bonus:1.20,buffs:["Basic","Splash","Guardian"]}
+};
+
+const towerTypes=[
+{name:"Scout",cost:60,damage:22,range:125,rate:700,color:"#4da6ff",unlock:1},
+{name:"Basic",cost:60,damage:22,range:125,rate:700,color:"#73b8ff",unlock:1},
+{name:"Rapid",cost:90,damage:10,range:135,rate:220,color:"#ffcc33",unlock:1},
+{name:"Heavy",cost:140,damage:65,range:145,rate:1100,color:"#ff7043",unlock:1},
+{name:"Slow",cost:120,damage:12,range:150,rate:800,color:"#8e9eff",unlock:1},
+{name:"Splash",cost:170,damage:35,range:135,rate:1000,color:"#ff4d88",unlock:1},
+{name:"Laser",cost:230,damage:18,range:190,rate:170,color:"#ff3333",unlock:2},
+{name:"Freeze",cost:250,damage:9,range:155,rate:700,color:"#66eaff",unlock:2},
+{name:"Poison",cost:280,damage:14,range:160,rate:600,color:"#9cff33",unlock:2},
+{name:"Sniper",cost:350,damage:150,range:300,rate:1900,color:"#d9d9d9",unlock:3},
+{name:"Tesla",cost:420,damage:38,range:175,rate:850,color:"#b266ff",unlock:3},
+{name:"Mortar",cost:480,damage:80,range:250,rate:1800,color:"#a87952",unlock:3},
+{name:"Flame",cost:520,damage:17,range:105,rate:260,color:"#ff6600",unlock:4},
+{name:"Ice",cost:580,damage:28,range:180,rate:650,color:"#99ffff",unlock:4},
+{name:"Ballista",cost:650,damage:220,range:280,rate:2400,color:"#b58a5a",unlock:5},
+{name:"Catapult",cost:700,damage:125,range:260,rate:2100,color:"#806040",unlock:5},
+{name:"Void",cost:800,damage:100,range:220,rate:1000,color:"#7b4dff",unlock:6},
+{name:"Meteor",cost:950,damage:250,range:290,rate:2600,color:"#ff452e",unlock:7},
+{name:"Crystal",cost:1100,damage:70,range:240,rate:500,color:"#e8aaff",unlock:7},
+{name:"Guardian",cost:1400,damage:120,range:200,rate:700,color:"#59d98e",unlock:8},
+{name:"King",cost:2000,damage:300,range:350,rate:1800,color:"#ffd700",unlock:9},
+{name:"Accelerator",cost:1200,damage:45,range:220,rate:140,color:"#82eaff",unlock:1,gemCost:150}
+];
+
+const roadPoints=[
+{x:1740,y:475},
+{x:1600,y:475},
+{x:1450,y:475},
+{x:1300,y:475},
+{x:1150,y:475},
+{x:1000,y:475},
+{x:850,y:475},
+{x:700,y:475},
+{x:550,y:475},
+{x:400,y:475},
+{x:250,y:475}
+];
+
+const enemyTypes=[
+{name:"Goblin",hp:90,speed:27,damage:4,reward:12,color:"#7bc96f"},
+{name:"Runner",hp:65,speed:52,damage:3,reward:14,color:"#6fdbbf"},
+{name:"Orc",hp:240,speed:20,damage:7,reward:24,color:"#b47b42",armor:.15},
+{name:"Shade",hp:150,speed:33,damage:6,reward:28,color:"#a778d1",hidden:true},
+{name:"Troll",hp:1100,speed:12,damage:13,reward:80,color:"#8b6748",armor:.25},
+{name:"Demon",hp:2600,speed:10,damage:20,reward:170,color:"#a33"}
+];
+
+function resize(){
+W=window.innerWidth;
+H=window.innerHeight-42;
+const pixelRatio=Math.max(1,window.devicePixelRatio||1);
+canvas.style.width=W+"px";
+canvas.style.height=H+"px";
+canvas.width=Math.round(W*pixelRatio);
+canvas.height=Math.round(H*pixelRatio);
+ctx.setTransform(pixelRatio,0,0,pixelRatio,0,0);
+}
+function canvasPoint(event){
+const rect=canvas.getBoundingClientRect();
+return{x:(event.clientX-rect.left)*(W/rect.width),y:(event.clientY-rect.top)*(H/rect.height)};
+}
+window.addEventListener("resize",resize);
+
+function worldToScreen(x,y){
+return{
+x:(x-camera.x)*camera.zoom,
+y:(y-camera.y)*camera.zoom
+};
+}
+
+function screenToWorld(x,y){
+return{
+x:x/camera.zoom+camera.x,
+y:y/camera.zoom+camera.y
+};
+}
+
+function dist(a,b){
+return Math.hypot(a.x-b.x,a.y-b.y);
+}
+
+function snap(v){
+return Math.floor(v/grid)*grid+grid/2;
+}
+
+function towerAt(x,y){
+return towers.find(t=>dist(t,{x,y})<25);
+}
+
+function terrainAt(x,y){
+return terrainTiles.find(t=>t.x===x&&t.y===y);
+}
+
+function drawTowers(){
+for(const t of towers){
+const p=worldToScreen(t.x,t.y);
+const stats=towerStats(t);
+const index=towerTypes.indexOf(t.type);
+const level=Math.max(1,Math.min(5,t.level||1));
+const size=(22+(index%5)*3)*(1+(level-1)*.13)*camera.zoom;
+if(selectedTower===t){
+ctx.beginPath();
+ctx.fillStyle="rgba(168,217,111,.10)";
+ctx.strokeStyle="rgba(190,238,137,.95)";
+ctx.lineWidth=2.5;
+ctx.arc(p.x,p.y,stats.range*camera.zoom,0,Math.PI*2);
+ctx.fill();ctx.stroke();
+}
+ctx.save();
+ctx.translate(p.x,p.y);
+ctx.rotate(t.angle??0);
+ctx.fillStyle=t.type.color;
+ctx.strokeStyle=level>=2?"#f1ce62":"#111";
+ctx.lineWidth=Math.max(1,(level>=2?3.5:3)*camera.zoom);
+ctx.fillRect(-size*.10,-size*.74,size*.20,size*.78);
+ctx.beginPath();
+const shape=(index+level-1)%4;
+if(shape===0){ctx.arc(0,0,size*.43,0,Math.PI*2);}
+else if(shape===1){ctx.roundRect(-size*.42,-size*.34,size*.84,size*.68,size*.12);}
+else if(shape===2){ctx.moveTo(0,-size*.48);ctx.lineTo(size*.48,0);ctx.lineTo(0,size*.48);ctx.lineTo(-size*.48,0);ctx.closePath();}
+else{ctx.moveTo(-size*.42,-size*.3);ctx.lineTo(0,-size*.52);ctx.lineTo(size*.42,-size*.3);ctx.lineTo(size*.34,size*.38);ctx.lineTo(-size*.34,size*.38);ctx.closePath();}
+ctx.fill();ctx.stroke();
+if(level>=2){ctx.beginPath();ctx.strokeStyle="#f1ce62";ctx.lineWidth=1.5*camera.zoom;ctx.arc(0,0,size*.49,0,Math.PI*2);ctx.stroke();}
+if(level>=3){ctx.fillStyle="#fff0a8";ctx.beginPath();ctx.moveTo(0,-size*.2);ctx.lineTo(size*.18,0);ctx.lineTo(0,size*.2);ctx.lineTo(-size*.18,0);ctx.closePath();ctx.fill();}
+if(level>=4){ctx.fillStyle=t.type.color;ctx.fillRect(-size*.4,-size*.84,size*.12,size*.35);ctx.fillRect(size*.28,-size*.84,size*.12,size*.35);}
+if(level>=5){ctx.fillStyle="#fff0a8";ctx.beginPath();ctx.moveTo(0,-size*.78);ctx.lineTo(size*.12,-size*.6);ctx.lineTo(size*.3,-size*.58);ctx.lineTo(size*.16,-size*.42);ctx.lineTo(size*.2,-size*.22);ctx.lineTo(0,-size*.32);ctx.lineTo(-size*.2,-size*.22);ctx.lineTo(-size*.16,-size*.42);ctx.lineTo(-size*.3,-size*.58);ctx.lineTo(-size*.12,-size*.6);ctx.closePath();ctx.fill();}
+if(index%3===1){ctx.fillStyle=t.type.color;ctx.fillRect(-size*.28,-size*.80,size*.12,size*.43);ctx.fillRect(size*.16,-size*.80,size*.12,size*.43);}
+ctx.restore();
+ctx.fillStyle=level>=5?"#fff0a8":"#fff";ctx.font=`${10*camera.zoom}px Courier New`;ctx.textAlign="center";ctx.fillText(level,p.x,p.y+4*camera.zoom);
+}
+}
+
+function roadAt(x,y){
+return roads.find(r=>r.x===x&&r.y===y);
+}
+
+function zoneUpgradeCost(type){
+const tiles=terrainTiles.filter(t=>t.type===type).length;
+if(!tiles)return Infinity;
+const level=(terrainLevels[type]||1);
+return Math.floor((900+tiles*180)*Math.pow(2.15,level-1));
+}
+
+let terrainLevels={
+forest:1,hills:1,crystal:1,mountain:1,
+swamp:1,ice:1,desert:1,plains:1
+};
+
+function terrainBonus(type){
+const base=terrainTypes[type].bonus;
+const level=terrainLevels[type]||1;
+return 1+(base-1)*level;
+}
+
+function towerBuff(t){
+const tile=terrainAt(t.x,t.y);
+if(!tile)return 1;
+const terrain=terrainTypes[tile.type];
+if(!terrain.buffs.includes(t.type.name))return 1;
+return terrainBonus(tile.type);
+}
+
+function upgradeCost(t){
+return Math.floor(t.type.cost*1.8**t.level);
+}
+
+function towerStats(t){
+const level=Math.max(1,Math.min(5,t.level||1));
+const damageScale=[1,1.35,1.85,2.55,3.5][level-1];
+const rangeScale=[1,1.05,1.1,1.16,1.23][level-1];
+const rateScale=[1,.94,.87,.79,.7][level-1];
+const buff=towerBuff(t);
+const acceleratorBonus=t.type.name==="Accelerator"?1.35:1;
+return{damage:t.type.damage*damageScale*buff*acceleratorBonus,range:t.type.range*rangeScale,rate:Math.max(80,t.type.rate*rateScale/buff)};
 }
 
 function drawGrid(){
@@ -1594,6 +2924,7 @@ document.getElementById("overlayText").textContent=
 }
 
 function resetGame(){
+runSettled=false;
 money=0;
 wave=1;
 kills=0;
@@ -1633,7 +2964,7 @@ saveGame();
 }
 
 function saveGame(){
-if(!activeMode)return;
+if(!activeMode||runSettled)return;
 const data={
 mode:activeMode,
 money,
@@ -1665,6 +2996,7 @@ if(!raw)return;
 
 const data=JSON.parse(raw);
 savedRunMode=data.mode||"Easy";
+runSettled=false;
 
 money=data.money??0;
 wave=data.wave??1;
@@ -1748,7 +3080,9 @@ window.location.href="index.html";
 });
 
 setInterval(saveGame,5000);
-window.addEventListener("beforeunload",()=>{if(activeMode&&!gameOver)saveGame();});
+const forfeitActiveRun=()=>{if(activeMode&&!runSettled)settleRun(false);};
+window.addEventListener("beforeunload",forfeitActiveRun);
+window.addEventListener("pagehide",forfeitActiveRun);
 
 loadGame();
 updateUI();
