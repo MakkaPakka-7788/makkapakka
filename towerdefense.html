@@ -1154,9 +1154,16 @@ saveGame();
 
 function updateInfo(){
 const upgrade=document.getElementById("upgradeBtn"),targetButton=document.getElementById("targetBtn");
+if(selectedBuild!==null){
+const type=towerTypes[selectedBuild],freeScout=type.name==="Scout"&&towers.length===0&&wave===1;
+document.getElementById("infoTitle").textContent="PLACE "+type.name.toUpperCase();
+document.getElementById("infoBody").innerHTML="Click an open tile beside the route to place this tower.<br>Cost: "+(freeScout?"FREE":"$"+type.cost)+"<br>Current cash: $"+Math.floor(money);
+if(upgrade){upgrade.disabled=true;upgrade.textContent="UPGRADE";}
+if(targetButton)targetButton.disabled=true;return;
+}
 if(!selectedTower){
 document.getElementById("infoTitle").textContent="KINGDOM WAR";
-document.getElementById("infoBody").innerHTML="Select one of your towers to inspect it. Its attack radius appears on the map.";
+document.getElementById("infoBody").innerHTML="Select a tower below, then click an open tile beside the route. Select a placed tower to view its radius and upgrades.";
 if(upgrade){upgrade.disabled=true;upgrade.textContent="UPGRADE";}
 if(targetButton)targetButton.disabled=true;return;
 }
@@ -1192,6 +1199,11 @@ if(!b)continue;
 if(type.unlock>wave||!loadout.includes(type.name))b.classList.add("locked");
 else b.classList.remove("locked");
 b.style.display=loadout.includes(type.name)?"block":"none";
+const costLabel=type.name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+type.cost;
+if(b.dataset.costLabel!==costLabel){
+b.dataset.costLabel=costLabel;
+b.innerHTML='<span class="tower-button-icon" style="--tower-color:'+type.color+'"><i></i></span><span>'+type.name+'<small>'+costLabel+'</small></span>';
+}
 }
 
 const skip=document.getElementById("skipWaveBtn");
