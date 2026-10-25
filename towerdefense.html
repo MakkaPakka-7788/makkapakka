@@ -748,10 +748,26 @@ ctx.rotate(t.angle??0);
 ctx.fillStyle=t.type.color;
 ctx.strokeStyle="#101010";
 ctx.lineWidth=Math.max(1,2*camera.zoom);
+ctx.translate(0,(t.recoil||0)*camera.zoom);
 ctx.fillRect(-size*.105,-size*.78,size*.21,size*.82);
 ctx.strokeRect(-size*.105,-size*.78,size*.21,size*.82);
 ctx.fillStyle=level>=3?"#fff0a8":"#d9e4eb";
 ctx.beginPath();ctx.arc(0,-size*.48,size*.105,0,Math.PI*2);ctx.fill();
+if((t.fireFlash||0)>0){
+const strength=Math.min(1,t.fireFlash/.14);
+ctx.save();
+ctx.globalAlpha=strength;
+ctx.shadowColor=t.type.color;
+ctx.shadowBlur=24*camera.zoom;
+ctx.fillStyle="#fff7c2";
+ctx.beginPath();ctx.arc(0,-size*.91,size*(.15+.09*strength),0,Math.PI*2);ctx.fill();
+ctx.fillStyle=t.type.color;
+ctx.beginPath();ctx.moveTo(0,-size*1.23);ctx.lineTo(size*.12,-size*.94);ctx.lineTo(0,-size*.78);ctx.lineTo(-size*.12,-size*.94);ctx.closePath();ctx.fill();
+ctx.strokeStyle="#fff4a8";
+ctx.lineWidth=2.5*camera.zoom;
+ctx.beginPath();ctx.moveTo(-size*.25,-size*.91);ctx.lineTo(size*.25,-size*.91);ctx.moveTo(0,-size*1.18);ctx.lineTo(0,-size*.68);ctx.stroke();
+ctx.restore();
+}
 ctx.restore();
 }
 if(level>=2){
@@ -1585,6 +1601,8 @@ enemies.splice(i,1);
 function updateTowers(dt){
 for(const t of towers){
 if(t.upgradeFlash>0)t.upgradeFlash=Math.max(0,t.upgradeFlash-dt/1000);
+t.fireFlash=Math.max(0,(t.fireFlash||0)-dt/1000);
+t.recoil=Math.max(0,(t.recoil||0)-dt/1000*42);
 const pos=towerPosition(t);
 if(t.type.farm){t.cooldown-=dt;if(t.cooldown<=0){money+=farmIncome(t);t.cooldown=1000;}continue;}
 if(t.type.flying){t.x=pos.x;t.y=pos.y;}
@@ -1605,6 +1623,8 @@ let angleDiff=(desiredAngle-(t.angle||0)+Math.PI*3)%(Math.PI*2)-Math.PI;
 t.angle=(t.angle||0)+angleDiff*Math.min(1,dt/110);
 if(t.cooldown>0)continue;
 t.cooldown=s.rate;
+t.fireFlash=0.14;
+t.recoil=7;
 projectiles.push({x:t.x,y:t.y,target,owner:t,damage:s.damage,speed:650,splash:["Splash","Mortar","Catapult","Meteor"].includes(t.type.name)?45:0,slow:["Slow","Freeze","Ice"].includes(t.type.name)?0.55:1,poison:t.type.name==="Poison"?1000:0,color:t.type.color});
 }
 }
