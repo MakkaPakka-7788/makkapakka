@@ -970,7 +970,7 @@ drawEnemies();
 drawProjectiles();
 drawParticles();
 
-if(selectedBuild){
+if(selectedBuild!==null){
 const m=mouseWorld;
 if(m){
 const x=snap(m.x);
@@ -1057,7 +1057,7 @@ buildTerrain(x,y,selectedTerrain);
 return;
 }
 
-if(selectedBuild){
+if(selectedBuild!==null){
 buildTower(x,y,selectedBuild);
 return;
 }
