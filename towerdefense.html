@@ -475,8 +475,7 @@ const ctx=canvas.getContext("2d");
 
 let W=window.innerWidth;
 let H=window.innerHeight-42;
-canvas.width=W;
-canvas.height=H;
+resize();
 
 const world={w:2200,h:1200};
 const grid=50;
@@ -572,8 +571,16 @@ const enemyTypes=[
 function resize(){
 W=window.innerWidth;
 H=window.innerHeight-42;
-canvas.width=W;
-canvas.height=H;
+const pixelRatio=Math.max(1,window.devicePixelRatio||1);
+canvas.style.width=W+"px";
+canvas.style.height=H+"px";
+canvas.width=Math.round(W*pixelRatio);
+canvas.height=Math.round(H*pixelRatio);
+ctx.setTransform(pixelRatio,0,0,pixelRatio,0,0);
+}
+function canvasPoint(event){
+const rect=canvas.getBoundingClientRect();
+return{x:(event.clientX-rect.left)*(W/rect.width),y:(event.clientY-rect.top)*(H/rect.height)};
 }
 window.addEventListener("resize",resize);
 
@@ -960,14 +967,14 @@ camera.y=Math.max(0,Math.min(world.h-H/camera.zoom,camera.y));
 lastMouse={x:e.clientX,y:e.clientY};
 }
 
-mouseWorld=screenToWorld(e.offsetX,e.offsetY);
+const point=canvasPoint(e);mouseWorld=screenToWorld(point.x,point.y);
 });
 
 canvas.addEventListener("pointerup",e=>{
 dragging=false;
 canvas.classList.remove("dragging");
 
-if(!dragMoved)handleMapClick(e.offsetX,e.offsetY);
+if(!dragMoved){const point=canvasPoint(e);handleMapClick(point.x,point.y);}
 });
 
 canvas.addEventListener("pointerleave",()=>{
@@ -1055,7 +1062,8 @@ if(towerAt(x,y)||roadAt(x,y)||terrainAt(x,y))return;
 if(x<100&&y>400&&y<550)return;
 if(towers.length>=40)return;
 const placementCost=type.name==="Scout"&&towers.length===0&&wave===1?0:type.cost;
-if(money<placementCost)return;
+if(money<placementCost){document.getElementById("infoBody").innerHTML="Need $"+placementCost+" to place "+type.name+".";
+return;}
 
 money-=placementCost;
 
@@ -1173,6 +1181,8 @@ towerBar.style.padding="7px";
 towerBar.style.zIndex="5";
 towerBar.style.display="grid";
 towerBar.style.gridTemplateColumns="repeat(10,74px)";
+towerBar.style.maxWidth="calc(100vw - 20px)";
+towerBar.style.overflowX="auto";
 towerBar.style.gap="5px";
 document.getElementById("gameWrap").appendChild(towerBar);
 
