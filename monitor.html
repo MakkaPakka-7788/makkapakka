@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#05070b">
+  <title>Live Player Monitor · MakkaPakka</title>
+  <style>
+    :root { color-scheme: dark; --bg:#05070b; --panel:#0c1119; --line:#1e2938; --muted:#78869a; --text:#e9f1fb; --cyan:#5de1dc; --blue:#668cff; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:radial-gradient(ellipse at 50% -20%,#12243b 0,#05070b 54%); color:var(--text); font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    a { color:inherit; text-decoration:none; }
+    header { max-width:1240px; margin:auto; padding:24px 28px 12px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand-mark { width:38px;height:38px;border:1px solid #335064;border-radius:12px;display:grid;place-items:center;color:var(--cyan);background:#0b1822;font-size:19px; }
+    .brand strong { display:block;font-size:15px;letter-spacing:.1em;text-transform:uppercase; }
+    .brand small { color:var(--muted); }
+    .nav { display:flex;align-items:center;gap:10px; }
+    .nav a,.nav span { border:1px solid var(--line); background:#0b1018; padding:8px 12px;border-radius:9px;color:#b8c6d8;font-size:12px; }
+    .nav span { color:var(--cyan);border-color:#25434a; }
+    main { max-width:1240px;margin:auto;padding:22px 28px 48px; }
+    .hero { display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin:18px 0 22px; }
+    h1 { margin:0;font-size:clamp(30px,4vw,46px);letter-spacing:-.04em;line-height:1.05; }
+    .subtitle { color:var(--muted);margin:10px 0 0; }
+    .live-badge { display:inline-flex;align-items:center;gap:8px;color:#a9f4e8;border:1px solid #245447;background:#0a1916;border-radius:999px;padding:8px 12px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap; }
+    .live-dot { width:8px;height:8px;border-radius:50%;background:#55e29d;box-shadow:0 0 12px #55e29d; }
+    .stat-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:14px; }
+    .panel { border:1px solid var(--line);background:linear-gradient(145deg,rgba(15,22,32,.96),rgba(8,12,18,.98));border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.22); }
+    .stat { padding:20px 22px;min-height:132px;position:relative;overflow:hidden; }
+    .stat:after { content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-52px;top:-60px;background:radial-gradient(circle,rgba(93,225,220,.10),transparent 70%); }
+    .stat-label { color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.13em; }
+    .stat-value { font-size:42px;line-height:1.1;font-weight:700;margin-top:10px;letter-spacing:-.04em; }
+    .stat-hint { color:#92a1b5;font-size:12px;margin-top:5px; }
+    .small-value { font-size:22px; }
+    .content-grid { display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:14px; }
+    .chart-panel { padding:20px 22px 18px; }
+    .panel-head { display:flex;justify-content:space-between;align-items:flex-start;gap:16px; }
+    h2 { font-size:15px;margin:0;letter-spacing:.02em; }
+    .panel-note { color:var(--muted);font-size:12px;margin-top:5px; }
+    .ranges { display:flex;gap:5px;padding:4px;background:#080c12;border:1px solid #182230;border-radius:10px; }
+    .ranges button { border:0;background:transparent;color:#8392a7;font:inherit;font-size:11px;padding:6px 9px;border-radius:7px;cursor:pointer; }
+    .ranges button[aria-pressed="true"] { background:#182839;color:#a8f0ec; }
+    canvas { display:block;width:100%;height:260px;margin-top:18px; }
+    .chart-legend { display:flex;gap:18px;color:#91a0b2;font-size:11px;margin-top:8px; }
+    .legend-dot { display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--cyan);margin-right:6px; }
+    .legend-up { color:#62e4a9; }.legend-down { color:#ff8794; }
+    .games-panel { padding:20px 20px 10px; }
+    .games-list { list-style:none;margin:12px 0 0;padding:0; }
+    .games-list li { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #1a2431; }
+    .games-list li:last-child { border-bottom:0; }
+    .game-name { color:#d2deed;font-size:13px; }
+    .game-count { min-width:32px;text-align:center;border:1px solid #253345;border-radius:8px;padding:3px 8px;color:#a8f0ec;background:#0b151c;font-variant-numeric:tabular-nums; }
+    #authGate { max-width:470px;margin:90px auto;padding:30px;text-align:center; }
+    #authGate h1 { font-size:29px; }
+    #authGate p { color:#94a4b8; }
+    .auth-button { border:1px solid #395575;background:#13243a;color:#dceaff;border-radius:10px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer; }
+    .auth-status { min-height:24px;color:#ffafb5!important;font-size:13px; }
+    .footnote { color:#627287;font-size:11px;margin-top:16px; }
+    #dashboard[hidden],#authGate[hidden] { display:none; }
+    @media (max-width:800px) { .stat-grid {grid-template-columns:1fr 1fr;} .content-grid {grid-template-columns:1fr;} }
+    @media (max-width:540px) { header {padding:18px 16px 8px;align-items:flex-start;} main {padding:18px 16px 32px;} .nav {flex-direction:column;align-items:flex-end;} .hero {align-items:flex-start;flex-direction:column;} .stat-grid {grid-template-columns:1fr;} .stat {min-height:112px;} .panel-head {flex-direction:column;} canvas {height:220px;} }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-mark">◉</div>
+      <div><strong>MakkaPakka</strong><small>Player activity</small></div>
+    </div>
+    <nav class="nav" aria-label="Shortcuts">
+      <span>RRR · Games</span>
+      <span>UUU · Flashcards</span>
+    </nav>
+  </header>
+
+  <main>
+    <section id="authGate" class="panel">
+      <div class="brand-mark" style="margin:0 auto 16px">◉</div>
+      <h1>Live Player Monitor</h1>
+      <p>Sign in with the monitor owner’s Google account to view live player counts.</p>
+      <button id="signInButton" class="auth-button" type="button">Sign in with Google</button>
+      <p id="authStatus" class="auth-status" role="status" aria-live="polite"></p>
+      <p class="footnote">Only the owner account can read presence data. Players are counted anonymously; this page shows totals by game, not names or screens.</p>
+    </section>
+
+    <section id="dashboard" hidden>
+      <div class="hero">
+        <div>
+          <div class="live-badge"><span class="live-dot"></span> Live monitoring</div>
+          <h1 style="margin-top:16px">Players online</h1>
+          <p class="subtitle">Anonymous heartbeat counts, grouped by game.</p>
+        </div>
+        <div id="connectedLabel" class="live-badge"><span class="live-dot"></span> Connecting</div>
+      </div>
+
+      <div class="stat-grid">
+        <article class="panel stat">
+          <div class="stat-label">Online now</div>
+          <div id="onlineCount" class="stat-value">—</div>
+          <div class="stat-hint">Active within the last 2 minutes</div>
+        </article>
+        <article class="panel stat">
+          <div class="stat-label">Joined in range</div>
+          <div id="joinedCount" class="stat-value small-value legend-up">0</div>
+          <div class="stat-hint">Since this monitor opened</div>
+        </article>
+        <article class="panel stat">
+          <div class="stat-label">Left in range</div>
+          <div id="leftCount" class="stat-value small-value legend-down">0</div>
+          <div class="stat-hint">Since this monitor opened</div>
+        </article>
+      </div>
+
+      <div class="content-grid">
+        <section class="panel chart-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Online players over time</h2>
+              <div class="panel-note">The curve fills as live samples arrive while this page stays open.</div>
+            </div>
+            <div class="ranges" role="group" aria-label="Chart time range">
+              <button type="button" data-range="900000" aria-pressed="true">15 min</button>
+              <button type="button" data-range="3600000" aria-pressed="false">1 hour</button>
+              <button type="button" data-range="21600000" aria-pressed="false">6 hours</button>
+            </div>
+          </div>
+          <canvas id="onlineChart" aria-label="Line chart showing online player count over time"></canvas>
+          <div class="chart-legend"><span><i class="legend-dot"></i>Online count</span><span class="legend-up">↑ joined</span><span class="legend-down">↓ left</span></div>
+        </section>
+
+        <section class="panel games-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Playing now</h2>
+              <div class="panel-note">Counts by game</div>
+            </div>
+          </div>
+          <ul id="gamesList" class="games-list"><li><span class="game-name">Waiting for player data…</span><span class="game-count">—</span></li></ul>
+        </section>
+      </div>
+      <p class="footnote">Players appear after their browser connects. A player is considered offline after 2 minutes without a heartbeat. The chart starts collecting history when this monitor opens.</p>
+    </section>
+  </main>
+
+  <script type="module">
+    const OWNER_EMAIL = "makkasentpakking@gmail.com";
+    const HUB_URL = "https://makkapakka-7788.github.io/makkapakka/?games=true";
+    const FLASHCARDS_URL = "https://makkapakka-7788.github.io/makkapakka/flashcard.html";
+    const RANGE_DEFAULT = 15 * 60 * 1000;
+    const ACTIVE_WINDOW = 120 * 1000;
+    const gameNames = {
+      snake: "Snake", tetris: "Tetris", pong: "Pong", flappybird: "Flappy Bird",
+      towerdefense: "Tower Defence", dino: "Dino", pacman: "Pac-Man",
+      "danger-spinner": "Danger Spinner", rng: "RNG", minesweeper: "Minesweeper",
+      plinko: "Plinko", "car.f1": "Car", "flashcards.city": "Fable Cities",
+      "dr-doom": "Doom", clicker: "Antimatter Dimensions", balatro: "Poker",
+      polytrack: "Poly Track", fishing: "Tiny Fishing", ironcrown: "Ironcrown"
+    };
+    const authGate = document.getElementById("authGate");
+    const dashboard = document.getElementById("dashboard");
+    const statusEl = document.getElementById("authStatus");
+    const signInButton = document.getElementById("signInButton");
+    const canvas = document.getElementById("onlineChart");
+    const ctx = canvas.getContext("2d");
+    const rangeButtons = [...document.querySelectorAll("[data-range]")];
+    let rangeMs = RANGE_DEFAULT;
+    let unsubscribe = null;
+    let presenceDocs = [];
+    let history = [];
+    let events = [];
+    let previousIds = null;
+    let connected = false;
+
+    function activePlayers(now = Date.now()) {
+      return presenceDocs.filter(item => item.lastSeen && now - item.lastSeen <= ACTIVE_WINDOW);
+    }
+
+    function sample() {
+      const now = Date.now();
+      const active = activePlayers(now);
+      const ids = new Set(active.map(item => item.id));
+      if (previousIds !== null) {
+        for (const id of ids) if (!previousIds.has(id)) events.push({ time: now, delta: 1 });
+        for (const id of previousIds) if (!ids.has(id)) events.push({ time: now, delta: -1 });
+      }
+      previousIds = ids;
+      history.push({ time: now, count: active.length });
+      const cutoff = now - 6 * 60 * 60 * 1000;
+      history = history.filter(point => point.time >= cutoff);
+      events = events.filter(event => event.time >= cutoff);
+      renderDashboard(active, now);
+    }
+
+    function renderDashboard(active, now) {
+      document.getElementById("onlineCount").textContent = String(active.length);
+      const windowStart = now - rangeMs;
+      const rangeEvents = events.filter(event => event.time >= windowStart);
+      document.getElementById("joinedCount").textContent = String(rangeEvents.filter(e => e.delta > 0).length);
+      document.getElementById("leftCount").textContent = String(rangeEvents.filter(e => e.delta < 0).length);
+
+      const counts = new Map();
+      for (const item of active) counts.set(item.game, (counts.get(item.game) || 0) + 1);
+      const gamesList = document.getElementById("gamesList");
+      gamesList.replaceChildren();
+      const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+      if (sorted.length === 0) {
+        const li = document.createElement("li");
+        li.innerHTML = '<span class="game-name">No active players right now</span><span class="game-count">0</span>';
+        gamesList.appendChild(li);
+      } else {
+        for (const [slug, count] of sorted) {
+          const li = document.createElement("li");
+          const name = document.createElement("span");
+          name.className = "game-name";
+          name.textContent = gameNames[slug] || slug;
+          const value = document.createElement("span");
+          value.className = "game-count";
+          value.textContent = String(count);
+          li.append(name, value);
+          gamesList.appendChild(li);
+        }
+      }
+      document.getElementById("connectedLabel").innerHTML = '<span class="live-dot"></span> Live';
+      drawChart(now);
+    }
+
+    function drawChart(now = Date.now()) {
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const width = rect.width, height = rect.height;
+      const pad = { left: 38, right: 10, top: 14, bottom: 28 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+      const start = now - rangeMs;
+      const points = history.filter(point => point.time >= start && point.time <= now);
+      const maxCount = Math.max(1, ...points.map(point => point.count));
+      ctx.clearRect(0, 0, width, height);
+      ctx.font = "10px system-ui";
+      ctx.fillStyle = "#74849a";
+      ctx.strokeStyle = "#1c2735";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 3; i++) {
+        const y = pad.top + plotH * i / 3;
+        const label = String(Math.round(maxCount * (3 - i) / 3));
+        ctx.fillText(label, 5, y + 3);
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(width - pad.right, y); ctx.stroke();
+      }
+      for (let i = 0; i <= 3; i++) {
+        const x = pad.left + plotW * i / 3;
+        const t = start + rangeMs * i / 3;
+        const d = new Date(t);
+        const label = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        ctx.fillText(label, Math.max(0, x - 17), height - 7);
+      }
+      if (!points.length) return;
+
+      const coords = points.map(point => ({
+        x: pad.left + ((point.time - start) / rangeMs) * plotW,
+        y: pad.top + plotH - (point.count / maxCount) * plotH
+      }));
+      if (coords.length === 1) {
+        coords.unshift({ x: pad.left, y: coords[0].y });
+      }
+      const line = new Path2D();
+      line.moveTo(coords[0].x, coords[0].y);
+      for (let i = 1; i < coords.length; i++) {
+        const prev = coords[i - 1], current = coords[i];
+        const midX = (prev.x + current.x) / 2;
+        line.bezierCurveTo(midX, prev.y, midX, current.y, current.x, current.y);
+      }
+      const fill = new Path2D(line);
+      fill.lineTo(coords[coords.length - 1].x, pad.top + plotH);
+      fill.lineTo(coords[0].x, pad.top + plotH);
+      fill.closePath();
+      const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+      gradient.addColorStop(0, "rgba(93,225,220,.20)");
+      gradient.addColorStop(1, "rgba(93,225,220,0)");
+      ctx.fillStyle = gradient;
+      ctx.fill(fill);
+      ctx.strokeStyle = "#5de1dc";
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.shadowColor = "rgba(93,225,220,.35)";
+      ctx.shadowBlur = 10;
+      ctx.stroke(line);
+      ctx.shadowBlur = 0;
+    }
+
+    function showMonitor(user) {
+      if (!user) {
+        authGate.hidden = false;
+        dashboard.hidden = true;
+        statusEl.textContent = "Sign in with the monitor owner’s Google account.";
+        return;
+      }
+      if ((user.email || "").toLowerCase() !== OWNER_EMAIL) {
+        authGate.hidden = false;
+        dashboard.hidden = true;
+        statusEl.textContent = "This Google account does not have monitor access.";
+        return;
+      }
+
+      authGate.hidden = true;
+      dashboard.hidden = false;
+      statusEl.textContent = "";
+      if (unsubscribe) return;
+
+      import("https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js").then(({ collection, limit, onSnapshot, query }) => {
+        const db = window.FlashAccount.db;
+        const presenceQuery = query(collection(db, "presence"), limit(1000));
+        unsubscribe = onSnapshot(presenceQuery, snapshot => {
+          presenceDocs = snapshot.docs.map(item => {
+            const data = item.data();
+            return { id: item.id, game: data.game || "unknown", lastSeen: data.lastSeen?.toMillis?.() || 0 };
+          });
+          connected = true;
+          sample();
+        }, error => {
+          connected = false;
+          document.getElementById("connectedLabel").textContent = "Connection issue";
+          console.error("Live monitor read failed:", error);
+          statusEl.textContent = "Could not load live player data. Check Firestore rules.";
+          authGate.hidden = false;
+          dashboard.hidden = true;
+        });
+      }).catch(error => {
+        console.error("Could not load Firestore:", error);
+        statusEl.textContent = "Could not connect to live player data.";
+        authGate.hidden = false;
+        dashboard.hidden = true;
+      });
+    }
+
+    signInButton.addEventListener("click", async () => {
+      try {
+        await window.FlashAccount.signInWithGoogle();
+      } catch (error) {
+        statusEl.textContent = "Google sign-in failed. Please try again.";
+      }
+    });
+
+    await import("https://makkapakka-7788.github.io/makkapakka/flashaccount.js");
+    const account = window.FlashAccount;
+    import("https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js").then(({ onAuthStateChanged }) => {
+      onAuthStateChanged(account.auth, showMonitor);
+    });
+
+    for (const button of rangeButtons) {
+      button.addEventListener("click", () => {
+        rangeMs = Number(button.dataset.range);
+        for (const other of rangeButtons) other.setAttribute("aria-pressed", String(other === button));
+        drawChart();
+        sample();
+      });
+    }
+
+    window.addEventListener("resize", () => drawChart());
+
+    let rCount = 0, uCount = 0, keyTimer = null;
+    window.addEventListener("keydown", event => {
+      if (event.repeat || event.ctrlKey || event.altKey || event.metaKey) return;
+      if (event.target instanceof Element && event.target.closest("input,textarea,[contenteditable='true']")) return;
+      const key = event.key.toLowerCase();
+      if (key === "r") { rCount++; uCount = 0; }
+      else if (key === "u") { uCount++; rCount = 0; }
+      else { rCount = 0; uCount = 0; }
+      clearTimeout(keyTimer);
+      keyTimer = setTimeout(() => { rCount = 0; uCount = 0; }, 800);
+      if (rCount >= 3) {
+        window.location.href = HUB_URL;
+      } else if (uCount >= 3) {
+        window.location.href = FLASHCARDS_URL;
+      }
+    }, true);
+
+    let sampleTimer = setInterval(sample, 10000);
+  </script>
+</body>
+</html>
