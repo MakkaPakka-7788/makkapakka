@@ -1581,7 +1581,7 @@ const raw=localStorage.getItem("kingdomWarSave");
 if(!raw)return;
 
 const data=JSON.parse(raw);
-savedRunMode=data.mode||null;
+savedRunMode=data.mode||"Easy";
 
 money=data.money??0;
 wave=data.wave??1;
