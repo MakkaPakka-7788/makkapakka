@@ -552,11 +552,12 @@ const roadPoints=[
 ];
 
 const enemyTypes=[
-{name:"Goblin",hp:90,speed:26,damage:20,reward:15},
-{name:"Orc",hp:220,speed:20,damage:35,reward:30},
-{name:"Knight",hp:500,speed:16,damage:55,reward:55},
-{name:"Troll",hp:1000,speed:12,damage:90,reward:100},
-{name:"Demon",hp:2200,speed:10,damage:150,reward:200}
+{name:"Goblin",hp:90,speed:27,damage:4,reward:12,color:"#7bc96f"},
+{name:"Runner",hp:65,speed:52,damage:3,reward:14,color:"#6fdbbf"},
+{name:"Orc",hp:240,speed:20,damage:7,reward:24,color:"#b47b42",armor:.15},
+{name:"Shade",hp:150,speed:33,damage:6,reward:28,color:"#a778d1",hidden:true},
+{name:"Troll",hp:1100,speed:12,damage:13,reward:80,color:"#8b6748",armor:.25},
+{name:"Demon",hp:2600,speed:10,damage:20,reward:170,color:"#a33"}
 ];
 
 function resize(){
@@ -1272,27 +1273,29 @@ cooldown:800
 };
 
 function enemyForWave(){
-const r=Math.random();
-let index=0;
-if(wave>=3&&r>.62)index=1;
-if(wave>=5&&r>.76)index=2;
-if(wave>=8&&r>.88)index=3;
-if(wave>=12&&r>.95)index=4;
-const base=enemyTypes[index];
 const selected=modeData.find(m=>m.name===activeMode)||modeData[0];
-const modeScale=selected.scale;
-const enemyCount=5+wave*2;
-const boss=wave===selected.waves&&nextEnemy===enemyCount-1;
-const hp=base.hp*(1+wave*.22)*modeScale*(boss?8:1);
+const modeIndex=modeData.indexOf(selected),r=Math.random();
+let index=0;
+const shift=Math.floor(modeIndex/2);
+if(wave>=Math.max(2,3-shift)&&r>.58)index=1;
+if(wave>=Math.max(4,6-shift)&&r>.72)index=2;
+if(wave>=Math.max(7,9-shift)&&r>.84)index=3;
+if(wave>=Math.max(10,13-shift)&&r>.93)index=4;
+if(wave>=Math.max(14,17-shift)&&r>.975)index=5;
+const count=4+Math.floor(wave*1.25);
+const boss=wave===selected.waves&&nextEnemy===count-1;
+if(boss)index=5;
+const base=enemyTypes[index],modeScale=selected.scale;
+const hp=base.hp*(1+wave*.13)*modeScale*(boss?8:1);
 return{
 type:boss?"WAVE "+wave+" BOSS":base.name,
 x:1740,y:475,path:0,pathProgress:0,
 hp,maxHp:hp,
 speed:base.speed*(boss ? 0.72 : 1),
-damage:base.damage*(1+wave*.08)*modeScale*(boss?3:1),
-reward:Math.floor(base.reward*(1+wave*.06)*(boss?5:1)),
-color:boss?"#e2b84d":index===0?"#7bc96f":index===1?"#b47b42":index===2?"#aaa":index===3?"#8b6748":"#a33",
-boss,slow:1,poison:0
+damage:base.damage*(1+wave*.035)*modeScale*(boss?3:1),
+reward:Math.floor(base.reward*(1+wave*.045)*(boss?5:1)),
+color:boss?"#e2b84d":base.color,
+boss,hidden:!!base.hidden,armor:base.armor||0,slow:1,slowTimer:0,poison:0
 };
 }
 
@@ -1482,34 +1485,23 @@ if(particles[i].life<=0)particles.splice(i,1);
 function updateWave(dt){
 if(waveActive){
 spawnTimer-=dt;
-
 if(spawnTimer<=0){
-const count=5+wave*2;
-
+const count=4+Math.floor(wave*1.25);
 if(nextEnemy<count){
-spawnEnemy();
-nextEnemy++;
-spawnTimer=Math.max(350,900-wave*25);
+spawnEnemy();nextEnemy++;
+spawnTimer=Math.max(350,1000-wave*16);
 }else if(enemies.length===0){
-waveActive=false;
-wave++;
-nextEnemy=0;
-money+=100+wave*20;
-updateUI();
-saveGame();
-const selected=modeData.find(m=>m.name===activeMode);
-if(selected&&wave>selected.waves){completeMode();}
+waveActive=false;wave++;nextEnemy=0;
+const selected=modeData.find(m=>m.name===activeMode)||modeData[0];
+money+=Math.max(25,Math.floor(selected.waveBonus+(wave-2)*selected.waveStep));
+updateUI();saveGame();
+if(wave>selected.waves){completeMode();}
 else{waveTimer=3000;}
 }
 }
 }else{
 waveTimer-=dt;
-
-if(waveTimer<=0){
-waveActive=true;
-nextEnemy=0;
-spawnTimer=0;
-}
+if(waveTimer<=0){waveActive=true;nextEnemy=0;spawnTimer=0;}
 }
 }
 
