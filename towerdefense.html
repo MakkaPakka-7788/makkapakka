@@ -454,10 +454,14 @@ title.textContent="TOWER SHOP";sub.textContent="Buy new cannons, then add them t
 sideTitle.textContent="TOWER COLLECTION";sideCopy.textContent="Tower purchases are permanent and saved on this device. You can equip up to five towers.";
 towerTypes.forEach(t=>{
 const owned=ownedTowers.includes(t.name), equipped=loadout.includes(t.name);
-(equipped?(t.name==="Scout"?"STARTER":"EQUIPPED"):"EQUIP"):("BUY $"+towerPrice(t));
+const label=owned?(equipped?(t.name==="Scout"?"STARTER":"EQUIPPED"):"EQUIP"):(t.gemCost?"BUY "+t.gemCost+" GEMS":"BUY $"+towerPrice(t));
 content.appendChild(makeTowerCard(t,label,()=>{
 if(equipped&&t.name==="Scout")return;
-if(!owned){const price=towerPrice(t);if(bankCash<price)return;bankCash-=price;ownedTowers.push(t.name);if(loadout.length<5)loadout.push(t.name);}
+if(!owned){
+if(t.gemCost){if(gems<t.gemCost)return;gems-=t.gemCost;}
+else{const price=towerPrice(t);if(bankCash<price)return;bankCash-=price;}
+ownedTowers.push(t.name);if(loadout.length<5)loadout.push(t.name);
+}
 else if(equipped){loadout=loadout.filter(n=>n!==t.name);}
 else if(loadout.length<5){loadout.push(t.name);}
 persistProgress();renderLobby();
