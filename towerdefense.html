@@ -608,7 +608,10 @@ const towerTypes=[
 {name:"Crystal",cost:1100,damage:70,range:240,rate:500,color:"#e8aaff",unlock:7},
 {name:"Guardian",cost:1400,damage:120,range:200,rate:700,color:"#59d98e",unlock:8},
 {name:"King",cost:2000,damage:300,range:350,rate:1800,color:"#ffd700",unlock:9},
-{name:"Accelerator",cost:1200,damage:45,range:220,rate:140,color:"#82eaff",unlock:1,gemCost:150}
+{name:"Accelerator",cost:1200,damage:45,range:220,rate:140,color:"#82eaff",unlock:1,gemCost:150},
+{name:"Pursuit",cost:14000,damage:190,range:330,rate:650,color:"#65e8ff",unlock:1,airDefense:true,flying:true},
+{name:"Fighter Jet",cost:5200,damage:95,range:290,rate:380,color:"#b5d5ff",unlock:1,airDefense:true,flying:true},
+{name:"Farm",cost:700,damage:0,range:0,rate:1000,color:"#73c66b",unlock:1,farm:true}
 ];
 
 const roadPoints=[
@@ -680,13 +683,34 @@ function terrainAt(x,y){
 return terrainTiles.find(t=>t.x===x&&t.y===y);
 }
 
+function towerPosition(t){
+if(!t.type.flying)return {x:t.x,y:t.y};
+const time=gameTime/1000;
+if(t.type.name==="Pursuit"){
+const radius=58;
+return {x:(t.homeX??t.x)+Math.cos(time*1.25)*radius,y:(t.homeY??t.y)+Math.sin(time*1.25)*radius+Math.sin(time*2.6)*18};
+}
+return {x:1740+Math.sin(time*1.25)*105,y:475+Math.sin(time*2.5)*42};
+}
+
 function drawTowers(){
 for(const t of towers){
-const p=worldToScreen(t.x,t.y);
+const pos=towerPosition(t);
+const p=worldToScreen(pos.x,pos.y);
 const stats=towerStats(t);
 const index=towerTypes.indexOf(t.type);
 const level=Math.max(1,Math.min(5,t.level||1));
 const size=(22+(index%5)*3)*(1+(level-1)*.13)*camera.zoom;
+if(t.type.farm){
+ctx.save();ctx.translate(p.x,p.y);
+ctx.fillStyle="#285e31";ctx.strokeStyle="#a5e68a";ctx.lineWidth=2*camera.zoom;
+ctx.fillRect(-size*.5,-size*.38,size,size*.76);ctx.strokeRect(-size*.5,-size*.38,size,size*.76);
+ctx.fillStyle="#73c66b";ctx.beginPath();ctx.arc(-size*.16,-size*.12,size*.19,0,Math.PI*2);ctx.arc(size*.16,-size*.12,size*.19,0,Math.PI*2);ctx.fill();
+ctx.strokeStyle="#e1f5d5";ctx.beginPath();ctx.moveTo(0,size*.2);ctx.lineTo(0,-size*.2);ctx.stroke();
+ctx.restore();
+ctx.fillStyle="#d9ffd0";ctx.font=`${9*camera.zoom}px Courier New`;ctx.textAlign="center";ctx.fillText("+$"+farmIncome(t),p.x,p.y-size*.62);
+continue;
+}
 if(selectedTower===t){
 ctx.beginPath();
 ctx.fillStyle="rgba(168,217,111,.10)";
@@ -699,6 +723,10 @@ ctx.save();
 ctx.translate(p.x,p.y);
 ctx.rotate(t.angle??0);
 ctx.fillStyle=t.type.color;
+if(t.type.flying){
+ctx.beginPath();ctx.moveTo(0,-size*.8);ctx.lineTo(size*.28,-size*.12);ctx.lineTo(size*.8,size*.28);ctx.lineTo(size*.7,size*.45);ctx.lineTo(0,size*.22);ctx.lineTo(-size*.7,size*.45);ctx.lineTo(-size*.8,size*.28);ctx.lineTo(-size*.28,-size*.12);ctx.closePath();ctx.fill();ctx.stroke();
+ctx.fillStyle="#eaf8ff";ctx.fillRect(-size*.09,-size*.4,size*.18,size*.75);
+}else{
 ctx.strokeStyle=level>=2?"#f1ce62":"#111";
 ctx.lineWidth=Math.max(1,(level>=2?3.5:3)*camera.zoom);
 ctx.fillRect(-size*.10,-size*.74,size*.20,size*.78);
@@ -709,6 +737,7 @@ else if(shape===1){ctx.roundRect(-size*.42,-size*.34,size*.84,size*.68,size*.12)
 else if(shape===2){ctx.moveTo(0,-size*.48);ctx.lineTo(size*.48,0);ctx.lineTo(0,size*.48);ctx.lineTo(-size*.48,0);ctx.closePath();}
 else{ctx.moveTo(-size*.42,-size*.3);ctx.lineTo(0,-size*.52);ctx.lineTo(size*.42,-size*.3);ctx.lineTo(size*.34,size*.38);ctx.lineTo(-size*.34,size*.38);ctx.closePath();}
 ctx.fill();ctx.stroke();
+}
 if(level>=2){ctx.beginPath();ctx.strokeStyle="#f1ce62";ctx.lineWidth=1.5*camera.zoom;ctx.arc(0,0,size*.49,0,Math.PI*2);ctx.stroke();}
 if(level>=3){ctx.fillStyle="#fff0a8";ctx.beginPath();ctx.moveTo(0,-size*.2);ctx.lineTo(size*.18,0);ctx.lineTo(0,size*.2);ctx.lineTo(-size*.18,0);ctx.closePath();ctx.fill();}
 if(level>=4){ctx.fillStyle=t.type.color;ctx.fillRect(-size*.4,-size*.84,size*.12,size*.35);ctx.fillRect(size*.28,-size*.84,size*.12,size*.35);}
@@ -958,13 +987,17 @@ ctx.fillRect(p.x-7*camera.zoom,p.y-7*camera.zoom,14*camera.zoom,14*camera.zoom);
 }
 
 function hiddenDetectionLevel(type){
-const levels={Scout:1,King:1,Sniper:3,Tesla:3,Void:4,Crystal:4,Guardian:4};
+const levels={Scout:1,King:1,Sniper:3,Tesla:3,Void:4,Crystal:4,Guardian:4,Pursuit:1,"Fighter Jet":1};
 return levels[type.name]||0;
 }
 
 function towerDetectsHidden(t){
 const level=hiddenDetectionLevel(t.type);
 return level>0&&t.level>=level;
+}
+
+function farmIncome(t){
+return Math.floor(8+12*(t.level||1));
 }
 
 function hiddenDetectionLabel(type,level=1){
@@ -986,6 +1019,7 @@ const p=worldToScreen(e.x,e.y),r=(e.boss?17:10)*camera.zoom;
 ctx.globalAlpha=1;
 ctx.fillStyle=e.color;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
 if(e.boss){ctx.strokeStyle="#fff0a8";ctx.lineWidth=2;ctx.stroke();}
+if(e.flying){ctx.strokeStyle="#d8f7ff";ctx.lineWidth=2*camera.zoom;ctx.beginPath();ctx.moveTo(p.x-r*1.8,p.y);ctx.lineTo(p.x-r*.5,p.y-r*.45);ctx.moveTo(p.x+r*1.8,p.y);ctx.lineTo(p.x+r*.5,p.y-r*.45);ctx.stroke();}
 ctx.fillStyle="#222";ctx.fillRect(p.x-r,p.y-r-7*camera.zoom,r*2,4*camera.zoom);
 ctx.fillStyle=e.boss?"#ffd34d":"#4caf50";ctx.fillRect(p.x-r,p.y-r-7*camera.zoom,r*2*Math.max(0,e.hp/e.maxHp),4*camera.zoom);
 if(e.boss){ctx.globalAlpha=1;ctx.fillStyle="#ffe68b";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText("BOSS",p.x,p.y-r-12*camera.zoom);}
@@ -1172,6 +1206,8 @@ money-=placementCost;
 towers.push({
 x,
 y,
+homeX:x,
+homeY:y,
 type,
 level:1,
 cooldown:0,
@@ -1222,7 +1258,7 @@ const upgrade=document.getElementById("upgradeBtn"),targetButton=document.getEle
 if(selectedBuild!==null){
 const type=towerTypes[selectedBuild],freeScout=type.name==="Scout"&&towers.length===0&&wave===1;
 document.getElementById("infoTitle").textContent="PLACE "+type.name.toUpperCase();
-document.getElementById("infoBody").innerHTML="Click an open tile beside the route to place this tower.<br>Cost: "+(freeScout?"FREE":"$"+type.cost)+"<br>Current cash: $"+Math.floor(money)+"<br><strong>"+hiddenDetectionLabel(type,1)+"</strong>"+(hiddenDetectionLevel(type)?"<br>Detection unlocks at tower level "+hiddenDetectionLevel(type)+".":"<br>This tower can never reveal hidden enemies.");
+document.getElementById("infoBody").innerHTML=(type.farm?"Generates $"+farmIncome({level:1})+" per second.<br>":"")+(type.flying?"Flight pattern: "+(type.name==="Pursuit"?"Orbit with up/down waves":"Figure-eight above the launch pad")+"<br>Air defence: YES<br>":"")+(type.name==="Pursuit"?"Very expensive elite aircraft.<br>":"")+"Click an open tile beside the route to place this tower.<br>Cost: "+(freeScout?"FREE":"$"+type.cost)+"<br>Current cash: $"+Math.floor(money)+"<br><strong>"+hiddenDetectionLabel(type,1)+"</strong>"+(hiddenDetectionLevel(type)?"<br>Detection unlocks at tower level "+hiddenDetectionLevel(type)+".":"<br>This tower can never reveal hidden enemies.");
 if(upgrade){upgrade.disabled=true;upgrade.textContent="UPGRADE";}
 if(targetButton)targetButton.disabled=true;return;
 }
@@ -1239,7 +1275,7 @@ const nextStats=maxed?s:towerStats({...t,level:nextLevel});
 document.getElementById("infoTitle").textContent=t.type.name+" · LEVEL "+t.level+"/5";
 const preview=maxed?'<div class="upgrade-preview-copy"><strong>MAX LEVEL · LEGEND</strong><br>This tower has reached its final form.</div>':
 '<div class="upgrade-preview"><div class="upgrade-shape level-'+nextLevel+'" style="--tower-color:'+t.type.color+'"><i></i><b></b></div><div class="upgrade-preview-copy"><strong>UPGRADE TO LEVEL '+nextLevel+' · '+tierNames[nextLevel-1].toUpperCase()+'</strong><br>Damage '+Math.floor(s.damage)+' → '+Math.floor(nextStats.damage)+'<br>Range '+Math.floor(s.range)+' → '+Math.floor(nextStats.range)+'<br>Fire rate '+Math.floor(s.rate)+' → '+Math.floor(nextStats.rate)+' ms</div></div>';
-document.getElementById("infoBody").innerHTML="Damage: "+Math.floor(s.damage)+"<br>Range: "+Math.floor(s.range)+" · RADIUS SHOWN ON MAP<br>Fire rate: "+Math.floor(s.rate)+" ms<br>"+hiddenDetectionLabel(t.type,t.level)+"<br>Kills: "+t.kills+"<br>Target: "+(t.targetMode||"FIRST")+"<br>"+(maxed?"":("Upgrade cost: $"+upgradeCost(t)))+preview;
+document.getElementById("infoBody").innerHTML=(t.type.farm?"Income: $"+farmIncome(t)+" per second<br>":"Damage: "+Math.floor(s.damage)+"<br>Range: "+Math.floor(s.range)+" · RADIUS SHOWN ON MAP<br>Fire rate: "+Math.floor(s.rate)+" ms<br>")+(t.type.flying?"Flight pattern: "+(t.type.name==="Pursuit"?"Orbit with vertical waves":"Figure-eight above launch pad")+"<br>Air defence: YES<br>":"")+hiddenDetectionLabel(t.type,t.level)+"<br>Kills: "+t.kills+"<br>Target: "+(t.targetMode||"FIRST")+"<br>"+(maxed?"":("Upgrade cost: $"+upgradeCost(t)))+preview;
 if(upgrade){upgrade.disabled=maxed||money<upgradeCost(t);upgrade.textContent=maxed?"MAX LEVEL":"UPGRADE → LV "+nextLevel+" · $"+upgradeCost(t);}
 if(targetButton){targetButton.disabled=false;targetButton.textContent="TARGET: "+(t.targetMode||"FIRST");}
 }
@@ -1424,20 +1460,22 @@ function enemyForWave(){
 const selected=modeData.find(m=>m.name===activeMode)||modeData[0];
 const modeIndex=modeData.indexOf(selected),r=Math.random();
 let index=0;
+const flying=selected.name==="Hardcore"&&wave>=25&&r>.72;
 const shift=Math.floor(modeIndex/2);
 if(wave>=Math.max(2,3-shift)&&r>.58)index=1;
 if(wave>=Math.max(4,6-shift)&&r>.72)index=2;
 if(wave>=Math.max(7,9-shift)&&r>.84)index=3;
 if(wave>=Math.max(10,13-shift)&&r>.93)index=4;
 if(wave>=Math.max(14,17-shift)&&r>.975)index=5;
+if(flying)index=6;
 const count=4+Math.floor(wave*1.25);
 const boss=wave===selected.waves&&nextEnemy===count-1;
 if(boss)index=5;
-const base=enemyTypes[index],modeScale=selected.scale;
+const base=flying?{name:"Sky Raider",hp:420,speed:62,damage:12,reward:55,color:"#73d9ff",flying:true}:enemyTypes[index],modeScale=selected.scale;
 const hp=base.hp*(1+wave*.13)*modeScale*(boss?8:1);
 return{
 type:boss?"WAVE "+wave+" BOSS":base.name,
-x:1740,y:475,path:0,pathProgress:0,
+x:1740,y:475,path:0,pathProgress:0,flying:!!base.flying,flightPhase:Math.random()*Math.PI*2,
 hp,maxHp:hp,
 speed:base.speed*(boss ? 0.72 : 1),
 damage:base.damage*(1+wave*.035)*modeScale*(boss?3:1),
@@ -1454,6 +1492,16 @@ enemies.push(enemyForWave());
 function updateEnemies(dt){
 for(let i=enemies.length-1;i>=0;i--){
 const e=enemies[i];
+
+if(e.flying){
+if(e.poison>0){e.poison-=dt;e.hp-=dt*.02;}
+e.x-=e.speed*e.slow*dt/1000;
+e.y=475+Math.sin(gameTime/360+e.flightPhase)*92;
+e.pathProgress=(1740-e.x)/1490;
+if(e.x<=250){castleHP-=e.damage;enemies.splice(i,1);continue;}
+if(e.hp<=0){money+=e.reward;kills++;enemies.splice(i,1);}
+continue;
+}
 
 if(e.poison>0){
 e.poison-=dt;
@@ -1499,9 +1547,14 @@ enemies.splice(i,1);
 
 function updateTowers(dt){
 for(const t of towers){
+const pos=towerPosition(t);
+if(t.type.farm){t.cooldown-=dt;if(t.cooldown<=0){money+=farmIncome(t);t.cooldown=1000;}continue;}
+if(t.type.flying){t.x=pos.x;t.y=pos.y;}
 t.cooldown-=dt;if(t.cooldown>0)continue;
 const s=towerStats(t);let target=null,best=-Infinity;
 for(const e of enemies){
+if(e.flying&&!t.type.airDefense)continue;
+if(!e.flying&&t.type.airDefense)continue;
 const d=dist(t,e);
 if(d>s.range||(e.hidden&&!towerDetectsHidden(t)))continue;
 const mode=t.targetMode||"FIRST";
@@ -1509,7 +1562,10 @@ const score=mode==="STRONGEST"?e.hp:mode==="CLOSEST"?-d:(e.pathProgress??e.path)
 if(score>best){best=score;target=e;}
 }
 if(!target)continue;
-t.angle=Math.atan2(target.y-t.y,target.x-t.x)+Math.PI/2;t.cooldown=s.rate;
+const desiredAngle=Math.atan2(target.y-t.y,target.x-t.x)+Math.PI/2;
+let angleDiff=(desiredAngle-(t.angle||0)+Math.PI*3)%(Math.PI*2)-Math.PI;
+t.angle=(t.angle||0)+angleDiff*Math.min(1,dt/110);
+t.cooldown=s.rate;
 projectiles.push({x:t.x,y:t.y,target,owner:t,damage:s.damage,speed:650,splash:["Splash","Mortar","Catapult","Meteor"].includes(t.type.name)?45:0,slow:["Slow","Freeze","Ice"].includes(t.type.name)?0.55:1,poison:t.type.name==="Poison"?1000:0,color:t.type.color});
 }
 }
