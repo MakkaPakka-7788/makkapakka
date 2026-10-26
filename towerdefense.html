@@ -416,8 +416,6 @@ const defaultOwned=["Scout"];
 let ownedTowers=JSON.parse(localStorage.getItem("kingdomWarOwned")||"null")||defaultOwned.slice();
 let loadout=JSON.parse(localStorage.getItem("kingdomWarLoadout")||"null")||defaultOwned.slice();
 if(!ownedTowers.includes("Scout"))ownedTowers.unshift("Scout");
-ownedTowers=[...new Set([...ownedTowers,...towerTypes.map(t=>t.name)])];
-localStorage.setItem("kingdomWarOwned",JSON.stringify(ownedTowers));
 if(!loadout.includes("Scout")){loadout=[...new Set(["Scout",...loadout])].slice(0,5);localStorage.setItem("kingdomWarLoadout",JSON.stringify(loadout));}
 if(!localStorage.getItem("kingdomWarStarterSet")){loadout=["Scout"];localStorage.setItem("kingdomWarStarterSet","scout");}
 const modeData=[
@@ -1346,7 +1344,7 @@ function buildTower(x,y,index){
 const type=towerTypes[index];
 const status=document.getElementById("buildStatus");
 const fail=message=>{if(status)status.textContent=message;};
-if(!type||!loadout.includes(type.name)){fail("That tower is not in your loadout. Equip it from the lobby first.");return;}
+if(!type){fail("Choose a tower first.");return;}
 
 if(towerAt(x,y)){fail("That tile is occupied. Choose an empty tile.");return;}
 if(roadAt(x,y)){fail("Towers cannot go on a built road. Choose a clear tile beside it.");return;}
@@ -1464,9 +1462,8 @@ document.getElementById("castleText").textContent=
 for(const [i,type] of towerTypes.entries()){
 const b=document.getElementById("tower"+i);
 if(!b)continue;
-if(!loadout.includes(type.name))b.classList.add("locked");
-else b.classList.remove("locked");
-b.style.display=loadout.includes(type.name)?"flex":"none";
+b.classList.remove("locked");
+b.style.display="flex";
 b.classList.toggle("build-selected",selectedBuild===i);
 const costLabel=type.name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+type.cost;
 if(b.dataset.costLabel!==costLabel){
@@ -1485,7 +1482,7 @@ const b=document.createElement("button");
 b.id="tower"+i;
 b.textContent=towerTypes[i].name+" $"+towerTypes[i].cost;
 b.onclick=()=>{
-if(towerTypes[i].unlock>wave||!loadout.includes(towerTypes[i].name))return;
+
 selectedBuild=i;
 selectedTerrain=null;
 selectedTower=null;
