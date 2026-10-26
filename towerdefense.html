@@ -629,7 +629,9 @@ const towerTypes=[
 {name:"Accelerator",cost:1200,damage:45,range:220,rate:140,color:"#82eaff",unlock:1,gemCost:150},
 {name:"Pursuit",cost:14000,damage:190,range:330,rate:650,color:"#65e8ff",unlock:1,airDefense:true,flying:true},
 {name:"Fighter Jet",cost:5200,damage:95,range:290,rate:380,color:"#b5d5ff",unlock:1,airDefense:true,flying:true},
-{name:"Farm",cost:700,damage:0,range:0,rate:1000,color:"#73c66b",unlock:1,farm:true}
+{name:"Farm",cost:700,damage:0,range:0,rate:1000,color:"#73c66b",unlock:1,farm:true},
+{name:"Military Base",cost:950,damage:32,range:150,rate:6500,color:"#6c9b47",unlock:2,militaryBase:true},
+{name:"Mafia Boss",cost:1250,damage:48,range:190,rate:850,color:"#b9a06a",unlock:3,mafiaBoss:true}
 ];
 
 const roadPoints=[
@@ -745,7 +747,9 @@ ctx.fill();ctx.stroke();
 }
 ctx.save();
 ctx.translate(p.x,p.y);
-if(!t.type.flying){
+if(t.type.militaryBase){ctx.fillStyle="#35442b";ctx.fillRect(-size*.58,-size*.48,size*1.16,size*.96);ctx.strokeStyle="#a7c77d";ctx.lineWidth=2*camera.zoom;ctx.strokeRect(-size*.58,-size*.48,size*1.16,size*.96);ctx.fillStyle="#6d9b42";ctx.fillRect(-size*.36,-size*.28,size*.72,size*.56);ctx.fillStyle="#1c2419";ctx.fillRect(-size*.08,-size*.46,size*.16,size*.92);ctx.fillStyle="#d5e4bc";ctx.font="bold "+Math.max(8,10*camera.zoom)+"px Courier New";ctx.textAlign="center";ctx.fillText("MB",0,size*.12);ctx.restore();ctx.fillStyle="#d9ffd0";ctx.font=`${9*camera.zoom}px Courier New`;ctx.textAlign="center";ctx.fillText("TANK LV "+level,p.x,p.y-size*.62);continue;}
+if(t.type.mafiaBoss){ctx.fillStyle="#242424";ctx.beginPath();ctx.arc(0,0,size*.48,0,Math.PI*2);ctx.fill();ctx.fillStyle="#e5d5b5";ctx.beginPath();ctx.arc(0,-size*.08,size*.25,0,Math.PI*2);ctx.fill();ctx.fillStyle="#171717";ctx.beginPath();ctx.moveTo(-size*.32,-size*.24);ctx.lineTo(0,-size*.53);ctx.lineTo(size*.32,-size*.24);ctx.closePath();ctx.fill();ctx.fillStyle="#b9a06a";ctx.fillRect(-size*.3,size*.16,size*.6,size*.22);ctx.fillStyle="#f2d98e";ctx.fillRect(-size*.13,-size*.13,size*.08,size*.05);ctx.fillRect(size*.05,-size*.13,size*.08,size*.05);ctx.restore();ctx.fillStyle="#f2d98e";ctx.font="bold "+Math.max(8,10*camera.zoom)+"px Courier New";ctx.textAlign="center";ctx.fillText("BOSS "+((t.shotsFired||0)%10)+"/10",p.x,p.y-size*.68);
+}else if(!t.type.flying){
 ctx.save();ctx.shadowColor=t.type.color;ctx.shadowBlur=9*camera.zoom;ctx.strokeStyle=t.type.color+"bb";ctx.lineWidth=1.6*camera.zoom;ctx.beginPath();ctx.arc(0,0,size*.61,0,Math.PI*2);ctx.stroke();ctx.restore();
 }
 if(t.type.flying)ctx.rotate(t.angle??0);
@@ -1055,6 +1059,7 @@ ctx.fillRect(p.x-s*.15,p.y-s*.65,s*.3,s*.3);
 function drawTroops(){
 for(const t of troops){
 const p=worldToScreen(t.x,t.y);
+if(t.militaryTank){const z=camera.zoom,lv=t.level||1;ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle="#151a13";ctx.fillRect(-13*z,-10*z,26*z,20*z);ctx.fillStyle=t.color||"#6d9b42";ctx.fillRect(-10*z,-8*z,20*z,16*z);ctx.fillStyle=lv>=4?"#d9e4e8":lv>=3?"#9ea9b4":lv>=2?"#a5b57a":"#84b64d";ctx.fillRect(-7*z,-6*z,14*z,12*z);ctx.fillStyle="#273323";ctx.fillRect(-3*z,-14*z,6*z,17*z);ctx.fillRect(-2*z,-20*z,4*z,12*z);ctx.fillStyle="#cbd5b0";ctx.fillRect(-2*z,-19*z,4*z,7*z);ctx.restore();if(t.hp<t.maxHp){ctx.fillStyle="#222";ctx.fillRect(p.x-13*z,p.y+12*z,26*z,3*z);ctx.fillStyle="#6ed56b";ctx.fillRect(p.x-13*z,p.y+12*z,26*z*Math.max(0,t.hp/t.maxHp),3*z);}continue;}
 ctx.fillStyle=t.type==="Knight"?"#ddd":t.type==="Archer"?"#7fc":"#aaa";
 ctx.fillRect(p.x-7*camera.zoom,p.y-7*camera.zoom,14*camera.zoom,14*camera.zoom);
 }
@@ -1714,6 +1719,7 @@ t.recoil=Math.max(0,(t.recoil||0)-dt/1000*75);
 t.shotPulse=Math.max(0,(t.shotPulse||0)-dt/1000*3.8);
 const pos=towerPosition(t);
 if(t.type.farm){t.cooldown-=dt;if(t.cooldown<=0){money+=farmIncome(t);t.cooldown=1000;}continue;}
+if(t.type.militaryBase){t.cooldown-=dt;if(t.cooldown<=0){const lv=Math.max(1,t.level||1);troops.push({type:"Tank",militaryTank:true,owner:t,x:250,y:475,roadIndex:roadPoints.length-1,hp:220+lv*120,maxHp:220+lv*120,damage:t.type.damage*[1,1.45,2,2.8,3.8][lv-1],speed:34+lv*5,range:130+lv*18,cooldown:0,level:lv,color:lv===1?"#6d9b42":lv===2?"#8c9c55":lv===3?"#b2b9b0":lv===4?"#5d6d83":"#d2b75d"});t.cooldown=Math.max(2600,t.type.rate*[1,.88,.76,.64,.52][lv-1]);t.fireFlash=.24;}continue;}
 if(t.type.flying){t.x=pos.x;t.y=pos.y;}
 t.cooldown-=dt;
 const s=towerStats(t);let target=null,best=-Infinity;
@@ -1734,6 +1740,7 @@ if(t.cooldown>0)continue;
 t.cooldown=s.rate;
 t.fireFlash=0.24;
 t.recoil=13;
+if(t.type.mafiaBoss){t.shotsFired=(t.shotsFired||0)+1;if(t.shotsFired%10===0){const payout=100+Math.max(0,(t.level||1)-1)*75;money+=payout;visualEffects.push({kind:"cash",x:t.x,y:t.y-28,amount:payout,life:1,maxLife:1});updateUI();}}
 const barrelLength=(22+(towerTypes.indexOf(t.type)%5)*3)*(1+((t.level||1)-1)*.13)*.78;
 const muzzleX=pos.x+Math.sin(t.angle||0)*barrelLength;
 const muzzleY=pos.y-Math.cos(t.angle||0)*barrelLength;
@@ -1780,7 +1787,7 @@ for(let i=0;i<5;i++)particles.push({x:e.x+(Math.random()-.5)*15,y:e.y+(Math.rand
 function updateTroops(dt){
 for(let i=troops.length-1;i>=0;i--){
 const t=troops[i];
-
+if(t.militaryTank){if(t.hp<=0||t.roadIndex<0){troops.splice(i,1);continue;}let target=null,best=Infinity;for(const e of enemies){if(e.flying)continue;const d=dist(t,e);if(d<=t.range&&d<best){best=d;target=e;}}if(target){t.cooldown-=dt;if(t.cooldown<=0){t.cooldown=Math.max(260,850-(t.level||1)*100);projectiles.push({x:t.x,y:t.y-12,target,damage:t.damage,speed:520,splash:(t.level||1)>=4?28:0,color:t.color||"#84b64d",tankShot:true});visualEffects.push({kind:"shot",x:t.x,y:t.y-12,angle:Math.atan2(target.y-t.y,target.x-t.x),color:t.color||"#84b64d",life:.1,maxLife:.1});}}else{const targetPoint=roadPoints[Math.max(0,t.roadIndex-1)];const dx=targetPoint.x-t.x,dy=targetPoint.y-t.y,d=Math.hypot(dx,dy);if(d<5){t.roadIndex--;if(t.roadIndex<0){troops.splice(i,1);continue;}}else{t.x+=dx/d*t.speed*dt/1000;t.y+=dy/d*t.speed*dt/1000;}}continue;}
 if(t.hp<=0){
 troops.splice(i,1);
 continue;
