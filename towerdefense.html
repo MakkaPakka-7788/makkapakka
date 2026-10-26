@@ -634,7 +634,8 @@ const towerTypes=[
 {name:"Mafia Boss",cost:1250,damage:48,range:190,rate:850,color:"#b9a06a",unlock:1,mafiaBoss:true}
 ];
 
-loadout=towerTypes.map(t=>t.name);
+loadout=[...new Set(loadout.filter(name=>ownedTowers.includes(name)))].slice(0,5);
+if(!loadout.includes("Scout"))loadout.unshift("Scout");
 localStorage.setItem("kingdomWarLoadout",JSON.stringify(loadout));
 
 const roadPoints=[
@@ -1501,6 +1502,7 @@ towerBar.style.gap="5px";
 document.getElementById("gameWrap").appendChild(towerBar);
 
 for(let i=0;i<towerTypes.length;i++){
+if(!loadout.includes(towerTypes[i].name))continue;
 const b=document.createElement("button");
 b.id="tower"+i;
 b.innerHTML='<span class="tower-button-icon shape-'+(i%4)+'" style="--tower-color:'+towerTypes[i].color+'"><i></i></span><span>'+towerTypes[i].name+'<small>'+(towerTypes[i].name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+towerTypes[i].cost)+'</small><small style="color:'+(hiddenDetectionLevel(towerTypes[i])?'#a8e88a':'#999')+'">'+(hiddenDetectionLevel(towerTypes[i])?'HIDDEN DETECTION':'NO DETECTION')+'</small></span>';
