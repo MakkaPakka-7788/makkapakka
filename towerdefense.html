@@ -794,6 +794,37 @@ ctx.beginPath();ctx.strokeStyle="hsl("+hue+",100%,60%)";ctx.lineWidth=5*camera.z
 for(let k=0;k<8;k++){const h=(hue+k*45)%360;ctx.fillStyle="hsl("+h+",100%,60%)";ctx.beginPath();const ang=k*Math.PI/4+gameTime*.0004;ctx.arc(Math.cos(ang)*size*.68,Math.sin(ang)*size*.68,size*.09,0,Math.PI*2);ctx.fill();}
 }
 ctx.restore();
+if((t.fireFlash||0)>0){
+const f=Math.min(1,t.fireFlash/.24);
+ctx.save();
+ctx.globalAlpha=f*.9;
+ctx.strokeStyle=t.type.color;
+ctx.lineWidth=(3+5*f)*camera.zoom;
+ctx.shadowColor=t.type.color;
+ctx.shadowBlur=22*camera.zoom;
+ctx.beginPath();
+ctx.arc(p.x,p.y,size*(.62+.4*(1-f)),0,Math.PI*2);
+ctx.stroke();
+ctx.restore();
+}
+if((t.upgradeFlash||0)>0){
+const f=t.upgradeFlash/1.15;
+const tier=t.level===2?"#b8c0ca":t.level===3?"#ffd34f":t.level===4?"#32aaff":"hsl("+(gameTime*.12%360)+",100%,60%)";
+ctx.save();
+ctx.globalAlpha=Math.min(1,f*1.5);
+ctx.strokeStyle=tier;
+ctx.shadowColor=tier;
+ctx.shadowBlur=24*camera.zoom;
+ctx.lineWidth=(2+5*f)*camera.zoom;
+ctx.beginPath();
+ctx.arc(p.x,p.y,size*(.75+(1-f)*1.15),0,Math.PI*2);
+ctx.stroke();
+ctx.fillStyle=tier;
+ctx.font="bold "+Math.max(13,18*camera.zoom)+"px Courier New";
+ctx.textAlign="center";
+ctx.fillText("LEVEL "+t.level+"!",p.x,p.y-size*(1.15+(1-f)*1.1));
+ctx.restore();
+}
 ctx.fillStyle=level>=5?"#fff0a8":"#fff";ctx.font="bold "+Math.max(10,12*camera.zoom)+"px Courier New";ctx.textAlign="center";ctx.fillText("LV "+level,p.x,p.y+size*.92);
 if(level>=2){
 const tierColor=level===2?"#b8c0ca":level===3?"#ffd34f":level===4?"#32aaff":"hsl("+(gameTime*.12%360)+",100%,60%)";
@@ -1112,7 +1143,11 @@ for(const p of particles){
 const a=worldToScreen(p.x,p.y);
 ctx.globalAlpha=p.life;
 ctx.fillStyle=p.color;
-ctx.fillRect(a.x-2,a.y-2,4,4);
+const particleSize=(p.size||4)*camera.zoom;
+ctx.shadowColor=p.color;
+ctx.shadowBlur=(p.vx!==undefined?9:0)*camera.zoom;
+ctx.fillRect(a.x-particleSize/2,a.y-particleSize/2,particleSize,particleSize);
+ctx.shadowBlur=0;
 ctx.globalAlpha=1;
 }
 }
@@ -1304,7 +1339,15 @@ if(money<cost){const status=document.getElementById("buildStatus");if(status)sta
 
 money-=cost;
 selectedTower.level++;
-selectedTower.upgradeFlash=1.5;
+selectedTower.upgradeFlash=1.15;
+selectedTower.upgradeBurst=1;
+selectedTower.upgradeStartLevel=selectedTower.level;
+const upgradePos=towerPosition(selectedTower);
+for(let i=0;i<18;i++){
+const a=Math.PI*2*i/18;
+const tier=selectedTower.level===2?"#b8c0ca":selectedTower.level===3?"#ffd34f":selectedTower.level===4?"#32aaff":"hsl("+((gameTime*.12+i*20)%360)+",100%,60%)";
+particles.push({x:upgradePos.x,y:upgradePos.y,vx:Math.cos(a)*(45+Math.random()*65),vy:Math.sin(a)*(45+Math.random()*65),life:1.1,color:tier,size:3+Math.random()*3});
+}
 const status=document.getElementById("buildStatus");
 if(status)status.textContent=selectedTower.type.name+" upgraded to level "+selectedTower.level+"!";
 updateUI();
@@ -1621,7 +1664,8 @@ enemies.splice(i,1);
 function updateTowers(dt){
 for(const t of towers){
 if(t.upgradeFlash>0)t.upgradeFlash=Math.max(0,t.upgradeFlash-dt/1000);
- t.fireFlash=Math.max(0,(t.fireFlash||0)-dt/1000);
+t.upgradeBurst=Math.max(0,(t.upgradeBurst||0)-dt/1000);
+t.fireFlash=Math.max(0,(t.fireFlash||0)-dt/1000);
 t.recoil=Math.max(0,(t.recoil||0)-dt/1000*75);
 t.shotPulse=Math.max(0,(t.shotPulse||0)-dt/1000*3.8);
 const pos=towerPosition(t);
@@ -1725,8 +1769,10 @@ t.cooldown=t.type==="Archer"?900:700;
 
 function updateParticles(dt){
 for(let i=particles.length-1;i>=0;i--){
-particles[i].life-=dt/500;
-if(particles[i].life<=0)particles.splice(i,1);
+const p=particles[i];
+p.life-=dt/500;
+if(p.vx!==undefined){p.x+=p.vx*dt/1000;p.y+=p.vy*dt/1000;p.vx*=.96;p.vy*=.96;}
+if(p.life<=0)particles.splice(i,1);
 }
 }
 
