@@ -1051,36 +1051,6 @@ ctx.fillStyle="#b33";
 ctx.fillRect(p.x-s*.15,p.y-s*.65,s*.3,s*.3);
 }
 
-function drawTowers(){
-for(const t of towers){
-const p=worldToScreen(t.x,t.y);
-const s=34*camera.zoom;
-const stats=towerStats(t);
-
-ctx.fillStyle=t.type.color;
-ctx.fillRect(p.x-s/2,p.y-s/2,s,s);
-
-ctx.strokeStyle="#111";
-ctx.lineWidth=3;
-ctx.strokeRect(p.x-s/2,p.y-s/2,s,s);
-
-ctx.fillStyle="#111";
-ctx.fillRect(p.x-3*camera.zoom,p.y-18*camera.zoom,6*camera.zoom,12*camera.zoom);
-
-if(selectedTower===t){
-ctx.beginPath();
-ctx.strokeStyle="rgba(255,255,255,.45)";
-ctx.lineWidth=2;
-ctx.arc(p.x,p.y,stats.range*camera.zoom,0,Math.PI*2);
-ctx.stroke();
-}
-
-ctx.fillStyle="#fff";
-ctx.font=`${10*camera.zoom}px Courier New`;
-ctx.textAlign="center";
-ctx.fillText(t.level,p.x,p.y+4*camera.zoom);
-}
-}
 
 function drawTroops(){
 for(const t of troops){
