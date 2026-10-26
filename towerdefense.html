@@ -754,18 +754,23 @@ ctx.strokeRect(-size*.105,-size*.78,size*.21,size*.82);
 ctx.fillStyle=level>=3?"#fff0a8":"#d9e4eb";
 ctx.beginPath();ctx.arc(0,-size*.48,size*.105,0,Math.PI*2);ctx.fill();
 if((t.fireFlash||0)>0){
-const strength=Math.min(1,t.fireFlash/.14);
+const strength=Math.min(1,t.fireFlash/.24);
 ctx.save();
 ctx.globalAlpha=strength;
 ctx.shadowColor=t.type.color;
-ctx.shadowBlur=24*camera.zoom;
-ctx.fillStyle="#fff7c2";
-ctx.beginPath();ctx.arc(0,-size*.91,size*(.15+.09*strength),0,Math.PI*2);ctx.fill();
+ctx.shadowBlur=38*camera.zoom;
+ctx.fillStyle="#ffffff";
+ctx.beginPath();ctx.arc(0,-size*1.02,size*(.28+.12*strength),0,Math.PI*2);ctx.fill();
 ctx.fillStyle=t.type.color;
-ctx.beginPath();ctx.moveTo(0,-size*1.23);ctx.lineTo(size*.12,-size*.94);ctx.lineTo(0,-size*.78);ctx.lineTo(-size*.12,-size*.94);ctx.closePath();ctx.fill();
-ctx.strokeStyle="#fff4a8";
-ctx.lineWidth=2.5*camera.zoom;
-ctx.beginPath();ctx.moveTo(-size*.25,-size*.91);ctx.lineTo(size*.25,-size*.91);ctx.moveTo(0,-size*1.18);ctx.lineTo(0,-size*.68);ctx.stroke();
+ctx.beginPath();ctx.moveTo(0,-size*1.48);ctx.lineTo(size*.2,-size*1.04);ctx.lineTo(0,-size*.8);ctx.lineTo(-size*.2,-size*1.04);ctx.closePath();ctx.fill();
+ctx.strokeStyle="#fff7c7";
+ctx.lineWidth=3.5*camera.zoom;
+ctx.beginPath();
+ctx.moveTo(-size*.48,-size*1.02);ctx.lineTo(size*.48,-size*1.02);
+ctx.moveTo(0,-size*1.48);ctx.lineTo(0,-size*.62);
+ctx.moveTo(-size*.33,-size*1.35);ctx.lineTo(size*.33,-size*.69);
+ctx.moveTo(size*.33,-size*1.35);ctx.lineTo(-size*.33,-size*.69);
+ctx.stroke();
 ctx.restore();
 }
 ctx.restore();
@@ -1080,10 +1085,25 @@ ctx.globalAlpha=1;
 function drawProjectiles(){
 for(const p of projectiles){
 const a=worldToScreen(p.x,p.y);
-ctx.fillStyle=p.color||"#fff";
+const start=p.owner?worldToScreen(p.owner.x,p.owner.y):a;
+const dx=a.x-start.x,dy=a.y-start.y;
+const len=Math.hypot(dx,dy)||1;
+ctx.save();
+ctx.strokeStyle=p.color||"#fff";
+ctx.lineWidth=Math.max(2,4*camera.zoom);
+ctx.globalAlpha=.85;
+ctx.shadowColor=p.color||"#fff";
+ctx.shadowBlur=10*camera.zoom;
 ctx.beginPath();
-ctx.arc(a.x,a.y,3*camera.zoom,0,Math.PI*2);
+ctx.moveTo(a.x-dx/len*15*camera.zoom,a.y-dy/len*15*camera.zoom);
+ctx.lineTo(a.x,a.y);
+ctx.stroke();
+ctx.globalAlpha=1;
+ctx.fillStyle="#fff7d1";
+ctx.beginPath();
+ctx.arc(a.x,a.y,Math.max(3,5*camera.zoom),0,Math.PI*2);
 ctx.fill();
+ctx.restore();
 }
 }
 
@@ -1601,8 +1621,9 @@ enemies.splice(i,1);
 function updateTowers(dt){
 for(const t of towers){
 if(t.upgradeFlash>0)t.upgradeFlash=Math.max(0,t.upgradeFlash-dt/1000);
-t.fireFlash=Math.max(0,(t.fireFlash||0)-dt/1000);
-t.recoil=Math.max(0,(t.recoil||0)-dt/1000*42);
+ t.fireFlash=Math.max(0,(t.fireFlash||0)-dt/1000);
+t.recoil=Math.max(0,(t.recoil||0)-dt/1000*75);
+t.shotPulse=Math.max(0,(t.shotPulse||0)-dt/1000*3.8);
 const pos=towerPosition(t);
 if(t.type.farm){t.cooldown-=dt;if(t.cooldown<=0){money+=farmIncome(t);t.cooldown=1000;}continue;}
 if(t.type.flying){t.x=pos.x;t.y=pos.y;}
@@ -1623,8 +1644,10 @@ let angleDiff=(desiredAngle-(t.angle||0)+Math.PI*3)%(Math.PI*2)-Math.PI;
 t.angle=(t.angle||0)+angleDiff*Math.min(1,dt/110);
 if(t.cooldown>0)continue;
 t.cooldown=s.rate;
-t.fireFlash=0.14;
-t.recoil=7;
+t.fireFlash=0.24;
+t.recoil=13;
+t.lastShotAngle=t.angle;
+t.shotPulse=1;
 projectiles.push({x:t.x,y:t.y,target,owner:t,damage:s.damage,speed:650,splash:["Splash","Mortar","Catapult","Meteor"].includes(t.type.name)?45:0,slow:["Slow","Freeze","Ice"].includes(t.type.name)?0.55:1,poison:t.type.name==="Poison"?1000:0,color:t.type.color});
 }
 }
