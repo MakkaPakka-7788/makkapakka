@@ -1477,21 +1477,6 @@ if(skip){skip.disabled=waveActive;skip.textContent=waveActive?"WAVE LIVE":"START
 updateInfo();
 }
 
-for(let i=0;i<towerTypes.length;i++){
-const b=document.createElement("button");
-b.id="tower"+i;
-b.textContent=towerTypes[i].name+" $"+towerTypes[i].cost;
-b.onclick=()=>{
-
-selectedBuild=i;
-selectedTerrain=null;
-selectedTower=null;
-roadMode=false;
-updateInfo();
-};
-document.getElementById("towerbar")?.appendChild(b);
-}
-
 const bar=document.getElementById("terrainBar");
 document.getElementById("towerInfo").appendChild(document.createElement("div"));
 const towerBar=document.createElement("div");
@@ -1893,7 +1878,7 @@ document.getElementById("homeBtn").textContent="LOBBY";
 
 function resetGame(){
 runSettled=false;
-money=0;
+money=5000;
 wave=1;
 kills=0;
 castleHP=1000;
