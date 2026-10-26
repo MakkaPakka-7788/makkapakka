@@ -170,6 +170,11 @@ color:#aaa;
 z-index:5;
 transform:translateY(-42px);
 }
+#runEndedScreen{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.96);display:none;align-items:center;justify-content:center;padding:24px;font-family:Inter,Arial,sans-serif;color:#eee;text-align:center}
+#runEndedBox{width:min(520px,100%);border:1px solid #a8d96f;background:#101010;padding:36px 28px;box-shadow:0 0 35px rgba(168,217,111,.15)}
+#runEndedBox h1{margin:0 0 12px;font-size:clamp(30px,6vw,48px);letter-spacing:.08em;color:#a8d96f}
+#runEndedBox p{color:#bbb;line-height:1.6;margin:0 0 24px}
+#runEndedBox button{border:0;background:#a8d96f;color:#111;font-weight:800;padding:13px 22px;cursor:pointer}
 #overlay{
 position:absolute;
 inset:0;
@@ -396,6 +401,14 @@ button:disabled{opacity:.35;cursor:not-allowed}
 </div>
 </div>
 
+<div id="runEndedScreen" role="dialog" aria-modal="true" aria-labelledby="runEndedTitle">
+<div id="runEndedBox">
+<h1 id="runEndedTitle">RUN ENDED</h1>
+<p id="runEndedMessage">Your previous run ended when you left. Your towers and in-mode progress have been cleared.</p>
+<button id="runEndedContinue">BACK TO LOBBY</button>
+</div>
+</div>
+
 <script>
 let bankCash=Number(localStorage.getItem("kingdomWarBank")||0);
 let gems=Number(localStorage.getItem("kingdomWarGems")||0);
@@ -502,8 +515,10 @@ card.querySelector("button").onclick=onClick;return card;
 document.querySelectorAll(".lobby-nav button").forEach(b=>b.addEventListener("click",()=>{lobbyTab=b.dataset.tab;renderLobby();}));
 document.getElementById("startModeBtn").addEventListener("click",()=>{
 if(!modeUnlocked(modeData.findIndex(m=>m.name===selectedMode)))return;
-if(savedRunMode===selectedMode){activeMode=selectedMode;loadGame();gameOver=false;updateUI();}
-else{activeMode=selectedMode;resetGame();}
+localStorage.removeItem("kingdomWarSave");
+savedRunMode=null;
+activeMode=selectedMode;
+resetGame();
 document.getElementById("lobby").style.display="none";
 document.getElementById("stats").style.display="flex";
 document.getElementById("gameWrap").style.display="block";
@@ -2068,13 +2083,31 @@ window.location.href="index.html";
 });
 
 setInterval(saveGame,5000);
-const forfeitActiveRun=()=>{if(activeMode&&!runSettled)settleRun(false);};
+const forfeitActiveRun=()=>{
+if(!activeMode||runSettled)return;
+const endedMode=activeMode;
+const endedWave=Math.max(0,wave-1);
+try{localStorage.setItem("kingdomWarRunEndedNotice",JSON.stringify({mode:endedMode,wave:endedWave}));}catch(e){}
+settleRun(false);
+};
 window.addEventListener("beforeunload",forfeitActiveRun);
 window.addEventListener("pagehide",forfeitActiveRun);
 
-loadGame();
+document.getElementById("runEndedContinue").onclick=()=>{
+localStorage.removeItem("kingdomWarRunEndedNotice");
+document.getElementById("runEndedScreen").style.display="none";
+showLobby();
+};
 updateUI();
 showLobby();
+try{
+const ended=JSON.parse(localStorage.getItem("kingdomWarRunEndedNotice")||"null");
+if(ended){
+localStorage.removeItem("kingdomWarRunEndedNotice");
+document.getElementById("runEndedMessage").textContent="Your "+ended.mode+" run ended when you left"+(ended.wave>0?" after wave "+ended.wave:"")+". Your towers and in-mode progress have been cleared. Start fresh when you’re ready.";
+document.getElementById("runEndedScreen").style.display="flex";
+}
+}catch(e){}
 requestAnimationFrame(gameLoop);
 </script>
 
