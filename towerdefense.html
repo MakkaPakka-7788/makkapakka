@@ -567,6 +567,7 @@ let towers=[];
 let enemies=[];
 let projectiles=[];
 let particles=[];
+let visualEffects=[];
 let troops=[];
 let terrainTiles=[];
 let roads=[];
@@ -1138,6 +1139,69 @@ ctx.restore();
 }
 }
 
+function updateVisualEffects(dt){
+for(let i=visualEffects.length-1;i>=0;i--){
+visualEffects[i].life-=dt/1000;
+if(visualEffects[i].life<=0)visualEffects.splice(i,1);
+}
+}
+
+function drawVisualEffects(){
+for(const e of visualEffects){
+const p=worldToScreen(e.x,e.y);
+const f=Math.max(0,e.life/e.maxLife);
+ctx.save();
+ctx.globalAlpha=Math.min(1,f*1.5);
+if(e.kind==="shot"){
+const radius=(13+(1-f)*30)*camera.zoom;
+ctx.translate(p.x,p.y);
+ctx.rotate(e.angle||0);
+ctx.shadowColor=e.color;
+ctx.shadowBlur=32*camera.zoom;
+ctx.fillStyle=e.color;
+ctx.strokeStyle="#ffffff";
+ctx.lineWidth=Math.max(2,4*camera.zoom);
+ctx.beginPath();
+ctx.moveTo(0,-radius*2.1);
+ctx.lineTo(radius*.55,-radius*.45);
+ctx.lineTo(0,radius*.1);
+ctx.lineTo(-radius*.55,-radius*.45);
+ctx.closePath();
+ctx.fill();
+ctx.beginPath();
+ctx.arc(0,-radius*.65,radius*.58,0,Math.PI*2);
+ctx.fill();
+ctx.stroke();
+ctx.strokeStyle="#fff7c7";
+ctx.beginPath();
+ctx.moveTo(-radius*1.4,-radius*.65);ctx.lineTo(radius*1.4,-radius*.65);
+ctx.moveTo(0,-radius*1.9);ctx.lineTo(0,radius*.15);
+ctx.stroke();
+}else{
+const radius=(22+(1-f)*75)*camera.zoom;
+ctx.shadowColor=e.color;
+ctx.shadowBlur=28*camera.zoom;
+ctx.strokeStyle=e.color;
+ctx.lineWidth=Math.max(3,7*f*camera.zoom);
+ctx.beginPath();
+ctx.arc(p.x,p.y,radius,0,Math.PI*2);
+ctx.stroke();
+ctx.fillStyle="#ffffff";
+ctx.font="bold "+Math.max(14,20*camera.zoom)+"px Courier New";
+ctx.textAlign="center";
+ctx.fillText("LEVEL "+e.level+"!",p.x,p.y-radius-8*camera.zoom);
+for(let k=0;k<8;k++){
+const a=k*Math.PI/4+(1-f)*.8;
+ctx.fillStyle=e.color;
+ctx.beginPath();
+ctx.arc(p.x+Math.cos(a)*radius,p.y+Math.sin(a)*radius,Math.max(2,4*camera.zoom),0,Math.PI*2);
+ctx.fill();
+}
+}
+ctx.restore();
+}
+}
+
 function drawParticles(){
 for(const p of particles){
 const a=worldToScreen(p.x,p.y);
@@ -1160,6 +1224,7 @@ drawPath();
 drawCastle();
 drawEnemyBase();
 drawTowers();
+drawVisualEffects();
 drawTroops();
 drawEnemies();
 drawProjectiles();
@@ -1340,6 +1405,7 @@ if(money<cost){const status=document.getElementById("buildStatus");if(status)sta
 money-=cost;
 selectedTower.level++;
 selectedTower.upgradeFlash=1.15;
+visualEffects.push({kind:"upgrade",x:towerPosition(selectedTower).x,y:towerPosition(selectedTower).y,color:selectedTower.level===2?"#b8c0ca":selectedTower.level===3?"#ffd34f":selectedTower.level===4?"#32aaff":"#ff4dff",level:selectedTower.level,life:1.25,maxLife:1.25});
 selectedTower.upgradeBurst=1;
 selectedTower.upgradeStartLevel=selectedTower.level;
 const upgradePos=towerPosition(selectedTower);
@@ -1690,6 +1756,7 @@ if(t.cooldown>0)continue;
 t.cooldown=s.rate;
 t.fireFlash=0.24;
 t.recoil=13;
+visualEffects.push({kind:"shot",x:pos.x,y:pos.y,angle:t.angle,color:t.type.color,life:.22,maxLife:.22});
 t.lastShotAngle=t.angle;
 t.shotPulse=1;
 projectiles.push({x:t.x,y:t.y,target,owner:t,damage:s.damage,speed:650,splash:["Splash","Mortar","Catapult","Meteor"].includes(t.type.name)?45:0,slow:["Slow","Freeze","Ice"].includes(t.type.name)?0.55:1,poison:t.type.name==="Poison"?1000:0,color:t.type.color});
@@ -1803,6 +1870,7 @@ function gameLoop(now){
 const dt=Math.min(40,now-lastTime);
 lastTime=now;
 
+updateVisualEffects(dt);
 if(!paused&&!gameOver){
 gameTime+=dt;
 updateWave(dt);
@@ -1852,6 +1920,7 @@ towers=[];
 enemies=[];
 projectiles=[];
 particles=[];
+visualEffects=[];
 troops=[];
 terrainTiles=[];
 roads=[];
@@ -1944,6 +2013,7 @@ enemies=[];
 projectiles=[];
 troops=[];
 particles=[];
+visualEffects=[];
 waveActive=false;
 waveTimer=2000;
 nextEnemy=0;
