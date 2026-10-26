@@ -416,6 +416,8 @@ const defaultOwned=["Scout"];
 let ownedTowers=JSON.parse(localStorage.getItem("kingdomWarOwned")||"null")||defaultOwned.slice();
 let loadout=JSON.parse(localStorage.getItem("kingdomWarLoadout")||"null")||defaultOwned.slice();
 if(!ownedTowers.includes("Scout"))ownedTowers.unshift("Scout");
+ownedTowers=[...new Set([...ownedTowers,...towerTypes.map(t=>t.name)])];
+localStorage.setItem("kingdomWarOwned",JSON.stringify(ownedTowers));
 if(!loadout.includes("Scout")){loadout=[...new Set(["Scout",...loadout])].slice(0,5);localStorage.setItem("kingdomWarLoadout",JSON.stringify(loadout));}
 if(!localStorage.getItem("kingdomWarStarterSet")){loadout=["Scout"];localStorage.setItem("kingdomWarStarterSet","scout");}
 const modeData=[
@@ -611,27 +613,27 @@ const towerTypes=[
 {name:"Heavy",cost:140,damage:65,range:145,rate:1100,color:"#ff7043",unlock:1},
 {name:"Slow",cost:120,damage:12,range:150,rate:800,color:"#8e9eff",unlock:1},
 {name:"Splash",cost:170,damage:35,range:135,rate:1000,color:"#ff4d88",unlock:1},
-{name:"Laser",cost:230,damage:18,range:190,rate:170,color:"#ff3333",unlock:2},
-{name:"Freeze",cost:250,damage:9,range:155,rate:700,color:"#66eaff",unlock:2},
-{name:"Poison",cost:280,damage:14,range:160,rate:600,color:"#9cff33",unlock:2},
-{name:"Sniper",cost:350,damage:150,range:300,rate:1900,color:"#d9d9d9",unlock:3},
-{name:"Tesla",cost:420,damage:38,range:175,rate:850,color:"#b266ff",unlock:3},
-{name:"Mortar",cost:480,damage:80,range:250,rate:1800,color:"#a87952",unlock:3},
-{name:"Flame",cost:520,damage:17,range:105,rate:260,color:"#ff6600",unlock:4},
-{name:"Ice",cost:580,damage:28,range:180,rate:650,color:"#99ffff",unlock:4},
-{name:"Ballista",cost:650,damage:220,range:280,rate:2400,color:"#b58a5a",unlock:5},
-{name:"Catapult",cost:700,damage:125,range:260,rate:2100,color:"#806040",unlock:5},
-{name:"Void",cost:800,damage:100,range:220,rate:1000,color:"#7b4dff",unlock:6},
-{name:"Meteor",cost:950,damage:250,range:290,rate:2600,color:"#ff452e",unlock:7},
-{name:"Crystal",cost:1100,damage:70,range:240,rate:500,color:"#e8aaff",unlock:7},
-{name:"Guardian",cost:1400,damage:120,range:200,rate:700,color:"#59d98e",unlock:8},
-{name:"King",cost:2000,damage:300,range:350,rate:1800,color:"#ffd700",unlock:9},
+{name:"Laser",cost:230,damage:18,range:190,rate:170,color:"#ff3333",unlock:1},
+{name:"Freeze",cost:250,damage:9,range:155,rate:700,color:"#66eaff",unlock:1},
+{name:"Poison",cost:280,damage:14,range:160,rate:600,color:"#9cff33",unlock:1},
+{name:"Sniper",cost:350,damage:150,range:300,rate:1900,color:"#d9d9d9",unlock:1},
+{name:"Tesla",cost:420,damage:38,range:175,rate:850,color:"#b266ff",unlock:1},
+{name:"Mortar",cost:480,damage:80,range:250,rate:1800,color:"#a87952",unlock:1},
+{name:"Flame",cost:520,damage:17,range:105,rate:260,color:"#ff6600",unlock:1},
+{name:"Ice",cost:580,damage:28,range:180,rate:650,color:"#99ffff",unlock:1},
+{name:"Ballista",cost:650,damage:220,range:280,rate:2400,color:"#b58a5a",unlock:1},
+{name:"Catapult",cost:700,damage:125,range:260,rate:2100,color:"#806040",unlock:1},
+{name:"Void",cost:800,damage:100,range:220,rate:1000,color:"#7b4dff",unlock:1},
+{name:"Meteor",cost:950,damage:250,range:290,rate:2600,color:"#ff452e",unlock:1},
+{name:"Crystal",cost:1100,damage:70,range:240,rate:500,color:"#e8aaff",unlock:1},
+{name:"Guardian",cost:1400,damage:120,range:200,rate:700,color:"#59d98e",unlock:1},
+{name:"King",cost:2000,damage:300,range:350,rate:1800,color:"#ffd700",unlock:1},
 {name:"Accelerator",cost:1200,damage:45,range:220,rate:140,color:"#82eaff",unlock:1,gemCost:150},
 {name:"Pursuit",cost:14000,damage:190,range:330,rate:650,color:"#65e8ff",unlock:1,airDefense:true,flying:true},
 {name:"Fighter Jet",cost:5200,damage:95,range:290,rate:380,color:"#b5d5ff",unlock:1,airDefense:true,flying:true},
 {name:"Farm",cost:700,damage:0,range:0,rate:1000,color:"#73c66b",unlock:1,farm:true},
-{name:"Military Base",cost:950,damage:32,range:150,rate:6500,color:"#6c9b47",unlock:2,militaryBase:true},
-{name:"Mafia Boss",cost:1250,damage:48,range:190,rate:850,color:"#b9a06a",unlock:3,mafiaBoss:true}
+{name:"Military Base",cost:950,damage:32,range:150,rate:6500,color:"#6c9b47",unlock:1,militaryBase:true},
+{name:"Mafia Boss",cost:1250,damage:48,range:190,rate:850,color:"#b9a06a",unlock:1,mafiaBoss:true}
 ];
 
 const roadPoints=[
@@ -1345,7 +1347,7 @@ const type=towerTypes[index];
 const status=document.getElementById("buildStatus");
 const fail=message=>{if(status)status.textContent=message;};
 if(!type||!loadout.includes(type.name)){fail("That tower is not in your loadout. Equip it from the lobby first.");return;}
-if(type.unlock>wave){fail(type.name+" unlocks at wave "+type.unlock+".");return;}
+
 if(towerAt(x,y)){fail("That tile is occupied. Choose an empty tile.");return;}
 if(roadAt(x,y)){fail("Towers cannot go on a built road. Choose a clear tile beside it.");return;}
 if(terrainAt(x,y)){fail("That tile has terrain on it. Choose a clear tile.");return;}
@@ -1462,7 +1464,7 @@ document.getElementById("castleText").textContent=
 for(const [i,type] of towerTypes.entries()){
 const b=document.getElementById("tower"+i);
 if(!b)continue;
-if(type.unlock>wave||!loadout.includes(type.name))b.classList.add("locked");
+if(!loadout.includes(type.name))b.classList.add("locked");
 else b.classList.remove("locked");
 b.style.display=loadout.includes(type.name)?"flex":"none";
 b.classList.toggle("build-selected",selectedBuild===i);
@@ -1516,7 +1518,7 @@ const b=document.createElement("button");
 b.id="tower"+i;
 b.innerHTML='<span class="tower-button-icon shape-'+(i%4)+'" style="--tower-color:'+towerTypes[i].color+'"><i></i></span><span>'+towerTypes[i].name+'<small>'+(towerTypes[i].name==="Scout"&&towers.length===0&&wave===1?"FREE":"$"+towerTypes[i].cost)+'</small><small style="color:'+(hiddenDetectionLevel(towerTypes[i])?'#a8e88a':'#999')+'">'+(hiddenDetectionLevel(towerTypes[i])?'HIDDEN DETECTION':'NO DETECTION')+'</small></span>';
 b.onclick=()=>{
-if(towerTypes[i].unlock>wave)return;
+
 selectedBuild=i;
 selectedTerrain=null;
 selectedTower=null;
