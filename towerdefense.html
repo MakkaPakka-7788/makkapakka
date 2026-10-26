@@ -634,6 +634,9 @@ const towerTypes=[
 {name:"Mafia Boss",cost:1250,damage:48,range:190,rate:850,color:"#b9a06a",unlock:1,mafiaBoss:true}
 ];
 
+loadout=towerTypes.map(t=>t.name);
+localStorage.setItem("kingdomWarLoadout",JSON.stringify(loadout));
+
 const roadPoints=[
 {x:1740,y:475},
 {x:1600,y:475},
@@ -1489,9 +1492,11 @@ towerBar.style.border="2px solid #444";
 towerBar.style.padding="7px";
 towerBar.style.zIndex="5";
 towerBar.style.display="grid";
-towerBar.style.gridTemplateColumns="repeat(10,74px)";
-towerBar.style.maxWidth="calc(100vw - 20px)";
-towerBar.style.overflowX="auto";
+towerBar.style.gridTemplateColumns="repeat(auto-fit,minmax(105px,1fr))";
+towerBar.style.width="min(900px,calc(100vw - 20px))";
+towerBar.style.maxHeight="155px";
+towerBar.style.overflowY="auto";
+towerBar.style.overflowX="hidden";
 towerBar.style.gap="5px";
 document.getElementById("gameWrap").appendChild(towerBar);
 
@@ -1885,7 +1890,7 @@ castleHP=1000;
 paused=false;
 gameOver=false;
 selectedTower=null;
-selectedBuild=loadout.includes("Scout")?towerTypes.findIndex(t=>t.name==="Scout"):null;
+selectedBuild=towerTypes.findIndex(t=>t.name==="Scout");
 selectedTerrain=null;
 roadMode=false;
 towers=[];
