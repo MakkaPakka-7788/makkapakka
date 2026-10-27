@@ -2,20 +2,85 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dune Dash | Flashcard.com</title>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080808;color:#eee;font-family:"Courier New",monospace}
-header{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#101010;border-bottom:1px solid #333}
+#game{width:100%;height:100%;display:flex;flex-direction:column}
+header{height:48px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#101010;border-bottom:1px solid #292929}
 h1{font-size:16px;margin:0}
-a{color:#eee;text-decoration:none;border:1px solid #444;padding:7px 10px;border-radius:4px}
-main{height:calc(100% - 48px);width:100%;position:relative}
-iframe{display:block;border:0;width:100%;height:100%;background:#fff}
+a,button{color:#eee;background:#181818;border:1px solid #444;padding:7px 12px;text-decoration:none;font:inherit;cursor:pointer}
+#stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}
+#unity-canvas{width:100%;height:100%;display:block;background:#171717;outline:none}
+#loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#080808;text-align:center;padding:20px}
+#bar{width:min(320px,80%);height:8px;background:#292929}
+#progress{height:100%;width:0;background:#eee;transition:width .15s}
+#message{max-width:800px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+#hint{font-size:12px;color:#aaa}
 </style>
 </head>
 <body>
+<div id="game">
 <header><h1>DUNE DASH</h1><a href="index.html">← HOME</a></header>
-<main><iframe src="https://script.google.com/macros/s/AKfycbwgLUpgbADEdCFDRp0NnFSr310OUnQMg6zj69o0Tu2UBe_nICkRNiqcBorb5IYBIeLQig/exec" allow="fullscreen; autoplay; gamepad" allowfullscreen loading="eager" title="Dune Dash"></iframe></main>
+<main id="stage">
+<canvas id="unity-canvas" tabindex="-1"></canvas>
+<div id="loading">
+<strong>LOADING DUNE DASH</strong>
+<div id="bar"><div id="progress"></div></div>
+<div id="message">Connecting to Unity game files…</div>
+<div id="hint">If loading fails, the game build may need its original configuration or compatible asset headers.</div>
+</div>
+</main>
+</div>
+<script>
+(() => {
+  const buildUrl = "https://cdn.jsdelivr.net/gh/KathleenAndrea/active@987cf3b8db590fcf991e08bfb879806977caf1b9/src/";
+  const canvas = document.getElementById("unity-canvas");
+  const loading = document.getElementById("loading");
+  const message = document.getElementById("message");
+  const progress = document.getElementById("progress");
+
+  const config = {
+    dataUrl: buildUrl + "data.br",
+    frameworkUrl: buildUrl + "framework.js",
+    codeUrl: buildUrl + "wasm.br",
+    streamingAssetsUrl: buildUrl + "StreamingAssets",
+    companyName: "Unknown",
+    productName: "Dune Dash",
+    productVersion: "1.0"
+  };
+
+  function showError(error) {
+    message.textContent = "Dune Dash could not start.\n" +
+      (error && error.message ? error.message : String(error)) +
+      "\n\nThis test uses the asset URLs we found, but the Unity build may require different configuration or file paths.";
+    progress.style.width = "0%";
+  }
+
+  const loader = document.createElement("script");
+  loader.src = buildUrl + "loader.js";
+  loader.onload = () => {
+    if (typeof createUnityInstance !== "function") {
+      showError("The loader file loaded, but createUnityInstance was not found.");
+      return;
+    }
+
+    message.textContent = "Starting Unity…";
+    try {
+      createUnityInstance(canvas, config, value => {
+        progress.style.width = Math.round(value * 100) + "%";
+      }).then(() => {
+        loading.style.display = "none";
+        canvas.focus();
+      }).catch(showError);
+    } catch (error) {
+      showError(error);
+    }
+  };
+  loader.onerror = () => showError("Could not download loader.js from the asset host.");
+  document.head.appendChild(loader);
+})();
+</script>
 </body>
 </html>
