@@ -855,9 +855,9 @@ function gameLoop(time) {
     /* GROUND / CEILING */
 
     if (
-        birdY < 0 ||
+        birdY + 6 < 0 ||
 
-        birdY + 40 >
+        birdY + 34 >
         game.clientHeight -
         groundHeight
     ) {
@@ -871,14 +871,13 @@ function gameLoop(time) {
 
     /* COLLISION */
 
-    const birdLeft = 105;
+    const birdLeft = 112;
 
-    const birdRight = 153;
+    const birdRight = 146;
 
-    const birdTop = birdY;
+    const birdTop = birdY + 6;
 
-    const birdBottom =
-        birdY + 40;
+    const birdBottom = birdY + 34;
 
 
     for (
