@@ -114,7 +114,7 @@ body {
     height: 90px;
 }
 
-/* BIRD */
+/* ORIGINAL-STYLE FLAPPY BIRD */
 
 #bird {
     position: absolute;
@@ -123,69 +123,27 @@ body {
     left: 105px;
     top: 300px;
     z-index: 10;
-    image-rendering: pixelated;
     transform-origin: center;
+    overflow: visible;
 }
 
-.bird-pixel {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-
-    box-shadow:
-        8px 0 #f4c542,
-        16px 0 #f4c542,
-        24px 0 #f4c542,
-
-        0 8px #f4c542,
-        8px 8px #f4c542,
-        16px 8px #f4c542,
-        24px 8px #f4c542,
-        32px 8px #f4c542,
-
-        0 16px #f4c542,
-        8px 16px #f4c542,
-        16px 16px #f4c542,
-        24px 16px #f4c542,
-        32px 16px #f4c542,
-
-        8px 24px #e8ad28,
-        16px 24px #e8ad28,
-        24px 24px #e8ad28,
-
-        16px 32px #9b7115,
-        24px 32px #9b7115;
+#bird svg {
+    display: block;
+    width: 48px;
+    height: 40px;
+    overflow: visible;
+    shape-rendering: crispEdges;
 }
 
-.bird-eye-pixel {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    left: 25px;
-    top: 8px;
-    background: #fff;
+#bird .wing {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: wingFlap 0.22s infinite alternate ease-in-out;
 }
 
-.bird-eye-pixel::after {
-    content: "";
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    right: 0;
-    top: 2px;
-    background: #111;
-}
-
-.bird-beak-pixel {
-    position: absolute;
-    width: 16px;
-    height: 8px;
-    left: 32px;
-    top: 16px;
-    background: #e87527;
-
-    box-shadow:
-        8px 8px #a94e18;
+@keyframes wingFlap {
+    from { transform: rotate(-12deg) translateY(-1px); }
+    to { transform: rotate(12deg) translateY(2px); }
 }
 
 /* PIPES */
@@ -482,14 +440,20 @@ body {
 
 <!-- BIRD -->
 
-<div id="bird">
-
-    <div class="bird-pixel"></div>
-
-    <div class="bird-eye-pixel"></div>
-
-    <div class="bird-beak-pixel"></div>
-
+<div id="bird" aria-label="Yellow Flappy Bird">
+    <svg viewBox="0 0 48 40" role="img" aria-label="Yellow bird with orange beak">
+        <g stroke="#70451f" stroke-width="1.5" stroke-linejoin="round">
+            <path d="M7 12 L12 6 L25 5 L33 10 L35 20 L29 29 L17 31 L8 25 L4 18 Z" fill="#f5d547"/>
+            <path class="wing" d="M8 19 L14 14 L25 17 L27 24 L20 28 L11 25 Z" fill="#e9a52a"/>
+            <path d="M26 10 L33 9 L36 13 L35 21 L29 22 L26 17 Z" fill="#fff"/>
+            <path d="M31 13 L34 13 L34 18 L31 18 Z" fill="#111" stroke="none"/>
+            <path d="M32 20 L46 22 L39 28 L31 26 Z" fill="#f08027"/>
+            <path d="M34 24 L42 25 L39 28 L33 27 Z" fill="#d65c1b" stroke="none"/>
+            <path d="M12 29 L17 30 L17 34 L13 34 Z" fill="#e08023"/>
+            <path d="M22 29 L27 28 L28 32 L23 33 Z" fill="#e08023"/>
+        </g>
+        <path d="M9 12 L14 8 L25 7 L31 11 L28 13 L17 12 L12 16 Z" fill="#ffe978" stroke="none"/>
+    </svg>
 </div>
 
 
