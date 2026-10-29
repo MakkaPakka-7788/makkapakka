@@ -589,7 +589,7 @@ function submitHomePasscode(event) {
 
     const passcode = input.value.trim().replace(/^#+|#+$/g, "").toLowerCase();
 
-    if (passcode === "makkasentpakking") {
+    if (passcode === "mastersentpakking") {
         sessionStorage.setItem("makkapakkaMonitorUnlocked", "1");
         window.location.href = "monitor.html";
         return;
