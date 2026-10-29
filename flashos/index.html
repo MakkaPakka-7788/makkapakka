@@ -22,7 +22,7 @@
 <div class="splash" id="splash"><div class="splash-inner"><div class="splash-logo">F</div><h1>FlashOS</h1><p>Your browser. Your apps. Your world.</p><div class="boot-progress"><span id="bootProgress"></span></div><button id="bootButton">Start FlashOS</button></div></div>
 <div class="wallpaper" id="wallpaper"></div>
 <main class="desktop" id="desktop">
-<header class="desktop-head"><div class="brand">Flash<span>OS</span></div><div class="date"><div id="clock">--:--</div><div id="today">Loading date</div></div></header>
+<header class="desktop-head"><div class="brand">Flash<span>OS</span></div><div style="display:flex;align-items:center;gap:12px"><button type="button" id="aboutBlankButton" title="Open FlashOS in an about:blank tab" style="font-size:11px;padding:8px 10px">ABOUT:BLANK</button><div class="date"><div id="clock">--:--</div><div id="today">Loading date</div></div></div></header>
 <div class="desktop-icons" id="desktopIcons"></div>
 <section class="welcome"><h1 id="greeting">Welcome to FlashOS</h1><p>Your space. Your apps. Your ideas.</p></section>
 </main>
@@ -66,5 +66,16 @@ $("#taskbar").addEventListener("click",e=>{const b=e.target.closest("[data-app]"
 <script type="module" src="../flashaccount.js"></script>
 <style>.account-wrap{max-width:680px;margin:0 auto}.account-status{margin:22px 0;padding:20px;border:1px solid var(--line);border-radius:14px;background:#ffffff08;line-height:1.8;overflow-wrap:anywhere}.account-actions{display:flex;gap:10px;flex-wrap:wrap}.account-actions button:first-child{background:var(--accent);color:#090b12;font-weight:700}</style>
 <script>window.flashAccountUser=null;window.addEventListener("flashaccount-auth",e=>{window.flashAccountUser=e.detail})</script>
+<script>
+function openFlashOSAboutBlank(){
+ const tab=window.open("about:blank","_blank");
+ if(!tab){toast("Pop-up blocked. Allow pop-ups for FlashOS and try again.");return;}
+ const target=window.location.href.replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+ tab.document.open();
+ tab.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FlashOS</title><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;overflow:hidden;background:#090b10}iframe{display:block}</style></head><body><iframe title="FlashOS" src="' + target + '"></iframe></body></html>');
+ tab.document.close();tab.focus();
+}
+$("#aboutBlankButton").addEventListener("click",openFlashOSAboutBlank);
+</script>
 </body>
 </html>
