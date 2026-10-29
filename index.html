@@ -26,7 +26,12 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
+.headerActions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cloakButton { background: #171717; color: #eee; border: 1px solid #555; padding: 10px 14px; font-family: inherit; font-weight: bold; cursor: pointer; }
+.cloakButton:hover { background: #292929; border-color: #888; }
 
 .logo { font-size: 25px; font-weight: bold; }
 .logo span { color: #777; }
@@ -186,7 +191,10 @@ header {
 
 <header>
     <div class="logo">FLASHCARD<span>.COM</span></div>
-    <button class="flashcardsButton" onclick="openFlashcards()">FLASHCARDS</button>
+    <div class="headerActions">
+        <button class="cloakButton" type="button" onclick="openCloakedTab()">ABOUT:BLANK</button>
+        <button class="flashcardsButton" onclick="openFlashcards()">FLASHCARDS</button>
+    </div>
 </header>
 
 <div class="container">
@@ -509,5 +517,16 @@ try {
 
 
 <script>let flashosShortcut="",flashosShortcutTime=0;document.addEventListener("keydown",e=>{if(e.ctrlKey||e.altKey||e.metaKey||e.key.length!==1)return;const now=Date.now();if(now-flashosShortcutTime>1800)flashosShortcut="";flashosShortcutTime=now;flashosShortcut=(flashosShortcut+e.key.toLowerCase()).slice(-3);if(flashosShortcut==="rrr"){flashosShortcut="";window.location.href="./flashos/";}});</script>
+<script>
+function openCloakedTab() {
+    const tab = window.open("about:blank", "_blank");
+    if (!tab) { alert("Your browser blocked the new tab. Allow pop-ups for this site and try again."); return; }
+    const current = window.location.href.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    tab.document.open();
+    tab.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Flashcard.com</title><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;overflow:hidden;background:#080808}iframe{display:block}</style></head><body><iframe title="Flashcard.com" src="' + current + '"></iframe></body></html>');
+    tab.document.close();
+    tab.focus();
+}
+</script>
 </body>
 </html>
