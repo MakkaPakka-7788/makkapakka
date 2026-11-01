@@ -78,13 +78,13 @@
     <section id="passcodeGate" class="panel">
       <div class="brand-mark" style="margin:0 auto 16px">◉</div>
       <h1>Live Player Monitor</h1>
-      <p>Enter the monitor passcode to continue to owner sign-in.</p>
+      <p>Enter the monitor passcode to open the live dashboard.</p>
       <form id="monitorPasscodeForm">
         <input id="monitorPasscode" class="passcode-input" type="password" autocomplete="off" aria-label="Monitor passcode" placeholder="Passcode" required>
         <button id="unlockMonitorButton" class="auth-button" type="submit">Continue</button>
       </form>
       <p id="passcodeStatus" class="auth-status" role="status" aria-live="polite"></p>
-      <p class="footnote">The dashboard shows counts only. Owner Google sign-in is still required.</p>
+      <p class="footnote">Password access only. Live player data loads automatically.</p>
     </section>
     <section id="authGate" class="panel" hidden>
       <div class="brand-mark" style="margin:0 auto 16px">◉</div>
@@ -311,23 +311,12 @@
       ctx.shadowBlur = 0;
     }
 
-    function showMonitor(user) {
-      if (!user) {
-        authGate.hidden = false;
-        dashboard.hidden = true;
-        statusEl.textContent = "Sign in with the monitor owner’s Google account.";
-        return;
-      }
-      if ((user.email || "").toLowerCase() !== OWNER_EMAIL) {
-        authGate.hidden = false;
-        dashboard.hidden = true;
-        statusEl.textContent = "This Google account does not have monitor access.";
-        return;
-      }
-
+    function showMonitor() {
       authGate.hidden = true;
+      passcodeGate.hidden = true;
       dashboard.hidden = false;
       statusEl.textContent = "";
+      dashboardStatus.textContent = "Connecting to live player data…";
       if (unsubscribePresence || unsubscribeJoinEvents) return;
 
       import("https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js").then(({ collection, limit, onSnapshot, orderBy, query }) => {
@@ -339,13 +328,14 @@
             return { id: item.id, game: data.game || "unknown", lastSeen: data.lastSeen?.toMillis?.() || 0 };
           });
           connected = true;
+          dashboardStatus.textContent = "";
           sample();
         }, error => {
           connected = false;
           document.getElementById("connectedLabel").textContent = "Connection issue";
           console.error("Live monitor read failed:", error);
           document.getElementById("onlineCount").textContent = "—";
-          dashboardStatus.textContent = "Live counts could not load. Firebase presence access may still need to be deployed.";
+          dashboardStatus.textContent = "Live counts could not load. Check Firebase rules allow authenticated monitor reads.";
         });
 
         const joinEventsQuery = query(collection(db, "presenceEvents"), orderBy("joinedAt", "desc"), limit(1000));
@@ -368,28 +358,26 @@
 
     async function openMonitor() {
       passcodeGate.hidden = true;
-      authGate.hidden = false;
-      dashboard.hidden = true;
-      statusEl.textContent = "";
+      authGate.hidden = true;
+      dashboard.hidden = false;
+      dashboardStatus.textContent = "Connecting to live player data…";
       try {
         await import("https://makkapakka-7788.github.io/makkapakka/flashaccount.js");
         const account = window.FlashAccount;
         if (!account) throw new Error("FlashAccount did not initialize.");
-        signInButton.addEventListener("click", async () => {
-          signInButton.disabled = true;
-          statusEl.textContent = "Opening Google sign-in…";
-          try {
-            await account.signInWithGoogle();
-          } finally {
-            signInButton.disabled = false;
-          }
-        });
-        const { onAuthStateChanged } =
+
+        const { signInAnonymously } =
           await import("https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js");
-        onAuthStateChanged(account.auth, showMonitor);
+        if (!account.auth.currentUser) {
+          await signInAnonymously(account.auth);
+        }
+
+        showMonitor();
       } catch (error) {
-        console.error("Could not initialize monitor sign-in:", error);
-        statusEl.textContent = "Could not initialize owner sign-in.";
+        console.error("Could not initialize password-only monitor access:", error);
+        dashboard.hidden = false;
+        document.getElementById("connectedLabel").textContent = "Connection issue";
+        dashboardStatus.textContent = "Could not connect to live player data. Check Firebase anonymous authentication is enabled.";
       }
     }
 
