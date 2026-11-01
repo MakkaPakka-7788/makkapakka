@@ -50,14 +50,10 @@
     .games-list li:last-child { border-bottom:0; }
     .game-name { color:#d2deed;font-size:13px; }
     .game-count { min-width:32px;text-align:center;border:1px solid #253345;border-radius:8px;padding:3px 8px;color:#a8f0ec;background:#0b151c;font-variant-numeric:tabular-nums; }
-    #authGate,#passcodeGate { max-width:470px;margin:90px auto;padding:30px;text-align:center; }
-    #authGate h1,#passcodeGate h1 { font-size:29px; }
-    #authGate p,#passcodeGate p { color:#94a4b8; }
     .passcode-input { width:min(100%,320px);margin:10px 8px 10px 0;padding:11px 13px;border:1px solid #395575;border-radius:10px;background:#080d14;color:var(--text);font:inherit; }
     .auth-button { border:1px solid #395575;background:#13243a;color:#dceaff;border-radius:10px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer; }
     .auth-status { min-height:24px;color:#ffafb5!important;font-size:13px; }
     .footnote { color:#627287;font-size:11px;margin-top:16px; }
-    #dashboard[hidden],#authGate[hidden],#passcodeGate[hidden] { display:none; }
     @media (max-width:800px) { .stat-grid {grid-template-columns:1fr 1fr;} .content-grid {grid-template-columns:1fr;} }
     @media (max-width:540px) { header {padding:18px 16px 8px;align-items:flex-start;} main {padding:18px 16px 32px;} .nav {flex-direction:column;align-items:flex-end;} .hero {align-items:flex-start;flex-direction:column;} .stat-grid {grid-template-columns:1fr;} .stat {min-height:112px;} .panel-head {flex-direction:column;} canvas {height:220px;} }
   </style>
@@ -86,13 +82,7 @@
       <p id="passcodeStatus" class="auth-status" role="status" aria-live="polite"></p>
       <p class="footnote">Password access only. Live player data loads automatically.</p>
     </section>
-    <section id="authGate" class="panel" hidden>
-      <div class="brand-mark" style="margin:0 auto 16px">◉</div>
-      <h1>Owner sign-in</h1>
-      <p>Sign in with the monitor owner’s Google account to see player counts.</p>
-      <button id="signInButton" class="auth-button" type="button">Sign in with Google</button>
-      <p id="authStatus" class="auth-status" role="status" aria-live="polite"></p>
-    </section>
+ion>
 
     <section id="dashboard" hidden>
       <p id="dashboardStatus" class="auth-status" role="status" aria-live="polite"></p>
@@ -170,9 +160,7 @@
       polytrack: "Poly Track", fishing: "Tiny Fishing", ironcrown: "Ironcrown"
     };
     const passcodeGate = document.getElementById("passcodeGate");
-    const authGate = document.getElementById("authGate");
     const dashboard = document.getElementById("dashboard");
-    const statusEl = document.getElementById("authStatus");
     const passcodeStatus = document.getElementById("passcodeStatus");
     const dashboardStatus = document.getElementById("dashboardStatus");
     const signInButton = document.getElementById("signInButton");
@@ -312,10 +300,8 @@
     }
 
     function showMonitor() {
-      authGate.hidden = true;
       passcodeGate.hidden = true;
       dashboard.hidden = false;
-      statusEl.textContent = "";
       dashboardStatus.textContent = "Connecting to live player data…";
       if (unsubscribePresence || unsubscribeJoinEvents) return;
 
@@ -358,7 +344,6 @@
 
     async function openMonitor() {
       passcodeGate.hidden = true;
-      authGate.hidden = true;
       dashboard.hidden = false;
       dashboardStatus.textContent = "Connecting to live player data…";
       try {
