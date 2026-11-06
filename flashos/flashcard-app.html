@@ -561,7 +561,7 @@ function saveData() {
 
 function goToGames() {
 
-    window.location.href = "../index.html?games=true";
+    window.top.location.href = new URL("../index.html?games=true", window.location.href).href;
 
 }
 
