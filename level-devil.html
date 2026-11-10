@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="robots" content="noindex,nofollow">
+<title>Level Devil</title>
+<base href="https://cdn.jsdelivr.net/gh/bubbls/UGS-Assets@2ac7e5b354322a207bd059768f928ece8c9471c1/level%20devil/">
+<link rel="shortcut icon" type="image/png" href="./favicon.png">
+<script src="./poki-sdk.js"></script>
+<script src="./Level Devil.js"></script>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000}
+#openfl-content{background:#000;width:100%;height:100%}
+</style>
+<script>
+window.addEventListener("touchmove",function(event){event.preventDefault()},{capture:false,passive:false});
+if(typeof window.devicePixelRatio!=="undefined"&&window.devicePixelRatio>2){
+window.addEventListener("DOMContentLoaded",function(){
+var meta=document.querySelector('meta[name="viewport"]');
+if(meta)meta.setAttribute("content","width=device-width, initial-scale="+(2/window.devicePixelRatio)+", user-scalable=no");
+});
+}
+</script>
+</head>
+<body>
+<noscript>This webpage requires JavaScript. Please enable JavaScript to play.</noscript>
+<div id="openfl-content"></div>
+<script>
+lime.embed("Level Devil","openfl-content",854,480,{parameters:{}});
+</script>
+</body>
+</html>
