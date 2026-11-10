@@ -3,62 +3,96 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GBA Emulator | Flashcard.com</title>
+<title>Pokémon FireRed | Flashcard.com</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
 html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000;color:#eee}
 body{font-family:"Press Start 2P",cursive}
 #shell{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:#000}
-#startButton{display:block;width:200px;min-height:60px;background:#4caf50;color:#fff;text-align:center;font:12px "Press Start 2P",cursive;padding:16px;border:0;border-radius:8px;cursor:pointer;box-shadow:0 0 10px 2px #000}
+#startButton{display:block;min-width:210px;min-height:64px;background:#4caf50;color:#fff;text-align:center;font:12px "Press Start 2P",cursive;padding:16px;border:0;border-radius:8px;cursor:pointer;box-shadow:0 0 10px 2px #000}
 #startButton:disabled{opacity:.65;cursor:wait}
-#picker{display:none}
 #game{display:none;width:100vw;height:100vh;background:#000}
 #game canvas{max-width:100%;max-height:100%;object-fit:contain}
-#status{position:fixed;left:10px;right:10px;bottom:10px;color:#aaa;font:10px Arial,sans-serif;text-align:center;pointer-events:none}
+#status{position:fixed;left:10px;right:10px;bottom:18px;color:#aaa;font:12px Arial,sans-serif;text-align:center;pointer-events:none}
 </style>
 </head>
 <body>
 <div id="shell">
 <button id="startButton" type="button">PLAY</button>
-<input id="picker" type="file" accept=".gba,.zip">
 <div id="game"></div>
-<div id="status"></div>
+<div id="status" role="status" aria-live="polite"></div>
 </div>
+<script src="pokemon-file-access.js"></script>
 <script>
-const startButton=document.getElementById("startButton");
-const picker=document.getElementById("picker");
-const game=document.getElementById("game");
-const statusText=document.getElementById("status");
-let loading=false;
-let gameObjectUrl="";
-startButton.addEventListener("click",()=>picker.click());
-picker.addEventListener("change",()=>{
- const file=picker.files&&picker.files[0];
- if(!file)return;
- if(loading)return;
- loading=true;
- startButton.style.display="none";
- game.style.display="block";
- statusText.textContent="Loading EmulatorJS…";
- gameObjectUrl=URL.createObjectURL(file);
- window.EJS_player="#game";
- window.EJS_core="gba";
- window.EJS_gameName=file.name;
- window.EJS_color="#000000";
- window.EJS_startOnLoaded=true;
- window.EJS_pathtodata="https://cdn.emulatorjs.org/stable/data/";
- window.EJS_gameUrl=gameObjectUrl;
- const loader=document.createElement("script");
- loader.src="https://cdn.emulatorjs.org/stable/data/loader.js";
- loader.onerror=()=>{
-  statusText.textContent="EmulatorJS failed to load. Check your connection and refresh.";
-  loading=false;
-  game.style.display="none";
-  startButton.style.display="block";
- };
- document.body.appendChild(loader);
-});
+const startButton = document.getElementById("startButton");
+const game = document.getElementById("game");
+const statusText = document.getElementById("status");
+let loading = false;
+let gameObjectUrl = "";
+
+async function launchGame(fromClick) {
+    if (loading) return;
+    loading = true;
+    startButton.disabled = true;
+    statusText.textContent = "Checking game file…";
+    try {
+        const handle = await window.PokemonLocalFile.getUsableFile();
+        const file = await handle.getFile();
+        if (!/\.(gba|zip)$/i.test(file.name)) {
+            throw new Error("Unauthorised to use this game.");
+        }
+        if (gameObjectUrl) URL.revokeObjectURL(gameObjectUrl);
+        gameObjectUrl = URL.createObjectURL(file);
+        startButton.style.display = "none";
+        game.style.display = "block";
+        statusText.textContent = "Loading emulator…";
+        window.EJS_player = "#game";
+        window.EJS_core = "gba";
+        window.EJS_gameName = file.name;
+        window.EJS_color = "#000000";
+        window.EJS_startOnLoaded = true;
+        window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+        window.EJS_gameUrl = gameObjectUrl;
+        const loader = document.createElement("script");
+        loader.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
+        loader.onerror = () => {
+            statusText.textContent = "EmulatorJS couldn't load. Check your internet connection and refresh.";
+            loading = false;
+            game.style.display = "none";
+            startButton.style.display = "block";
+            startButton.disabled = false;
+        };
+        document.body.appendChild(loader);
+    } catch (error) {
+        const message = error && error.name === "AbortError"
+            ? "Unauthorised to use this game."
+            : (error.message || "Unauthorised to use this game.");
+        statusText.textContent = message;
+        startButton.disabled = false;
+        loading = false;
+    }
+}
+
+startButton.addEventListener("click", () => launchGame(true));
+
+(async function autoLoadSavedFile() {
+    try {
+        const handle = await window.PokemonLocalFile.getHandle();
+        if (!handle) {
+            statusText.textContent = "Unauthorised to use this game. Press PLAY to select your game file.";
+            return;
+        }
+        const permission = await handle.queryPermission({ mode: "read" });
+        if (permission === "granted") {
+            await launchGame(false);
+        } else {
+            statusText.textContent = "Press PLAY to allow access to your saved game file.";
+        }
+    } catch (error) {
+        statusText.textContent = "Unauthorised to use this game. Press PLAY to select your game file.";
+    }
+})();
 </script>
 </body>
 </html>
