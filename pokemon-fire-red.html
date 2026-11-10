@@ -3,96 +3,119 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pokémon FireRed | Flashcard.com</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<title>Pokémon FireRed Authorisation | Flashcard.com</title>
 <style>
 *{box-sizing:border-box}
-html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000;color:#eee}
-body{font-family:"Press Start 2P",cursive}
-#shell{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:#000}
-#startButton{display:block;min-width:210px;min-height:64px;background:#4caf50;color:#fff;text-align:center;font:12px "Press Start 2P",cursive;padding:16px;border:0;border-radius:8px;cursor:pointer;box-shadow:0 0 10px 2px #000}
-#startButton:disabled{opacity:.65;cursor:wait}
-#game{display:none;width:100vw;height:100vh;background:#000}
-#game canvas{max-width:100%;max-height:100%;object-fit:contain}
-#status{position:fixed;left:10px;right:10px;bottom:18px;color:#aaa;font:12px Arial,sans-serif;text-align:center;pointer-events:none}
+html,body{margin:0;min-height:100%;background:#080808;color:#eee;font-family:"Courier New",monospace}
+body{min-height:100vh;display:grid;place-items:center;padding:22px}
+.panel{width:min(620px,100%);background:#111;border:2px solid #383838;padding:30px;text-align:center}
+h1{font-size:clamp(20px,4vw,30px);margin:0 0 22px}
+p{color:#aaa;line-height:1.6}
+.fileName{margin:22px 0;padding:16px;background:#080808;border:1px solid #444;color:#eee;overflow-wrap:anywhere}
+button{border:0;padding:14px 18px;margin:7px;background:#eee;color:#111;font: bold 14px "Courier New",monospace;cursor:pointer}
+button.primary{background:#4caf50;color:#fff}
+button:disabled{opacity:.55;cursor:wait}
+#gameFrame{display:none;position:fixed;inset:0;width:100%;height:100%;border:0;background:#000}
+#changeInput{display:none}
+.small{font-size:12px;color:#777}
 </style>
 </head>
 <body>
-<div id="shell">
-<button id="startButton" type="button">PLAY</button>
-<div id="game"></div>
-<div id="status" role="status" aria-live="polite"></div>
-</div>
+<main class="panel" id="authPanel">
+  <h1>POKÉMON FIRERED</h1>
+  <section id="noAccess" hidden>
+    <p><strong>You have no authorisation to use this game.</strong></p>
+    <p>If you have your own copy of the game's HTML source file, select it below to authorise it on this browser.</p>
+    <button class="primary" id="chooseFirst">UPLOAD / SELECT YOUR SOURCE FILE</button>
+  </section>
+  <section id="confirmAccess" hidden>
+    <p>We found a previously selected source file.</p>
+    <p>Are you sure this is the correct file?</p>
+    <div class="fileName" id="savedName"></div>
+    <button class="primary" id="startGame">START GAME</button>
+    <button id="changeFile">CHANGE FILE</button>
+  </section>
+  <p class="small" id="status" role="status" aria-live="polite"></p>
+  <p class="small">Your file stays on your device. Flashcard.com does not upload or receive it.</p>
+</main>
+<iframe id="gameFrame" title="Your selected game source" sandbox="allow-scripts allow-forms allow-pointer-lock allow-downloads"></iframe>
+<input id="changeInput" type="file" accept=".html,.htm,text/html">
 <script src="pokemon-file-access.js"></script>
 <script>
-const startButton = document.getElementById("startButton");
-const game = document.getElementById("game");
+const noAccess = document.getElementById("noAccess");
+const confirmAccess = document.getElementById("confirmAccess");
+const savedName = document.getElementById("savedName");
 const statusText = document.getElementById("status");
-let loading = false;
-let gameObjectUrl = "";
+const authPanel = document.getElementById("authPanel");
+const frame = document.getElementById("gameFrame");
+let currentHandle = null;
+let sourceUrl = "";
 
-async function launchGame(fromClick) {
-    if (loading) return;
-    loading = true;
-    startButton.disabled = true;
-    statusText.textContent = "Checking game file…";
-    try {
-        const handle = await window.PokemonLocalFile.getUsableFile();
-        const file = await handle.getFile();
-        if (!/\.(gba|zip)$/i.test(file.name)) {
-            throw new Error("Unauthorised to use this game.");
-        }
-        if (gameObjectUrl) URL.revokeObjectURL(gameObjectUrl);
-        gameObjectUrl = URL.createObjectURL(file);
-        startButton.style.display = "none";
-        game.style.display = "block";
-        statusText.textContent = "Loading emulator…";
-        window.EJS_player = "#game";
-        window.EJS_core = "gba";
-        window.EJS_gameName = file.name;
-        window.EJS_color = "#000000";
-        window.EJS_startOnLoaded = true;
-        window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
-        window.EJS_gameUrl = gameObjectUrl;
-        const loader = document.createElement("script");
-        loader.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
-        loader.onerror = () => {
-            statusText.textContent = "EmulatorJS couldn't load. Check your internet connection and refresh.";
-            loading = false;
-            game.style.display = "none";
-            startButton.style.display = "block";
-            startButton.disabled = false;
-        };
-        document.body.appendChild(loader);
-    } catch (error) {
-        const message = error && error.name === "AbortError"
-            ? "Unauthorised to use this game."
-            : (error.message || "Unauthorised to use this game.");
-        statusText.textContent = message;
-        startButton.disabled = false;
-        loading = false;
-    }
+function showNoAccess(message) {
+  noAccess.hidden = false;
+  confirmAccess.hidden = true;
+  statusText.textContent = message || "";
 }
-
-startButton.addEventListener("click", () => launchGame(true));
-
-(async function autoLoadSavedFile() {
-    try {
-        const handle = await window.PokemonLocalFile.getHandle();
-        if (!handle) {
-            statusText.textContent = "Unauthorised to use this game. Press PLAY to select your game file.";
-            return;
-        }
-        const permission = await handle.queryPermission({ mode: "read" });
-        if (permission === "granted") {
-            await launchGame(false);
-        } else {
-            statusText.textContent = "Press PLAY to allow access to your saved game file.";
-        }
-    } catch (error) {
-        statusText.textContent = "Unauthorised to use this game. Press PLAY to select your game file.";
+function showConfirmation(handle) {
+  currentHandle = handle;
+  savedName.textContent = handle.name;
+  noAccess.hidden = true;
+  confirmAccess.hidden = false;
+  statusText.textContent = "";
+}
+async function chooseSource() {
+  try {
+    statusText.textContent = "Choose your own HTML source file…";
+    const handle = await window.PokemonSourceAuthorization.chooseSource();
+    showConfirmation(handle);
+  } catch (error) {
+    if (error.name === "AbortError") {
+      statusText.textContent = "No file selected.";
+    } else {
+      showNoAccess(error.message || "Unable to authorise this file.");
     }
+  }
+}
+document.getElementById("chooseFirst").addEventListener("click", chooseSource);
+document.getElementById("changeFile").addEventListener("click", chooseSource);
+document.getElementById("startGame").addEventListener("click", async () => {
+  const button = document.getElementById("startGame");
+  button.disabled = true;
+  statusText.textContent = "Checking authorisation…";
+  try {
+    let handle = await window.PokemonSourceAuthorization.getAuthorizedHandle();
+    if (!handle) {
+      showNoAccess("You have no authorisation to use this game. Select your source file again.");
+      return;
+    }
+    const file = await handle.getFile();
+    if (!/\.html?$/i.test(file.name)) throw new Error("The selected file is not an HTML source file.");
+    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+    sourceUrl = URL.createObjectURL(file);
+    frame.src = sourceUrl;
+    authPanel.style.display = "none";
+    frame.style.display = "block";
+  } catch (error) {
+    showNoAccess(error.message || "You have no authorisation to use this game.");
+  } finally {
+    button.disabled = false;
+  }
+});
+(async function initialise() {
+  try {
+    const handle = await window.PokemonSourceAuthorization.getHandle();
+    if (!handle) {
+      showNoAccess("");
+      return;
+    }
+    showConfirmation(handle);
+  } catch (error) {
+    showNoAccess("You have no authorisation to use this game.");
+  }
 })();
+window.addEventListener("pagehide", () => {
+  if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+});
 </script>
 </body>
 </html>
