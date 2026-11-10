@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pokémon FireRed | Flashcard.com</title>
+<style>
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000;color:#eee;font-family:"Courier New",monospace}
+#shell{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:16px}
+#startButton{display:block;min-width:160px;padding:16px 24px;background:#4caf50;color:#fff;border:0;border-radius:8px;font:bold 16px "Courier New",monospace;cursor:pointer}
+#game{display:none;width:100%;height:100%;max-width:100%;max-height:100%}
+#game canvas{max-width:100%;max-height:100%;object-fit:contain}
+#status{color:#999;font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div id="shell">
+<button id="startButton" type="button">PLAY</button>
+<div id="status">Pokémon FireRed</div>
+<div id="game"></div>
+</div>
+<script>
+const startButton=document.getElementById("startButton");
+const game=document.getElementById("game");
+const statusText=document.getElementById("status");
+let loading=false;
+function startGame(){
+ if(loading)return;
+ loading=true;
+ startButton.style.display="none";
+ game.style.display="block";
+ statusText.textContent="Loading emulator…";
+ window.EJS_player="#game";
+ window.EJS_core="gba";
+ window.EJS_color="#000000";
+ window.EJS_startOnLoaded=true;
+ window.EJS_pathtodata="https://cdn.jsdelivr.net/gh/bubblfan/emu@master/";
+ window.EJS_gameUrl="https://cdn.jsdelivr.net/gh/7363272/ESPG@7aa7497bb64f4448ed3159d1fde86c7e82e6312d/games/pokemonfirered/rom.gba";
+ const script=document.createElement("script");
+ script.src="https://cdn.jsdelivr.net/gh/bubblfan/emu@master/loader.js";
+ script.onerror=()=>{statusText.textContent="Emulator failed to load. Refresh and try again.";loading=false;};
+ document.body.appendChild(script);
+}
+startButton.addEventListener("click",startGame);
+</script>
+</body>
+</html>
