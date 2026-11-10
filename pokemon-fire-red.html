@@ -4,49 +4,47 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GBA Emulator | Flashcard.com</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
-html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000;color:#eee;font-family:"Courier New",monospace}
-#shell{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px}
-#picker{max-width:90%;color:#ddd}
-#startButton{display:none;min-width:160px;padding:15px 24px;background:#4caf50;color:#fff;border:0;border-radius:8px;font:bold 16px "Courier New",monospace;cursor:pointer}
-#game{display:none;width:100%;height:100%;max-width:100%;max-height:100%}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000;color:#eee}
+body{font-family:"Press Start 2P",cursive}
+#shell{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:#000}
+#startButton{display:block;width:200px;min-height:60px;background:#4caf50;color:#fff;text-align:center;font:12px "Press Start 2P",cursive;padding:16px;border:0;border-radius:8px;cursor:pointer;box-shadow:0 0 10px 2px #000}
+#startButton:disabled{opacity:.65;cursor:wait}
+#picker{display:none}
+#game{display:none;width:100vw;height:100vh;background:#000}
 #game canvas{max-width:100%;max-height:100%;object-fit:contain}
-#status{color:#aaa;font-size:13px;text-align:center}
+#status{position:fixed;left:10px;right:10px;bottom:10px;color:#aaa;font:10px Arial,sans-serif;text-align:center;pointer-events:none}
 </style>
 </head>
 <body>
 <div id="shell">
-<div id="status">Choose a GBA game file you are authorised to use.</div>
+<button id="startButton" type="button">PLAY</button>
 <input id="picker" type="file" accept=".gba,.zip">
-<button id="startButton" type="button">START GAME</button>
 <div id="game"></div>
+<div id="status"></div>
 </div>
 <script>
-const picker=document.getElementById("picker");
 const startButton=document.getElementById("startButton");
+const picker=document.getElementById("picker");
 const game=document.getElementById("game");
 const statusText=document.getElementById("status");
-let selectedFile=null;
-let gameObjectUrl=null;
 let loading=false;
+let gameObjectUrl="";
+startButton.addEventListener("click",()=>picker.click());
 picker.addEventListener("change",()=>{
- selectedFile=picker.files&&picker.files[0];
- startButton.style.display=selectedFile?"block":"none";
- statusText.textContent=selectedFile?"Selected: "+selectedFile.name:"Choose a GBA game file you are authorised to use.";
-});
-startButton.addEventListener("click",()=>{
- if(!selectedFile||loading)return;
+ const file=picker.files&&picker.files[0];
+ if(!file)return;
+ if(loading)return;
  loading=true;
- startButton.disabled=true;
- picker.style.display="none";
  startButton.style.display="none";
  game.style.display="block";
  statusText.textContent="Loading EmulatorJS…";
- gameObjectUrl=URL.createObjectURL(selectedFile);
+ gameObjectUrl=URL.createObjectURL(file);
  window.EJS_player="#game";
  window.EJS_core="gba";
- window.EJS_gameName=selectedFile.name;
+ window.EJS_gameName=file.name;
  window.EJS_color="#000000";
  window.EJS_startOnLoaded=true;
  window.EJS_pathtodata="https://cdn.emulatorjs.org/stable/data/";
@@ -54,9 +52,10 @@ startButton.addEventListener("click",()=>{
  const loader=document.createElement("script");
  loader.src="https://cdn.emulatorjs.org/stable/data/loader.js";
  loader.onerror=()=>{
-  statusText.textContent="EmulatorJS couldn't load. Check your connection and refresh.";
+  statusText.textContent="EmulatorJS failed to load. Check your connection and refresh.";
   loading=false;
-  startButton.disabled=false;
+  game.style.display="none";
+  startButton.style.display="block";
  };
  document.body.appendChild(loader);
 });
