@@ -411,7 +411,7 @@ header {
                 </div>
             </a>
 
-            <a class="game" href="pokemon-fire-red.html">
+            <a class="game" id="pokemon-fire-red-card" href="pokemon-fire-red.html">
                 <div class="icon">🔥</div>
                 <div>
                     <div class="name">POKÉMON FIRERED</div>
@@ -558,7 +558,23 @@ function openCloakedTab() {
     if (!tab) { alert("Your browser blocked the new tab. Allow pop-ups for this site and try again."); return; }
     const current = window.location.href.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
     tab.document.open();
-    tab.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Flashcard.com</title><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;overflow:hidden;background:#080808}iframe{display:block}</style></head><body><iframe title="Flashcard.com" src="' + current + '"></iframe></body></html>');
+    tab.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Flashcard.com</title><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;overflow:hidden;background:#080808}iframe{display:block}</style></head><body><iframe title="Flashcard.com" src="' + current + '"></iframe>
+<script src="pokemon-file-access.js"></script>
+<script>
+document.getElementById("pokemon-fire-red-card")?.addEventListener("click", async function(event) {
+    event.preventDefault();
+    try {
+        await window.PokemonLocalFile.getUsableFile();
+        window.location.href = this.href;
+    } catch (error) {
+        const message = error && error.name === "AbortError"
+            ? "Unauthorised to use this game."
+            : (error.message || "Unauthorised to use this game.");
+        alert(message);
+    }
+});
+</script>
+\n</body></html>');
     tab.document.close();
     tab.focus();
 }
