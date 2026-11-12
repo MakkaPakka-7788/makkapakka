@@ -166,6 +166,54 @@ header {
     margin: 8px 0;
     overflow-wrap: anywhere;
 }
+
+#game-password-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: #000d;
+}
+#game-password-overlay.open { display: flex; }
+#game-password-box {
+    width: min(390px, 100%);
+    padding: 28px;
+    background: #101010;
+    border: 2px solid #555;
+    color: #eee;
+    text-align: center;
+    box-shadow: 0 12px 50px #000;
+}
+#game-password-box h2 { margin: 0 0 10px; }
+#game-password-box p { color: #888; font-size: 13px; }
+#game-password-input {
+    width: 100%;
+    margin: 12px 0;
+    padding: 13px;
+    background: #080808;
+    border: 1px solid #555;
+    color: #eee;
+    font: inherit;
+}
+#game-password-actions { display: flex; gap: 10px; }
+#game-password-actions button {
+    flex: 1;
+    padding: 11px;
+    border: 1px solid #666;
+    background: #eee;
+    color: #111;
+    font: bold 13px "Courier New", monospace;
+    cursor: pointer;
+}
+#game-password-actions #game-password-cancel {
+    background: #171717;
+    color: #eee;
+}
+#game-password-error { min-height: 18px; color: #ff7777 !important; }
+
 </style>
 </head>
 
@@ -182,6 +230,20 @@ header {
     <button id="flashaccount-logout" type="button" hidden>
         Sign out
     </button>
+</div>
+
+
+<div id="game-password-overlay" role="dialog" aria-modal="true" aria-labelledby="game-password-title">
+    <form id="game-password-box">
+        <h2 id="game-password-title">PASSWORD REQUIRED</h2>
+        <p>Enter the password to open this game.</p>
+        <input id="game-password-input" type="password" placeholder="Enter password" autocomplete="off" required>
+        <p id="game-password-error" aria-live="polite"></p>
+        <div id="game-password-actions">
+            <button type="submit">UNLOCK</button>
+            <button type="button" id="game-password-cancel">CANCEL</button>
+        </div>
+    </form>
 </div>
 
 <header>
@@ -561,7 +623,61 @@ function openCloakedTab() {
     }
     const current = window.location.href.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
     tab.document.open();
-    tab.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Flashcard.com</title><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;overflow:hidden;background:#080808}iframe{display:block}</style></head><body><iframe title="Flashcard.com" src="' + current + '"></iframe></body></html>');
+    tab.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Flashcard.com</title><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;overflow:hidden;background:#080808}iframe{display:block}</style></head><body><iframe title="Flashcard.com" src="' + current + '"></iframe>
+<script>
+(() => {
+    const overlay = document.getElementById("game-password-overlay");
+    const form = document.getElementById("game-password-box");
+    const input = document.getElementById("game-password-input");
+    const error = document.getElementById("game-password-error");
+    const cancel = document.getElementById("game-password-cancel");
+    let destination = null;
+    let target = "_self";
+
+    document.querySelector(".games").addEventListener("click", event => {
+        const card = event.target.closest("a.game");
+        if (!card) return;
+        event.preventDefault();
+        destination = card.href;
+        target = card.target || "_self";
+        error.textContent = "";
+        input.value = "";
+        overlay.classList.add("open");
+        input.focus();
+    });
+
+    function closePassword() {
+        overlay.classList.remove("open");
+        destination = null;
+    }
+
+    cancel.addEventListener("click", closePassword);
+    overlay.addEventListener("click", event => {
+        if (event.target === overlay) closePassword();
+    });
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && overlay.classList.contains("open")) closePassword();
+    });
+
+    form.addEventListener("submit", event => {
+        event.preventDefault();
+        if (input.value === "pness") {
+            const url = destination;
+            const openTarget = target;
+            closePassword();
+            if (url) {
+                if (openTarget === "_blank") window.open(url, "_blank", "noopener,noreferrer");
+                else window.location.assign(url);
+            }
+        } else {
+            error.textContent = "Incorrect password. Try again.";
+            input.select();
+        }
+    });
+})();
+</script>
+
+</body></html>');
     tab.document.close();
     tab.focus();
 }
