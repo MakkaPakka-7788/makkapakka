@@ -157,7 +157,7 @@ function addOne(){
     if(count>0)codeEl.textContent+='\n';
     const source=fragments[fragmentIndex];
     const uniqueTag=String(fragmentIndex+1).padStart(8,"0");
-    activeFragment=source+" /* trace:"+uniqueTag+" */";
+    activeFragment=source;
   }
   const character=activeFragment[offset];
   codeEl.textContent+=character;
