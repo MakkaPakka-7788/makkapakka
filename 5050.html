@@ -49,14 +49,14 @@ button:focus-visible{outline:3px solid var(--green);outline-offset:4px}
 </div>
 <section class="panel" aria-live="polite">
 <div id="grid" class="grid"></div>
-<div id="status" class="status">NUMBERS UPDATE EVERY 100 MILLISECONDS</div>
+<div id="status" class="status">NUMBERS UPDATE EVERY 10 MILLISECONDS</div>
 </section>
 <div class="stats">
 <div class="stat"><span>Best level</span><strong id="best">1</strong></div>
 <div class="stat"><span>Numbers running</span><strong id="running">3</strong></div>
 </div>
 <button id="restart" type="button">RESET TO LEVEL 1</button>
-<div class="note">Every 100 milliseconds, each running number independently has a 50% chance to go up by 1 and a 50% chance to freeze. If they do not all match, the same level automatically starts again. Match them all to advance and add another number. It keeps retrying automatically.</div>
+<div class="note">Every 10 milliseconds, each running number independently has a 50% chance to go up by 1 and a 50% chance to freeze. If they do not all match, the same level automatically starts again. Match them all to advance and add another number. It keeps retrying automatically.</div>
 </main>
 <script>
 (() => {
@@ -100,12 +100,12 @@ function finishRound() {
       try { localStorage.setItem('numberMatchBest', String(best)); } catch {}
     }
     render();
-    retryTimer = setTimeout(startRound, 900);
+    retryTimer = setTimeout(startRound, 0);
   } else {
     statusEl.textContent = 'NO MATCH — AUTOMATIC RETRY…';
     statusEl.className = 'status bad';
     render();
-    retryTimer = setTimeout(startRound, 700);
+    retryTimer = setTimeout(startRound, 0);
   }
 }
 
@@ -130,7 +130,7 @@ function startRound() {
   statusEl.textContent = 'RUNNING — EACH NUMBER HAS ITS OWN 50/50 CHANCE';
   statusEl.className = 'status';
   render();
-  timer = setInterval(tick, 100);
+  timer = setInterval(tick, 10);
 }
 
 restartButton.addEventListener('click', () => {
