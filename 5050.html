@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#080808">
 <title>50/50 — Number Match</title>
 <style>
-:root{color-scheme:dark;--bg:#080808;--panel:#111;--line:#292929;--muted:#858585;--white:#f4f4f4;--green:#75f0a1;--red:#ff626e;--gold:#ffd778}
+:root{color-scheme:dark;--panel:#111;--line:#292929;--muted:#858585;--white:#f4f4f4;--green:#75f0a1;--red:#ff626e;--gold:#ffd778}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 30%,#191919 0,#080808 68%);color:var(--white);font-family:Arial,Helvetica,sans-serif;display:grid;place-items:center;padding:22px}
 main{width:min(760px,100%);text-align:center}
@@ -18,7 +18,7 @@ h1{font-size:clamp(32px,8vw,58px);margin:12px 0 8px;letter-spacing:-2px}
 .pill strong{color:var(--white);font-size:15px;margin-left:5px}
 .panel{margin:18px auto;background:linear-gradient(145deg,#151515,#0d0d0d);border:1px solid var(--line);border-radius:24px;padding:26px 18px;box-shadow:0 20px 70px #0008}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.tile{min-width:0;background:#090909;border:1px solid #303030;border-radius:17px;padding:18px 8px 14px;transition:border-color .15s,background .15s}
+.tile{min-width:0;background:#090909;border:1px solid #303030;border-radius:17px;padding:18px 8px 14px;transition:border-color .1s,background .1s}
 .tile.locked{border-color:#414141;background:#111}
 .tile.matched{border-color:var(--green);background:#102016}
 .value{font-size:clamp(42px,10vw,76px);font-weight:800;line-height:1.1;letter-spacing:-3px;font-variant-numeric:tabular-nums}
@@ -42,21 +42,21 @@ button:focus-visible{outline:3px solid var(--green);outline-offset:4px}
 <main>
 <div class="kicker">THE 50 / 50 CHALLENGE</div>
 <h1>NUMBER MATCH</h1>
-<div class="sub">Let every number run. Get them all to stop on exactly the same number.</div>
+<div class="sub">Watch every number climb. Get them all to stop on exactly the same number.</div>
 <div class="topline">
 <div class="pill">LEVEL <strong id="level">1</strong></div>
 <div class="pill">NUMBERS TO MATCH <strong id="count">3</strong></div>
 </div>
 <section class="panel" aria-live="polite">
 <div id="grid" class="grid"></div>
-<div id="status" class="status">EACH NUMBER HAS ITS OWN 50/50 CHANCE</div>
+<div id="status" class="status">NUMBERS UPDATE EVERY 100 MILLISECONDS</div>
 </section>
 <div class="stats">
 <div class="stat"><span>Best level</span><strong id="best">1</strong></div>
 <div class="stat"><span>Numbers running</span><strong id="running">3</strong></div>
 </div>
-<button id="restart" type="button">START AGAIN</button>
-<div class="note">Every 250 milliseconds, each running number independently has a 50% chance to go up by 1 and a 50% chance to freeze. When every number has frozen, they must all match. Win a level to add another number: 3, then 4, then 5, then 6…</div>
+<button id="restart" type="button">RESET TO LEVEL 1</button>
+<div class="note">Every 100 milliseconds, each running number independently has a 50% chance to go up by 1 and a 50% chance to freeze. If they do not all match, the same level automatically starts again. Match them all to advance and add another number. It keeps retrying automatically.</div>
 </main>
 <script>
 (() => {
@@ -70,6 +70,7 @@ const restartButton = document.getElementById('restart');
 let level = 1;
 let numbers = [];
 let timer = null;
+let retryTimer = null;
 let active = false;
 let best = 1;
 try { best = Math.max(1, Number(localStorage.getItem('numberMatchBest')) || 1); } catch {}
@@ -79,15 +80,15 @@ function render() {
   levelEl.textContent = level.toLocaleString();
   countEl.textContent = numbers.length.toLocaleString();
   runningEl.textContent = numbers.filter(n => !n.frozen).length.toLocaleString();
-  gridEl.innerHTML = numbers.map((n, i) => '<div class="tile' + (n.frozen ? ' locked' : '') + (n.matched ? ' matched' : '') + '"><div class="value">' + n.value.toLocaleString() + '</div><div class="state">' + (n.frozen ? 'FROZEN' : 'RUNNING') + '</div></div>').join('');
+  gridEl.innerHTML = numbers.map(n => '<div class="tile' + (n.frozen ? ' locked' : '') + (n.matched ? ' matched' : '') + '"><div class="value">' + n.value.toLocaleString() + '</div><div class="state">' + (n.frozen ? 'FROZEN' : 'RUNNING') + '</div></div>').join('');
 }
 
 function finishRound() {
   active = false;
   clearInterval(timer);
   timer = null;
-  const first = numbers[0].value;
-  const won = numbers.every(n => n.value === first);
+  const target = numbers[0].value;
+  const won = numbers.every(n => n.value === target);
   if (won) {
     numbers.forEach(n => n.matched = true);
     statusEl.textContent = 'PERFECT MATCH! LEVEL ' + level.toLocaleString() + ' COMPLETE';
@@ -98,16 +99,13 @@ function finishRound() {
       bestEl.textContent = best.toLocaleString();
       try { localStorage.setItem('numberMatchBest', String(best)); } catch {}
     }
-    restartButton.textContent = 'NEXT LEVEL';
     render();
-    setTimeout(() => {
-      if (!active && numbers.every(n => n.matched)) startRound();
-    }, 1300);
+    retryTimer = setTimeout(startRound, 900);
   } else {
-    statusEl.textContent = 'NO MATCH — THE NUMBERS WERE DIFFERENT';
+    statusEl.textContent = 'NO MATCH — AUTOMATIC RETRY…';
     statusEl.className = 'status bad';
-    restartButton.textContent = 'TRY AGAIN';
     render();
+    retryTimer = setTimeout(startRound, 700);
   }
 }
 
@@ -125,17 +123,17 @@ function tick() {
 
 function startRound() {
   clearInterval(timer);
+  clearTimeout(retryTimer);
+  retryTimer = null;
   numbers = Array.from({length: level + 2}, () => ({value: 1, frozen: false, matched: false}));
   active = true;
-  statusEl.textContent = 'EACH NUMBER HAS ITS OWN 50/50 CHANCE';
+  statusEl.textContent = 'RUNNING — EACH NUMBER HAS ITS OWN 50/50 CHANCE';
   statusEl.className = 'status';
-  restartButton.textContent = 'RESTART RUN';
   render();
-  timer = setInterval(tick, 250);
+  timer = setInterval(tick, 100);
 }
 
 restartButton.addEventListener('click', () => {
-  if (level > 1 && numbers.every(n => n.matched)) return;
   level = 1;
   startRound();
 });
