@@ -615,71 +615,89 @@ try {
 
 <script>let flashosShortcut="",flashosShortcutTime=0;document.addEventListener("keydown",e=>{if(e.ctrlKey||e.altKey||e.metaKey||e.key.length!==1)return;const now=Date.now();if(now-flashosShortcutTime>1800)flashosShortcut="";flashosShortcutTime=now;flashosShortcut=(flashosShortcut+e.key.toLowerCase()).slice(-3);if(flashosShortcut==="rrr"){flashosShortcut="";window.location.href="./flashos/";}});</script>
 <script>
-function openCloakedTab() {
-    const tab = window.open("about:blank", "_blank");
-    if (!tab) {
-        alert("Your browser blocked the new tab. Allow pop-ups for this site and try again.");
-        return;
-    }
-    const current = window.location.href.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-    tab.document.open();
-    tab.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Flashcard.com</title><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;overflow:hidden;background:#080808}iframe{display:block}</style></head><body><iframe title="Flashcard.com" src="' + current + '"></iframe>
-<script>
 (() => {
-    const overlay = document.getElementById("game-password-overlay");
-    const form = document.getElementById("game-password-box");
-    const input = document.getElementById("game-password-input");
-    const error = document.getElementById("game-password-error");
-    const cancel = document.getElementById("game-password-cancel");
-    let destination = null;
-    let target = "_self";
-
-    document.querySelector(".games").addEventListener("click", event => {
-        const card = event.target.closest("a.game");
-        if (!card) return;
-        event.preventDefault();
-        destination = card.href;
-        target = card.target || "_self";
-        error.textContent = "";
-        input.value = "";
-        overlay.classList.add("open");
-        input.focus();
-    });
-
-    function closePassword() {
-        overlay.classList.remove("open");
-        destination = null;
-    }
-
-    cancel.addEventListener("click", closePassword);
-    overlay.addEventListener("click", event => {
-        if (event.target === overlay) closePassword();
-    });
-    document.addEventListener("keydown", event => {
-        if (event.key === "Escape" && overlay.classList.contains("open")) closePassword();
-    });
-
-    form.addEventListener("submit", event => {
-        event.preventDefault();
-        if (input.value === "pness") {
-            const url = destination;
-            const openTarget = target;
-            closePassword();
-            if (url) {
-                if (openTarget === "_blank") window.open(url, "_blank", "noopener,noreferrer");
-                else window.location.assign(url);
-            }
-        } else {
-            error.textContent = "Incorrect password. Try again.";
-            input.select();
+  const saltText = "71XAXhevouhLnBRipYpEaw==";
+  const verifierText = "JlPx/ZE8Qer/tWjULaHKU+GZL1vn4scEfkhqNnCvNhg=";
+  const iterations = 600000;
+  const decode = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
+  async function verifyGamePasscode(value) {
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(value), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:decode(saltText),iterations},key,256);
+    const actual = new Uint8Array(bits);
+    const expected = decode(verifierText);
+    if (actual.length !== expected.length) return false;
+    let diff = 0;
+    for (let i=0;i<actual.length;i++) diff |= actual[i] ^ expected[i];
+    return diff === 0;
+  }
+  const overlay = document.getElementById("game-password-overlay");
+  const form = document.getElementById("game-password-box");
+  const input = document.getElementById("game-password-input");
+  const error = document.getElementById("game-password-error");
+  const cancel = document.getElementById("game-password-cancel");
+  let destination = null;
+  let target = "_self";
+  document.querySelector(".games").addEventListener("click", event => {
+    const card = event.target.closest("a.game");
+    if (!card) return;
+    event.preventDefault();
+    destination = card.href;
+    target = card.target || "_self";
+    error.textContent = "";
+    input.value = "";
+    overlay.classList.add("open");
+    input.focus();
+  });
+  function closePassword() {
+    overlay.classList.remove("open");
+    destination = null;
+  }
+  cancel.addEventListener("click", closePassword);
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) closePassword();
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && overlay.classList.contains("open")) closePassword();
+  });
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    input.disabled = true;
+    error.textContent = "Checking…";
+    try {
+      if (await verifyGamePasscode(input.value)) {
+        const url = destination;
+        const openTarget = target;
+        closePassword();
+        if (url) {
+          if (openTarget === "_blank") window.open(url, "_blank", "noopener,noreferrer");
+          else window.location.assign(url);
         }
-    });
+      } else {
+        error.textContent = "Incorrect password. Try again.";
+        input.select();
+      }
+    } catch (e) {
+      error.textContent = "Passcode check unavailable. Try again.";
+    } finally {
+      input.disabled = false;
+    }
+  });
 })();
-</script>
-
-</body></html>');
-    tab.document.close();
-    tab.focus();
+function openCloakedTab() {
+  const tab = window.open("about:blank", "_blank");
+  if (!tab) {
+    alert("Your browser blocked the new tab. Allow pop-ups for this site and try again.");
+    return;
+  }
+  const frame = document.createElement("iframe");
+  frame.title = "Flashcard.com";
+  frame.src = window.location.href;
+  frame.style.cssText = "display:block;width:100%;height:100%;border:0";
+  tab.document.title = "Flashcard.com";
+  tab.document.documentElement.style.cssText = "height:100%;margin:0";
+  tab.document.body.style.cssText = "height:100%;margin:0;overflow:hidden;background:#080808";
+  tab.document.body.appendChild(frame);
+  tab.focus();
 }
 </script>
 </body>
