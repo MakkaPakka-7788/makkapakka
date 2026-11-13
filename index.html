@@ -167,6 +167,9 @@ header {
     overflow-wrap: anywhere;
 }
 
+body.gate-only > #flashaccount-panel,
+body.gate-only > header,
+body.gate-only > .container { display: none !important; }
 #game-password-overlay {
     position: fixed;
     inset: 0;
@@ -175,45 +178,61 @@ header {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: #000d;
+    background: #f3f7fc;
 }
 #game-password-overlay.open { display: flex; }
 #game-password-box {
     width: min(390px, 100%);
-    padding: 28px;
-    background: #101010;
-    border: 2px solid #555;
-    color: #eee;
+    padding: 32px;
+    background: #fff;
+    border: 1px solid #dce5ef;
+    border-top: 5px solid #1769e0;
+    border-radius: 14px;
+    color: #1d2a3a;
     text-align: center;
-    box-shadow: 0 12px 50px #000;
+    box-shadow: 0 8px 30px rgba(30, 60, 90, .12);
 }
-#game-password-box h2 { margin: 0 0 10px; }
-#game-password-box p { color: #888; font-size: 13px; }
+#game-password-box h2 { margin: 0 0 10px; color: #1769e0; }
+#game-password-box p { color: #718096; font-size: 14px; }
 #game-password-input {
     width: 100%;
     margin: 12px 0;
     padding: 13px;
-    background: #080808;
-    border: 1px solid #555;
-    color: #eee;
+    background: #fff;
+    border: 1px solid #ccd7e3;
+    border-radius: 8px;
+    color: #1d2a3a;
     font: inherit;
 }
+#game-password-input:focus { outline: 2px solid #1769e0; outline-offset: 1px; }
 #game-password-actions { display: flex; gap: 10px; }
 #game-password-actions button {
     flex: 1;
     padding: 11px;
-    border: 1px solid #666;
-    background: #eee;
-    color: #111;
-    font: bold 13px "Courier New", monospace;
+    border: 0;
+    border-radius: 8px;
+    background: #1769e0;
+    color: #fff;
+    font: bold 14px Arial, sans-serif;
     cursor: pointer;
 }
 #game-password-actions #game-password-cancel {
-    background: #171717;
-    color: #eee;
+    background: #e8f1ff;
+    color: #1769e0;
 }
-#game-password-error { min-height: 18px; color: #ff7777 !important; }
+#game-password-error { min-height: 18px; color: #c53030 !important; }
+body.gate-only { background: #f3f7fc !important; }
 
+</style>
+<script>
+if (new URLSearchParams(location.search).get("unlock") === "1") {
+    document.documentElement.classList.add("game-gate-only");
+}
+</script>
+<style>
+html.game-gate-only body > #flashaccount-panel,
+html.game-gate-only body > header,
+html.game-gate-only body > .container { display: none !important; }
 </style>
 </head>
 
@@ -235,13 +254,13 @@ header {
 
 <div id="game-password-overlay" role="dialog" aria-modal="true" aria-labelledby="game-password-title">
     <form id="game-password-box">
-        <h2 id="game-password-title">PASSWORD REQUIRED</h2>
-        <p>Enter the password to open this game.</p>
+        <h2 id="game-password-title">EXTRA ACCESS</h2>
+        <p>Enter password for extra access.</p>
         <input id="game-password-input" type="password" placeholder="Enter password" autocomplete="off" required>
         <p id="game-password-error" aria-live="polite"></p>
         <div id="game-password-actions">
-            <button type="submit">UNLOCK</button>
-            <button type="button" id="game-password-cancel">CANCEL</button>
+            <button type="submit">CONTINUE</button>
+            <button type="button" id="game-password-cancel">BACK</button>
         </div>
     </form>
 </div>
@@ -670,7 +689,13 @@ try {
     overlay.classList.remove("open");
     destination = null;
   }
-  cancel.addEventListener("click", closePassword);
+  cancel.addEventListener("click", () => {
+    if (unlockOnEntry) {
+      window.location.href = "flashcard.html";
+      return;
+    }
+    closePassword();
+  });
   overlay.addEventListener("click", event => {
     if (event.target === overlay) closePassword();
   });
@@ -686,6 +711,8 @@ try {
         const url = destination;
         const openTarget = target;
         unlocked = true;
+        document.documentElement.classList.remove("game-gate-only");
+        document.body.classList.remove("gate-only");
         closePassword();
         if (url) {
           if (openTarget === "_blank") window.open(url, "_blank", "noopener,noreferrer");
