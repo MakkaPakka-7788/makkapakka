@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080808">
+<title>50/50 — Number Run</title>
+<style>
+:root{color-scheme:dark;--bg:#080808;--panel:#111;--line:#292929;--muted:#858585;--white:#f4f4f4;--green:#75f0a1;--red:#ff626e}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 35%,#191919 0,#080808 65%);color:var(--white);font-family:Arial,Helvetica,sans-serif;display:grid;place-items:center;padding:22px}
+main{width:min(620px,100%);text-align:center}
+.kicker{font-size:12px;letter-spacing:5px;color:var(--muted);font-weight:700}
+h1{font-size:clamp(32px,8vw,58px);margin:12px 0 8px;letter-spacing:-2px}
+.sub{color:var(--muted);font-size:14px}
+.panel{margin:30px auto 18px;background:linear-gradient(145deg,#151515,#0d0d0d);border:1px solid var(--line);border-radius:24px;padding:30px 18px;box-shadow:0 20px 70px #0008}
+.number{font-size:clamp(90px,23vw,150px);font-weight:800;line-height:1.05;letter-spacing:-7px;font-variant-numeric:tabular-nums;transition:color .12s}
+.number.up{color:var(--green)}.number.down{color:var(--red)}
+.status{height:22px;margin-top:12px;color:var(--muted);font-size:13px;letter-spacing:2px;text-transform:uppercase}
+.stats{display:flex;justify-content:center;gap:12px;margin:18px 0}
+.stat{background:#101010;border:1px solid var(--line);border-radius:14px;padding:14px 22px;min-width:130px}
+.stat span{display:block;color:var(--muted);font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.stat strong{display:block;font-size:25px;margin-top:5px;font-variant-numeric:tabular-nums}
+button{border:0;border-radius:12px;background:var(--white);color:#080808;font-weight:800;font-size:15px;padding:15px 28px;cursor:pointer}
+button:hover{transform:translateY(-1px)}button:active{transform:translateY(1px)}
+button:focus-visible{outline:3px solid var(--green);outline-offset:4px}
+.note{color:#777;font-size:12px;line-height:1.6;margin:22px auto 0;max-width:440px}
+.over{color:var(--red);font-weight:800;letter-spacing:3px;font-size:14px}
+@media(max-width:420px){.stats{gap:8px}.stat{min-width:0;flex:1;padding:12px 8px}}
+</style>
+</head>
+<body>
+<main>
+<div class="kicker">THE 50 / 50 CHALLENGE</div>
+<h1>NUMBER RUN</h1>
+<div class="sub">It keeps moving. How high can the number survive?</div>
+<section class="panel" aria-live="polite">
+<div id="number" class="number">1</div>
+<div id="status" class="status">RUNNING · 4 STEPS / SECOND</div>
+</section>
+<div class="stats">
+<div class="stat"><span>Personal best</span><strong id="best">0</strong></div>
+<div class="stat"><span>Steps survived</span><strong id="steps">0</strong></div>
+</div>
+<button id="restart" type="button">START AGAIN</button>
+<div class="note">Every 250 milliseconds: exactly 50% chance of +1 and 50% chance of −1. Reaching 0 ends the run. Your best number is saved on this device.</div>
+</main>
+<script>
+(() => {
+const numberEl = document.getElementById('number');
+const statusEl = document.getElementById('status');
+const bestEl = document.getElementById('best');
+const stepsEl = document.getElementById('steps');
+const restartButton = document.getElementById('restart');
+let number = 1;
+let steps = 0;
+let best = 0;
+let timer = null;
+let running = false;
+try { best = Number(localStorage.getItem('numberRunBest')) || 0; } catch {}
+bestEl.textContent = best.toLocaleString();
+function draw(direction) {
+  numberEl.textContent = number.toLocaleString();
+  numberEl.className = 'number' + (direction ? ' ' + direction : '');
+  stepsEl.textContent = steps.toLocaleString();
+}
+function finish() {
+  running = false;
+  clearInterval(timer);
+  timer = null;
+  number = 0;
+  numberEl.textContent = '0';
+  numberEl.className = 'number down';
+  statusEl.innerHTML = '<span class="over">GAME OVER</span> · ' + best.toLocaleString() + ' BEST';
+  restartButton.textContent = 'TRY AGAIN';
+}
+function tick() {
+  if (!running) return;
+  const goesUp = Math.random() < 0.5;
+  number += goesUp ? 1 : -1;
+  steps++;
+  if (number > best) {
+    best = number;
+    bestEl.textContent = best.toLocaleString();
+    try { localStorage.setItem('numberRunBest', String(best)); } catch {}
+  }
+  if (number <= 0) {
+    finish();
+    return;
+  }
+  draw(goesUp ? 'up' : 'down');
+}
+function start() {
+  clearInterval(timer);
+  number = 1;
+  steps = 0;
+  running = true;
+  draw('');
+  statusEl.textContent = 'RUNNING · 4 STEPS / SECOND';
+  restartButton.textContent = 'RESTART RUN';
+  timer = setInterval(tick, 250);
+}
+restartButton.addEventListener('click', start);
+start();
+})();
+</script>
+</body>
+</html>
