@@ -645,16 +645,26 @@ try {
   const cancel = document.getElementById("game-password-cancel");
   let destination = null;
   let target = "_self";
-  document.querySelector(".games").addEventListener("click", event => {
-    const card = event.target.closest("a.game");
-    if (!card) return;
-    event.preventDefault();
-    destination = card.href;
-    target = card.target || "_self";
+  let unlocked = false;
+  const unlockOnEntry = new URLSearchParams(location.search).get("unlock") === "1";
+  function showPassword(destinationUrl = null, destinationTarget = "_self") {
+    destination = destinationUrl;
+    target = destinationTarget;
     error.textContent = "";
     input.value = "";
     overlay.classList.add("open");
     input.focus();
+  }
+  if (unlockOnEntry) showPassword();
+  document.querySelector(".games").addEventListener("click", event => {
+    const card = event.target.closest("a.game");
+    if (!card) return;
+    event.preventDefault();
+    if (unlocked) {
+      window.location.assign(card.href);
+      return;
+    }
+    showPassword(card.href, card.target || "_self");
   });
   function closePassword() {
     overlay.classList.remove("open");
@@ -675,6 +685,7 @@ try {
       if (await verifyGamePasscode(input.value)) {
         const url = destination;
         const openTarget = target;
+        unlocked = true;
         closePassword();
         if (url) {
           if (openTarget === "_blank") window.open(url, "_blank", "noopener,noreferrer");
