@@ -154,20 +154,20 @@ function addOne(){
     fragments.push(...makeEndlessCode());
   }
   if(offset===0){
-    if(count>0)codeEl.textContent+='\\n';
+    if(count>0)codeEl.textContent+='\n';
     const source=fragments[fragmentIndex];
     const uniqueTag=String(fragmentIndex+1).padStart(8,"0");
     activeFragment=source+" /* trace:"+uniqueTag+" */";
   }
   const character=activeFragment[offset];
   codeEl.textContent+=character;
-  if(character==='\\n')totalLines++;
+  if(character==='\n')totalLines++;
   offset++;
   count++;
   keyCount.textContent=count;
   if(offset>=activeFragment.length){fragmentIndex++;offset=0;activeFragment="";}
-  const lines=codeEl.textContent.split('\\n').length;
-  lineNumbers.textContent=Array.from({length:lines},(_,i)=>String(i+1).padStart(3,'0')).join('\\n');
+  const lines=codeEl.textContent.split('\n').length;
+  lineNumbers.textContent=Array.from({length:lines},(_,i)=>String(i+1).padStart(3,'0')).join('\n');
   editor.scrollTop=editor.scrollHeight;
 }
 window.addEventListener('keydown',e=>{if(e.key==='Tab'||e.key==='Enter'||e.key===' '){e.preventDefault();}addOne();});
