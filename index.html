@@ -664,8 +664,9 @@ try {
   const cancel = document.getElementById("game-password-cancel");
   let destination = null;
   let target = "_self";
-  let unlocked = false;
-  const unlockOnEntry = new URLSearchParams(location.search).get("unlock") === "1";
+  const accessParams = new URLSearchParams(location.search);
+  let unlocked = accessParams.get("bypass") === "1";
+  const unlockOnEntry = accessParams.get("unlock") === "1";
   function showPassword(destinationUrl = null, destinationTarget = "_self") {
     destination = destinationUrl;
     target = destinationTarget;
