@@ -36,7 +36,7 @@ function updatePreview(){
   if(previewBooted)return;
   const source=codeEl.textContent;
   const lines=source.split('\n').filter(line=>line.trim().length>0);
-  const codeLike=(source.match(/(?:<\\/?[a-z][^>]*>|\\b(?:const|let|var|function|return|if|class|async|await|document|console|\\.\\w+\\s*\\()/gi)||[]).length;
+  const codeLike=(source.match(/(?:<\/?[a-z][^>]*>|\b(?:const|let|var|function|return|if|class|async|await|document|console|\.\w+\s*\()/gi)||[]).length;
   if(!source.trim()){
     previewError.textContent='ERROR: NO CODE DETECTED\\nType some code to start the preview.';
     return;
