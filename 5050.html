@@ -3,120 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#080808">
-<title>50/50 — Number Match</title>
+<meta name="theme-color" content="#000000">
+<title>Number Match</title>
 <style>
-:root{color-scheme:dark;--panel:#111;--line:#292929;--muted:#858585;--white:#f4f4f4;--green:#75f0a1;--red:#ff626e;--gold:#ffd778}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 30%,#191919 0,#080808 68%);color:var(--white);font-family:Arial,Helvetica,sans-serif;display:grid;place-items:center;padding:22px}
-main{width:min(760px,100%);text-align:center}
-.kicker{font-size:12px;letter-spacing:5px;color:var(--muted);font-weight:700}
-h1{font-size:clamp(32px,8vw,58px);margin:12px 0 8px;letter-spacing:-2px}
-.sub{color:var(--muted);font-size:14px;line-height:1.6}
-.topline{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:22px 0}
-.pill{background:#101010;border:1px solid var(--line);border-radius:999px;padding:10px 17px;color:var(--muted);font-size:12px;letter-spacing:1px}
-.pill strong{color:var(--white);font-size:15px;margin-left:5px}
-.panel{margin:18px auto;background:linear-gradient(145deg,#151515,#0d0d0d);border:1px solid var(--line);border-radius:24px;padding:26px 18px;box-shadow:0 20px 70px #0008}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.tile{min-width:0;background:#090909;border:1px solid #303030;border-radius:17px;padding:18px 8px 14px;transition:border-color .1s,background .1s}
-.tile.locked{border-color:#414141;background:#111}
-.tile.matched{border-color:var(--green);background:#102016}
-.value{font-size:clamp(42px,10vw,76px);font-weight:800;line-height:1.1;letter-spacing:-3px;font-variant-numeric:tabular-nums}
-.tile.locked .value{color:var(--gold)}
-.tile.matched .value{color:var(--green)}
-.state{margin-top:9px;font-size:10px;letter-spacing:2px;color:var(--muted);font-weight:700}
-.status{min-height:24px;margin-top:22px;color:var(--muted);font-size:13px;letter-spacing:1px}
-.status.good{color:var(--green)}.status.bad{color:var(--red)}
-.stats{display:flex;justify-content:center;gap:12px;margin:18px 0}
-.stat{background:#101010;border:1px solid var(--line);border-radius:14px;padding:13px 22px;min-width:135px}
-.stat span{display:block;color:var(--muted);font-size:10px;letter-spacing:2px;text-transform:uppercase}
-.stat strong{display:block;font-size:24px;margin-top:5px;font-variant-numeric:tabular-nums}
-button{border:0;border-radius:12px;background:var(--white);color:#080808;font-weight:800;font-size:14px;padding:15px 28px;cursor:pointer}
-button:hover{transform:translateY(-1px)}button:active{transform:translateY(1px)}
-button:focus-visible{outline:3px solid var(--green);outline-offset:4px}
-.note{color:#777;font-size:12px;line-height:1.7;margin:22px auto 0;max-width:530px}
-@media(max-width:520px){body{padding:16px}.panel{padding:18px 10px}.grid{gap:7px}.tile{padding:15px 3px 12px;border-radius:13px}.value{letter-spacing:-2px}.stat{min-width:0;flex:1;padding:12px 8px}.topline{gap:7px}.pill{padding:9px 12px}}
+html,body{margin:0;min-height:100%;background:#000;color:#00ff66}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:"Courier New",monospace}
+#terminal{width:min(900px,100%);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.number{min-width:0;text-align:center;font-size:clamp(34px,8vw,82px);font-weight:700;line-height:1.2;overflow-wrap:anywhere;text-shadow:0 0 12px #00ff6655;font-variant-numeric:tabular-nums}
+.number.frozen{color:#00a843;text-shadow:none}
+@media(max-width:520px){body{padding:12px}#terminal{gap:8px}.number{font-size:clamp(26px,8vw,48px)}}
 </style>
 </head>
 <body>
-<main>
-<div class="kicker">THE 50 / 50 CHALLENGE</div>
-<h1>NUMBER MATCH</h1>
-<div class="sub">Watch every number climb. Get them all to stop on exactly the same number.</div>
-<div class="topline">
-<div class="pill">LEVEL <strong id="level">1</strong></div>
-<div class="pill">NUMBERS TO MATCH <strong id="count">3</strong></div>
-</div>
-<section class="panel" aria-live="polite">
-<div id="grid" class="grid"></div>
-<div id="status" class="status">NUMBERS UPDATE EVERY 10 MILLISECONDS</div>
-</section>
-<div class="stats">
-<div class="stat"><span>Best level</span><strong id="best">1</strong></div>
-<div class="stat"><span>Numbers running</span><strong id="running">3</strong></div>
-</div>
-<button id="restart" type="button">RESET TO LEVEL 1</button>
-<div class="note">Every 10 milliseconds, each running number independently has a 50% chance to go up by 1 and a 50% chance to freeze. If they do not all match, the same level automatically starts again. Match them all to advance and add another number. It keeps retrying automatically.</div>
-</main>
+<main id="terminal" aria-live="off"></main>
 <script>
 (() => {
-const gridEl = document.getElementById('grid');
-const levelEl = document.getElementById('level');
-const countEl = document.getElementById('count');
-const bestEl = document.getElementById('best');
-const runningEl = document.getElementById('running');
-const statusEl = document.getElementById('status');
-const restartButton = document.getElementById('restart');
+const terminal = document.getElementById('terminal');
 let level = 1;
 let numbers = [];
 let timer = null;
 let retryTimer = null;
 let active = false;
-let best = 1;
-try { best = Math.max(1, Number(localStorage.getItem('numberMatchBest')) || 1); } catch {}
-bestEl.textContent = best.toLocaleString();
 
 function render() {
-  levelEl.textContent = level.toLocaleString();
-  countEl.textContent = numbers.length.toLocaleString();
-  runningEl.textContent = numbers.filter(n => !n.frozen).length.toLocaleString();
-  gridEl.innerHTML = numbers.map(n => '<div class="tile' + (n.frozen ? ' locked' : '') + (n.matched ? ' matched' : '') + '"><div class="value">' + n.value.toLocaleString() + '</div><div class="state">' + (n.frozen ? 'FROZEN' : 'RUNNING') + '</div></div>').join('');
+  terminal.style.gridTemplateColumns = 'repeat(' + Math.min(3, numbers.length) + ', minmax(0, 1fr))';
+  terminal.innerHTML = numbers.map(n => '<div class="number' + (n.frozen ? ' frozen' : '') + '">' + n.value.toLocaleString() + '</div>').join('');
 }
 
 function finishRound() {
   active = false;
   clearInterval(timer);
   timer = null;
-  const target = numbers[0].value;
-  const won = numbers.every(n => n.value === target);
-  if (won) {
-    numbers.forEach(n => n.matched = true);
-    statusEl.textContent = 'PERFECT MATCH! LEVEL ' + level.toLocaleString() + ' COMPLETE';
-    statusEl.className = 'status good';
-    level++;
-    if (level > best) {
-      best = level;
-      bestEl.textContent = best.toLocaleString();
-      try { localStorage.setItem('numberMatchBest', String(best)); } catch {}
-    }
-    render();
-    retryTimer = setTimeout(startRound, 0);
-  } else {
-    statusEl.textContent = 'NO MATCH — AUTOMATIC RETRY…';
-    statusEl.className = 'status bad';
-    render();
-    retryTimer = setTimeout(startRound, 0);
-  }
+  const match = numbers.every(n => n.value === numbers[0].value);
+  if (match) level++;
+  retryTimer = setTimeout(startRound, 0);
 }
 
 function tick() {
   if (!active) return;
-  numbers.forEach(n => {
+  for (const n of numbers) {
     if (!n.frozen) {
       if (Math.random() < 0.5) n.value++;
       else n.frozen = true;
     }
-  });
+  }
   render();
   if (numbers.every(n => n.frozen)) finishRound();
 }
@@ -124,19 +55,12 @@ function tick() {
 function startRound() {
   clearInterval(timer);
   clearTimeout(retryTimer);
-  retryTimer = null;
-  numbers = Array.from({length: level + 2}, () => ({value: 1, frozen: false, matched: false}));
+  numbers = Array.from({length: level + 2}, () => ({value:1, frozen:false}));
   active = true;
-  statusEl.textContent = 'RUNNING — EACH NUMBER HAS ITS OWN 50/50 CHANCE';
-  statusEl.className = 'status';
   render();
   timer = setInterval(tick, 10);
 }
 
-restartButton.addEventListener('click', () => {
-  level = 1;
-  startRound();
-});
 startRound();
 })();
 </script>
