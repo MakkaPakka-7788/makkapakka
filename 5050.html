@@ -35,7 +35,7 @@ button:focus-visible{outline:3px solid var(--green);outline-offset:4px}
 <h1>NUMBER RUN</h1>
 <div class="sub">It keeps moving. How high can the number survive?</div>
 <section class="panel" aria-live="polite">
-<div id="number" class="number">2</div>
+<div id="number" class="number">1</div>
 <div id="status" class="status">RUNNING · 4 STEPS / SECOND</div>
 </section>
 <div class="stats">
@@ -43,7 +43,7 @@ button:focus-visible{outline:3px solid var(--green);outline-offset:4px}
 <div class="stat"><span>Steps survived</span><strong id="steps">0</strong></div>
 </div>
 <button id="restart" type="button">START AGAIN</button>
-<div class="note">Starts at 2. Every 250 milliseconds: exactly 50% chance of +1 and 50% chance of −1. Reaching 0 ends the run. Your best number is saved on this device.</div>
+<div class="note">Starts at 1. Every 250 milliseconds: 50% chance to add 1 and continue, or 50% chance to end the run immediately. Your best number is saved on this device.</div>
 </main>
 <script>
 (() => {
@@ -52,7 +52,7 @@ const statusEl = document.getElementById('status');
 const bestEl = document.getElementById('best');
 const stepsEl = document.getElementById('steps');
 const restartButton = document.getElementById('restart');
-let number = 2;
+let number = 1;
 let steps = 0;
 let best = 0;
 let timer = null;
@@ -68,31 +68,28 @@ function finish() {
   running = false;
   clearInterval(timer);
   timer = null;
-  number = 0;
-  numberEl.textContent = '0';
   numberEl.className = 'number down';
   statusEl.innerHTML = '<span class="over">GAME OVER</span> · ' + best.toLocaleString() + ' BEST';
   restartButton.textContent = 'TRY AGAIN';
 }
 function tick() {
   if (!running) return;
-  const goesUp = Math.random() < 0.5;
-  number += goesUp ? 1 : -1;
+  if (Math.random() >= 0.5) {
+    finish();
+    return;
+  }
+  number++;
   steps++;
   if (number > best) {
     best = number;
     bestEl.textContent = best.toLocaleString();
     try { localStorage.setItem('numberRunBest', String(best)); } catch {}
   }
-  if (number <= 0) {
-    finish();
-    return;
-  }
-  draw(goesUp ? 'up' : 'down');
+  draw('up');
 }
 function start() {
   clearInterval(timer);
-  number = 2;
+  number = 1;
   steps = 0;
   running = true;
   draw('');
