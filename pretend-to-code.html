@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pretend to Code</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#080b0a;color:#d8e7df;font-family:Consolas,"Courier New",monospace;overflow:hidden}body{display:flex;flex-direction:column}.top{height:48px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 17px;border-bottom:1px solid #20332b;background:#0c1210;color:#8df5ad;font-size:13px;letter-spacing:1px}.lights{display:flex;gap:6px}.lights i{width:9px;height:9px;border-radius:50%;background:#395548}.lights i:first-child{background:#ff625d}.lights i:nth-child(2){background:#ffc44f}.lights i:nth-child(3){background:#45ce76}.layout{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(300px,.88fr);gap:12px;padding:12px;min-height:0;flex:1}.panel{min-width:0;min-height:0;border:1px solid #1e382c;background:#0b100e;border-radius:7px;overflow:hidden;display:flex;flex-direction:column}.panelhead{height:39px;flex:none;border-bottom:1px solid #1b3026;display:flex;align-items:center;justify-content:space-between;padding:0 12px;color:#7eaa90;font-size:11px;letter-spacing:1.2px}.live{color:#6bf29a}.editor{position:relative;min-height:0;flex:1;overflow:auto;padding:13px 15px 30px;font-size:13px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;color:#a9cbb5}.line{color:#466b55;user-select:none}.code{color:#a9e7b8}.cursor{display:inline-block;width:8px;height:15px;background:#70f59b;vertical-align:-2px;animation:blink 1s steps(2) infinite}@keyframes blink{50%{opacity:0}}.previewwrap{padding:12px;min-height:0;flex:1;display:flex;flex-direction:column;gap:9px}.screen{position:relative;min-height:180px;flex:1;background:#111a17;border:1px solid #294537;border-radius:5px;overflow:hidden}canvas{width:100%;height:100%;display:block;touch-action:none}.hint{font-size:11px;color:#769180;line-height:1.5}.status{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#78a187}.score{color:#8df5ad}.bottom{height:29px;flex:none;border-top:1px solid #20332b;background:#0c1210;display:flex;align-items:center;justify-content:space-between;padding:0 13px;color:#557160;font-size:10px;letter-spacing:.4px}@media(max-width:720px){.layout{grid-template-columns:1fr;grid-template-rows:minmax(0,1.05fr) minmax(220px,.95fr);overflow:auto}.panel{min-height:220px}.top{height:42px}.editor{font-size:12px}}
+</style>
+</head>
+<body>
+<header class="top"><span>PRETEND_TO_CODE.exe</span><span class="lights"><i></i><i></i><i></i></span></header>
+<main class="layout">
+<section class="panel">
+<div class="panelhead"><span>◈ SOURCE_CODE.js</span><span class="live">● LIVE TYPING</span></div>
+<div class="editor" id="editor" aria-label="Fake generated code"><span class="line">001 </span><span class="code" id="code"></span><span class="cursor"></span></div>
+</section>
+<section class="panel">
+<div class="panelhead"><span>◈ GAME_PREVIEW</span><span id="gameName" class="live">RUNNING</span></div>
+<div class="previewwrap">
+<div class="screen"><canvas id="game"></canvas></div>
+<div class="status"><span id="gameStatus">Collect the apples.</span><span class="score" id="score">SCORE: 0</span></div>
+<div class="hint" id="hint">Click or tap the apple to collect it. Every key you press adds another piece of fake code.</div>
+</div>
+</section>
+</main>
+<footer class="bottom"><span>BUILD: SUCCESS</span><span>KEY EVENTS: <b id="keys">0</b></span><span>SIMULATION ACTIVE</span></footer>
+<script>
+const codeEl=document.getElementById('code');
+const editor=document.getElementById('editor');
+const keyCount=document.getElementById('keys');
+const fragments=[
+'const apple = spawn("🍎");','world.add(new Apple({ ripe: true }));','if (banana.isSuspicious) {','  reality.reload();','render(universe.parallelDimension);','let potato = 9001;','while (dreams.length > 0) {','  eat(quantumSandwich);','}','player.x += imagination;','await summon("tiny wizard");','physics.gravity = "maybe";','const cheese = new Portal(7);','map.generate({ trees: 404 });','console.log("beep boop");','entity.velocity = moonwalk;','if (cloud.isFluffy) cloud.bounce();','return pickles.transcend();','new Matrix("spaghetti");','system.boot("toaster.exe");','let dragon = null; // probably','apple.position = random.location();','function doTheWiggle() {','  return "wiggle wiggle";','}','memory.store("fish thoughts");','const dimension = 3.14159;','// TODO: teach the frog JavaScript','portal.open("somewhere nice");','ship.fuel = Infinity;','banana.rotate(360);'
+];
+let count=0,fragmentIndex=0,offset=0;
+function addOne(){const fragment=fragments[fragmentIndex%fragments.length];if(offset===0&&count>0)codeEl.textContent+='\n';codeEl.textContent+=fragment[offset];offset++;count++;keyCount.textContent=count;if(offset>=fragment.length){fragmentIndex++;offset=0;}editor.scrollTop=editor.scrollHeight;}
+window.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;if(e.key==='Tab'||e.key==='Enter'||e.key===' '){e.preventDefault();}addOne();});
+window.addEventListener('beforeinput',()=>addOne());
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const scoreEl=document.getElementById('score'),statusEl=document.getElementById('gameStatus');
+let score=0,apple={x:120,y:100,r:13},particles=[],w=0,h=0;
+function resize(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);w=r.width;h=r.height;canvas.width=Math.max(1,Math.floor(w*d));canvas.height=Math.max(1,Math.floor(h*d));ctx.setTransform(d,0,0,d,0,0);apple.x=Math.min(Math.max(apple.x,20),w-20);apple.y=Math.min(Math.max(apple.y,20),h-20);draw();}
+function placeApple(){apple={x:24+Math.random()*Math.max(1,w-48),y:24+Math.random()*Math.max(1,h-48),r:12};}
+function draw(){ctx.clearRect(0,0,w,h);ctx.fillStyle='#111a17';ctx.fillRect(0,0,w,h);ctx.strokeStyle='rgba(100,180,130,.08)';ctx.lineWidth=1;for(let x=0;x<w;x+=25){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}for(let y=0;y<h;y+=25){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}ctx.font='12px monospace';ctx.fillStyle='rgba(130,180,145,.35)';ctx.fillText('CLICK THE APPLE',12,20);ctx.font='30px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🍎',apple.x,apple.y);ctx.textAlign='left';ctx.textBaseline='alphabetic';}
+canvas.addEventListener('pointerdown',e=>{const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(Math.hypot(x-apple.x,y-apple.y)<30){score++;scoreEl.textContent='SCORE: '+score;statusEl.textContent=['Nice! The apple has been compiled.','Excellent fruit collection.','The code gods approve.','One more apple for the algorithm.'][Math.floor(Math.random()*4)];placeApple();draw();}else{statusEl.textContent='Missed! Try clicking the apple.';}});
+new ResizeObserver(resize).observe(canvas);
+resize();placeApple();draw();
+</script>
+</body>
+</html>
