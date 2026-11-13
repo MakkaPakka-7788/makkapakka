@@ -170,7 +170,54 @@ function addOne(){
   lineNumbers.textContent=Array.from({length:lines},(_,i)=>String(i+1).padStart(3,'0')).join('\n');
   editor.scrollTop=editor.scrollHeight;
 }
-window.addEventListener('keydown',e=>{if(e.key==='Tab'||e.key==='Enter'||e.key===' '){e.preventDefault();}addOne();});
+let manualMode=false;
+let equalsPresses=0;
+function refreshLineNumbers(){
+  const lines=codeEl.textContent.split('\n').length;
+  lineNumbers.textContent=Array.from({length:lines},(_,i)=>String(i+1).padStart(3,'0')).join('\n');
+  editor.scrollTop=editor.scrollHeight;
+}
+function handleManualKey(e){
+  if(e.key==='Backspace'){
+    e.preventDefault();
+    codeEl.textContent=codeEl.textContent.slice(0,-1);
+    count=Math.max(0,count-1);
+  }else if(e.key==='Enter'){
+    e.preventDefault();
+    codeEl.textContent+='\n';
+    count++;
+  }else if(e.key==='Tab'){
+    e.preventDefault();
+    codeEl.textContent+='  ';
+    count+=2;
+  }else if(e.key.length===1){
+    e.preventDefault();
+    codeEl.textContent+=e.key;
+    count++;
+  }else{
+    return;
+  }
+  keyCount.textContent=count;
+  refreshLineNumbers();
+}
+window.addEventListener('keydown',e=>{
+  if(e.key==='='){
+    e.preventDefault();
+    equalsPresses++;
+    if(equalsPresses===3){
+      manualMode=!manualMode;
+      equalsPresses=0;
+    }
+    return;
+  }
+  equalsPresses=0;
+  if(manualMode){
+    handleManualKey(e);
+  }else{
+    if(e.key==='Tab'||e.key==='Enter'||e.key===' '){e.preventDefault();}
+    addOne();
+  }
+});
 </script>
 </body>
 </html>
