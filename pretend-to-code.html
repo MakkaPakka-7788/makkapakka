@@ -34,8 +34,7 @@ const fragments=[
 ];
 let count=0,fragmentIndex=0,offset=0;
 function addOne(){const fragment=fragments[fragmentIndex%fragments.length];if(offset===0&&count>0)codeEl.textContent+='\n';codeEl.textContent+=fragment[offset];offset++;count++;keyCount.textContent=count;if(offset>=fragment.length){fragmentIndex++;offset=0;}editor.scrollTop=editor.scrollHeight;}
-window.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;if(e.key==='Tab'||e.key==='Enter'||e.key===' '){e.preventDefault();}addOne();});
-window.addEventListener('beforeinput',()=>addOne());
+window.addEventListener('keydown',e=>{if(e.key==='Tab'||e.key==='Enter'||e.key===' '){e.preventDefault();}addOne();});
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const scoreEl=document.getElementById('score'),statusEl=document.getElementById('gameStatus');
 let score=0,apple={x:120,y:100,r:13},particles=[],w=0,h=0;
