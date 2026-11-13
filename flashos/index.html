@@ -19,6 +19,18 @@
 .passcode-overlay{position:fixed;inset:0;z-index:6000;display:grid;place-items:center;padding:20px;background:#03050bdc;backdrop-filter:blur(18px)}.passcode-card{width:min(390px,100%);padding:28px;border:1px solid #ffffff26;border-radius:20px;background:#111725;box-shadow:0 25px 100px #000b}.passcode-card h2{margin:0 0 8px;font-size:24px}.passcode-logo{width:54px;height:54px;display:grid;place-items:center;border-radius:16px;background:#8795ff22;font-size:25px;margin-bottom:17px}.passcode-card form{display:flex;flex-direction:column;gap:10px}.passcode-card .row{justify-content:flex-end}.passcode-card .gate-submit{background:var(--accent);color:#090b12;font-weight:800}.gate-error{color:#ff8795;min-height:18px;margin:0;font-size:12px}</style>
 </head>
 <body class="booting">
+<div class="passcode-overlay" id="flashosGate" role="dialog" aria-modal="true" aria-labelledby="flashosGateTitle">
+  <div class="passcode-card">
+    <div class="passcode-logo">F</div>
+    <h2 id="flashosGateTitle">FLASHOS ACCESS</h2>
+    <p class="muted">Enter your passcode to continue.</p>
+    <form id="flashosGateForm">
+      <input id="flashosGateInput" type="password" placeholder="Enter passcode" autocomplete="current-password" required>
+      <p class="gate-error" id="flashosGateError" aria-live="polite"></p>
+      <div class="row"><button class="gate-submit" type="submit">UNLOCK FLASHOS</button></div>
+    </form>
+  </div>
+</div>
 <div class="splash" id="splash"><div class="splash-inner"><div class="splash-logo">F</div><h1>FlashOS</h1><p>Your browser. Your apps. Your world.</p><div class="boot-progress"><span id="bootProgress"></span></div><button id="bootButton">Start FlashOS</button></div></div>
 <div class="wallpaper" id="wallpaper"></div>
 <main class="desktop" id="desktop">
@@ -71,7 +83,51 @@ function openFlashOSAboutBlank(){
  if(!tab){toast("Pop-up blocked. Allow pop-ups for FlashOS and try again.");return;}
  const target=window.location.href.replace(/&/g,"&amp;").replace(/"/g,"&quot;");
  tab.document.open();
- tab.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FlashOS</title><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;overflow:hidden;background:#090b10}iframe{display:block}</style></head><body><iframe title="FlashOS" src="' + target + '"></iframe></body></html>');
+ tab.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FlashOS</title><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;overflow:hidden;background:#090b10}iframe{display:block}</style></head><body><iframe title="FlashOS" src="' + target + '"></iframe><script>
+(() => {
+  const saltText = "lxqObbTkujG0UdN4owefOw==";
+  const verifierText = "BOfXEmOKJ72Su8JfsLOXqMf0aS7k8Y5MpLr/p0QVs7g=";
+  const iterations = 600000;
+  const decode = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
+  async function verifyPasscode(value) {
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(value), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:decode(saltText),iterations},key,256);
+    const actual = new Uint8Array(bits);
+    const expected = decode(verifierText);
+    if (actual.length !== expected.length) return false;
+    let diff = 0;
+    for (let i=0;i<actual.length;i++) diff |= actual[i] ^ expected[i];
+    return diff === 0;
+  }
+  const gate = document.getElementById("flashosGate");
+  const form = document.getElementById("flashosGateForm");
+  const input = document.getElementById("flashosGateInput");
+  const error = document.getElementById("flashosGateError");
+  const boot = document.getElementById("bootButton");
+  boot.disabled = true;
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    error.textContent = "Checking…";
+    input.disabled = true;
+    try {
+      if (await verifyPasscode(input.value)) {
+        gate.remove();
+        boot.disabled = false;
+        boot.focus();
+      } else {
+        error.textContent = "Incorrect passcode. Try again.";
+        input.select();
+      }
+    } catch (e) {
+      error.textContent = "Passcode check unavailable. Use a supported browser and HTTPS.";
+    } finally {
+      input.disabled = false;
+    }
+  });
+  input.focus();
+})();
+</script>
+</body></html>');
  tab.document.close();tab.focus();
 }
 $("#aboutBlankButton").addEventListener("click",openFlashOSAboutBlank);
