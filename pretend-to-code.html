@@ -18,7 +18,7 @@
 <section class="panel">
 <div class="panelhead"><span>◈ GAME_PREVIEW</span><span id="gameName" class="live">RUNNING</span></div>
 <div class="previewwrap">
-<div class="screen"><iframe src="./level-devil.html" title="Level Devil game preview" allow="autoplay; fullscreen; gamepad" loading="eager"></iframe></div>
+<div class="screen" id="previewScreen"><div id="previewError" style="height:100%;min-height:180px;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#ff6b6b;font-size:13px;line-height:1.8;white-space:pre-line">ERROR: NO CODE DETECTED\nType some code to start the preview.</div><iframe id="gamePreview" title="Level Devil game preview" allow="autoplay; fullscreen; gamepad" loading="eager" style="display:none"></iframe></div>
 <div class="hint">LIVE GAME PREVIEW · Every key you press adds another character to the code.</div>
 </div>
 </section>
@@ -29,6 +29,226 @@ const codeEl=document.getElementById('code');
 const editor=document.getElementById('editor');
 const keyCount=document.getElementById('keys');
 const lineNumbers=document.getElementById('lineNumbers');
+const previewError=document.getElementById('previewError');
+const gamePreview=document.getElementById('gamePreview');
+let previewBooted=false;
+function updatePreview(){
+  if(previewBooted)return;
+  const source=codeEl.textContent;
+  const lines=source.split('\n').filter(line=>line.trim().length>0);
+  const codeLike=(source.match(/(?:<\\/?[a-z][^>]*>|\\b(?:const|let|var|function|return|if|class|async|await|document|console|\\.\\w+\\s*\\()/gi)||[]).length;
+  if(!source.trim()){
+    previewError.textContent='ERROR: NO CODE DETECTED\\nType some code to start the preview.';
+    return;
+  }
+  if(lines.length<2){
+    previewError.textContent='ERROR: ONE-LINE CODE\\nAdd proper lines and structure.';
+    return;
+  }
+  if(source.length<120||lines.length<3||codeLike<2){
+    previewError.textContent='ERROR: CODE NOT READY\\nNot enough valid-looking code yet.';
+    return;
+  }
+  previewBooted=true;
+  previewError.style.display='none';
+  gamePreview.style.display='block';
+  gamePreview.src='./level-devil.html';
+}
+const fragments=[
+'<!DOCTYPE html>',
+'<html lang="en">',
+'<head>',
+'  <meta charset="UTF-8">',
+'  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
+'  <title>Level Devil - Endless Level Engine</title>',
+'  <link rel="stylesheet" href="level.css">',
+'</head>',
+'<body class="level-devil">',
+'  <main id="game">',
+'    <section class="level" data-level="01">',
+'      <div class="platform floor"></div>',
+'      <div class="player" id="player"></div>',
+'      <div class="exit-door" data-target="next-level"></div>',
+'      <div class="spike-trap hidden"></div>',
+'    </section>',
+'  </main>',
+'  <script src="level-engine.js"><\\/script>',
+'</body>',
+'</html>',
+'const player = document.querySelector("#player");',
+'const level = document.querySelector(".level");',
+'let gravity = 0.48;',
+'let jumpPower = -10.5;',
+'let cameraOffset = 0;',
+'function loadLevel(number) {',
+'  level.dataset.level = String(number);',
+'  buildPlatforms(levelData[number]);',
+'  hideUnexpectedTraps();',
+'}',
+'function updatePlayer() {',
+'  player.velocityY += gravity;',
+'  player.positionY += player.velocityY;',
+'  checkPlatformCollision(player);',
+'  checkSpikeCollision(player);',
+'}',
+'function triggerHiddenTrap(trap) {',
+'  trap.classList.add("activated");',
+'  playTrapAnimation(trap);',
+'}',
+'function reachExit() {',
+'  showLevelTransition();',
+'  loadLevel(currentLevel + 1);',
+'}',
+'window.addEventListener("keydown", handleGameControls);',
+'requestAnimationFrame(gameLoop);',
+'<!-- careful: the floor might not be safe -->',
+'/* Level 02: moving platforms enabled */',
+'player.classList.toggle("jumping", isAirborne);',
+'trapTimer = window.setTimeout(triggerTrap, 850);',
+'door.style.transform = "translateX(12px)";',
+'level.classList.add("level-complete");',
+'console.log("Loading next level...");'
+];
+let count=0,fragmentIndex=0,offset=0,totalLines=1,nextLevel=3;
+const choose=items=>items[Math.floor(Math.random()*items.length)];
+function makeEndlessCode(){
+  const n=nextLevel++;
+  const id=String(n).padStart(2,"0");
+  const theme=choose(["moving platforms","invisible floor","fake exit door","falling ceiling","reverse gravity","teleport tiles","vanishing bridge","double jump","sliding walls","secret passage","tiny platforms","surprise spikes","rotating room","low gravity","speed boost"]);
+  const blocks=[
+    [
+      `// LEVEL ${id}: ${theme.toUpperCase()}`,
+      `const level${n} = { id: ${n}, name: "${theme}", unlocked: true };`,
+      `levelRegistry.set(${n}, level${n});`,
+      `loadLevel(${n});`,
+      `console.log("Level ${n} ready");`
+    ],
+    [
+      `<section class="level level-${n}" data-level="${n}">`,
+      `  <div class="platform platform-${n}"></div>`,
+      `  <div class="hazard" data-trigger="player-nearby"></div>`,
+      `  <button class="exit" aria-label="Continue to level ${n+1}"></button>`,
+      `</section>`
+    ],
+    [
+      `.level-${n} { --difficulty: ${(1+Math.random()*9).toFixed(1)}; }`,
+      `.level-${n} .platform { animation: platformShift ${(1+Math.random()*4).toFixed(1)}s infinite alternate; }`,
+      `.level-${n} .hazard { visibility: hidden; transition: opacity .2s ease; }`,
+      `@keyframes level-${n}-motion { to { transform: translateX(${Math.floor(Math.random()*90)}px); } }`
+    ],
+    [
+      `const trap${n} = document.createElement("div");`,
+      `trap${n}.className = "unexpected-trap";`,
+      `trap${n}.dataset.level = "${n}";`,
+      `document.querySelector("#game").appendChild(trap${n});`,
+      `setTimeout(() => trap${n}.classList.add("armed"), ${Math.floor(300+Math.random()*1800)});`
+    ],
+    [
+      `async function prepareLevel${n}() {`,
+      `  const settings = await fetch("/levels/${n}.json");`,
+      `  const config = await settings.json();`,
+      `  await preloadAssets(config.images);`,
+      `  return initialiseLevel(config);`,
+      `}`
+    ],
+    [
+      `const playerState${n} = { x: ${Math.floor(Math.random()*600)}, y: 0, lives: 3 };`,
+      `playerState${n}.checkpoint = "checkpoint-${n}";`,
+      `if (playerTouchesExit(playerState${n})) unlockLevel(${n+1});`,
+      `saveProgress({ level: ${n}, timestamp: Date.now() });`
+    ],
+    [
+      `// TODO: make the level look safe. It is probably not safe.`,
+      `const secretDoor = document.querySelector("[data-secret-door]");`,
+      `secretDoor?.addEventListener("pointerenter", revealHiddenPath);`,
+      `console.warn("Unexpected platform movement detected");`
+    ],
+    [
+      `const levelData${n} = await fetchLevelData(${n});`,
+      `validateLevel(levelData${n});`,
+      `renderPlatforms(levelData${n}.platforms);`,
+      `renderHazards(levelData${n}.hazards);`,
+      `updateScoreboard(currentScore, ${n});`
+    ]
+  ];
+  return choose(blocks);
+}
+let activeFragment="";
+function addOne(){
+  if(fragmentIndex>=fragments.length){
+    fragments.push(...makeEndlessCode());
+  }
+  if(offset===0){
+    if(count>0)codeEl.textContent+='\n';
+    const source=fragments[fragmentIndex];
+    const uniqueTag=String(fragmentIndex+1).padStart(8,"0");
+    activeFragment=source;
+  }
+  const character=activeFragment[offset];
+  codeEl.textContent+=character;
+  if(character==='\n')totalLines++;
+  offset++;
+  count++;
+  keyCount.textContent=count;
+  if(offset>=activeFragment.length){fragmentIndex++;offset=0;activeFragment="";}
+  const lines=codeEl.textContent.split('\n').length;
+  lineNumbers.textContent=Array.from({length:lines},(_,i)=>String(i+1).padStart(3,'0')).join('\n');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pretend to Code</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#080b0a;color:#d8e7df;font-family:Consolas,"Courier New",monospace;overflow:hidden}body{display:flex;flex-direction:column}.top{height:48px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 17px;border-bottom:1px solid #20332b;background:#0c1210;color:#8df5ad;font-size:13px;letter-spacing:1px}.lights{display:flex;gap:6px}.lights i{width:9px;height:9px;border-radius:50%;background:#395548}.lights i:first-child{background:#ff625d}.lights i:nth-child(2){background:#ffc44f}.lights i:nth-child(3){background:#45ce76}.layout{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(300px,.88fr);gap:12px;padding:12px;min-height:0;flex:1}.panel{min-width:0;min-height:0;border:1px solid #1e382c;background:#0b100e;border-radius:7px;overflow:hidden;display:flex;flex-direction:column}.panelhead{height:39px;flex:none;border-bottom:1px solid #1b3026;display:flex;align-items:center;justify-content:space-between;padding:0 12px;color:#7eaa90;font-size:11px;letter-spacing:1.2px}.live{color:#6bf29a}.editor{position:relative;min-height:0;flex:1;overflow:auto;padding:13px 0 30px;font-size:13px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;color:#a9cbb5;display:flex;align-items:flex-start}.gutter{flex:none;width:48px;padding:0 9px 0 0;text-align:right;color:#466b55;user-select:none;white-space:pre;line-height:1.7}.codearea{min-width:0;flex:1;padding:0 15px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}.code{color:#a9e7b8}.cursor{display:inline-block;width:8px;height:15px;background:#70f59b;vertical-align:-2px;animation:blink 1s steps(2) infinite}@keyframes blink{50%{opacity:0}}.previewwrap{padding:12px;min-height:0;flex:1;display:flex;flex-direction:column;gap:9px}.screen{position:relative;min-height:180px;flex:1;background:#000;border:1px solid #294537;border-radius:5px;overflow:hidden}.screen iframe{width:100%;height:100%;border:0;display:block;background:#000}.hint{font-size:11px;color:#769180;line-height:1.5}.status{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#78a187}.score{color:#8df5ad}.bottom{height:29px;flex:none;border-top:1px solid #20332b;background:#0c1210;display:flex;align-items:center;justify-content:space-between;padding:0 13px;color:#557160;font-size:10px;letter-spacing:.4px}@media(max-width:720px){.layout{grid-template-columns:1fr;grid-template-rows:minmax(0,1.05fr) minmax(220px,.95fr);overflow:auto}.panel{min-height:220px}.top{height:42px}.editor{font-size:12px}.gutter{width:42px;padding-right:7px}.codearea{padding-right:10px}}
+</style>
+</head>
+<body>
+<header class="top"><span></span><span class="lights"><i></i><i></i><i></i></span></header>
+<main class="layout">
+<section class="panel">
+<div class="panelhead"><span>◈ SOURCE_CODE.js</span><span class="live">● LIVE TYPING</span></div>
+<div class="editor" id="editor" aria-label="Fake generated code"><div class="gutter" id="lineNumbers">001</div><div class="codearea"><span class="code" id="code"></span><span class="cursor"></span></div></div>
+</section>
+<section class="panel">
+<div class="panelhead"><span>◈ GAME_PREVIEW</span><span id="gameName" class="live">RUNNING</span></div>
+<div class="previewwrap">
+<div class="screen" id="previewScreen"><div id="previewError" style="height:100%;min-height:180px;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#ff6b6b;font-size:13px;line-height:1.8;white-space:pre-line">ERROR: NO CODE DETECTED\nType some code to start the preview.</div><iframe id="gamePreview" title="Level Devil game preview" allow="autoplay; fullscreen; gamepad" loading="eager" style="display:none"></iframe></div>
+<div class="hint">LIVE GAME PREVIEW · Every key you press adds another character to the code.</div>
+</div>
+</section>
+</main>
+<footer class="bottom"><span>BUILD: SUCCESS</span><span>KEY EVENTS: <b id="keys">0</b></span><span>SIMULATION ACTIVE</span></footer>
+<script>
+const codeEl=document.getElementById('code');
+const editor=document.getElementById('editor');
+const keyCount=document.getElementById('keys');
+const lineNumbers=document.getElementById('lineNumbers');
+const previewError=document.getElementById('previewError');
+const gamePreview=document.getElementById('gamePreview');
+let previewBooted=false;
+function updatePreview(){
+  if(previewBooted)return;
+  const source=codeEl.textContent;
+  const lines=source.split('\n').filter(line=>line.trim().length>0);
+  const codeLike=(source.match(/(?:<\\/?[a-z][^>]*>|\\b(?:const|let|var|function|return|if|class|async|await|document|console|\\.\\w+\\s*\\()/gi)||[]).length;
+  if(!source.trim()){
+    previewError.textContent='ERROR: NO CODE DETECTED\\nType some code to start the preview.';
+    return;
+  }
+  if(lines.length<2){
+    previewError.textContent='ERROR: ONE-LINE CODE\\nAdd proper lines and structure.';
+    return;
+  }
+  if(source.length<120||lines.length<3||codeLike<2){
+    previewError.textContent='ERROR: CODE NOT READY\\nNot enough valid-looking code yet.';
+    return;
+  }
+  previewBooted=true;
+  previewError.style.display='none';
+  gamePreview.style.display='block';
+  gamePreview.src='./level-devil.html';
+}
 const fragments=[
 '<!DOCTYPE html>',
 '<html lang="en">',
@@ -199,6 +419,7 @@ function handleManualKey(e){
   }
   keyCount.textContent=count;
   refreshLineNumbers();
+  updatePreview();
 }
 window.addEventListener('keydown',e=>{
   if(e.key==='='){
