@@ -389,6 +389,7 @@ function addOne(){
   const lines=codeEl.textContent.split('\n').length;
   lineNumbers.textContent=Array.from({length:lines},(_,i)=>String(i+1).padStart(3,'0')).join('\n');
   editor.scrollTop=editor.scrollHeight;
+  updatePreview();
 }
 let manualMode=false;
 let equalsPresses=0;
@@ -397,11 +398,26 @@ function refreshLineNumbers(){
   lineNumbers.textContent=Array.from({length:lines},(_,i)=>String(i+1).padStart(3,'0')).join('\n');
   editor.scrollTop=editor.scrollHeight;
 }
+function resetToDoctype(){
+  codeEl.textContent='';
+  count=0;
+  fragmentIndex=0;
+  offset=0;
+  activeFragment='';
+  previewBooted=false;
+  gamePreview.removeAttribute('src');
+  gamePreview.style.display='none';
+  previewError.style.display='flex';
+  previewError.textContent='ERROR: NO CODE DETECTED\\nType some code to start the preview.';
+  keyCount.textContent='0';
+  refreshLineNumbers();
+}
 function handleManualKey(e){
   if(e.key==='Backspace'){
     e.preventDefault();
     codeEl.textContent=codeEl.textContent.slice(0,-1);
     count=Math.max(0,count-1);
+    if(!codeEl.textContent.length) resetToDoctype();
   }else if(e.key==='Enter'){
     e.preventDefault();
     codeEl.textContent+='\n';
@@ -421,9 +437,10 @@ function handleManualKey(e){
   refreshLineNumbers();
   updatePreview();
 }
-window.addEventListener('keydown',e=>{
+document.addEventListener('keydown',e=>{
   if(e.key==='='){
     e.preventDefault();
+    e.stopPropagation();
     equalsPresses++;
     if(equalsPresses===3){
       manualMode=!manualMode;
@@ -432,13 +449,16 @@ window.addEventListener('keydown',e=>{
     return;
   }
   equalsPresses=0;
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
   if(manualMode){
     handleManualKey(e);
   }else{
-    if(e.key==='Tab'||e.key==='Enter'||e.key===' '){e.preventDefault();}
+    e.preventDefault();
     addOne();
   }
-});
+},true);
+document.getElementById('editor').addEventListener('click',()=>window.focus());
+window.addEventListener('load',()=>window.focus());
 </script>
 </body>
 </html>
