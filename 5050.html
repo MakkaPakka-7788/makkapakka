@@ -35,7 +35,7 @@ button:focus-visible{outline:3px solid var(--green);outline-offset:4px}
 <h1>NUMBER RUN</h1>
 <div class="sub">It keeps moving. How high can the number survive?</div>
 <section class="panel" aria-live="polite">
-<div id="number" class="number">1</div>
+<div id="number" class="number">2</div>
 <div id="status" class="status">RUNNING · 4 STEPS / SECOND</div>
 </section>
 <div class="stats">
@@ -43,7 +43,7 @@ button:focus-visible{outline:3px solid var(--green);outline-offset:4px}
 <div class="stat"><span>Steps survived</span><strong id="steps">0</strong></div>
 </div>
 <button id="restart" type="button">START AGAIN</button>
-<div class="note">Every 250 milliseconds: exactly 50% chance of +1 and 50% chance of −1. Reaching 0 ends the run. Your best number is saved on this device.</div>
+<div class="note">Starts at 2. Every 250 milliseconds: exactly 50% chance of +1 and 50% chance of −1. Reaching 0 ends the run. Your best number is saved on this device.</div>
 </main>
 <script>
 (() => {
@@ -52,7 +52,7 @@ const statusEl = document.getElementById('status');
 const bestEl = document.getElementById('best');
 const stepsEl = document.getElementById('steps');
 const restartButton = document.getElementById('restart');
-let number = 1;
+let number = 2;
 let steps = 0;
 let best = 0;
 let timer = null;
@@ -92,7 +92,7 @@ function tick() {
 }
 function start() {
   clearInterval(timer);
-  number = 1;
+  number = 2;
   steps = 0;
   running = true;
   draw('');
