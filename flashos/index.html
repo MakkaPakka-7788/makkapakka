@@ -16,7 +16,51 @@
 @media(max-width:560px){.desktop{padding:18px 14px 80px}.desktop-icons{left:10px;top:90px;grid-template-columns:repeat(2,68px);gap:7px}.welcome{top:29%;left:56%;width:75%}.welcome h1{font-size:28px}.date{font-size:10px}.taskbar{gap:3px;padding:6px}.taskbar button{width:36px;height:40px}.taskbar .tray{display:none}.window{width:calc(100vw - 16px);height:calc(100dvh - 100px)}.note-layout{grid-template-columns:100px 1fr;gap:7px}.window-body{padding:11px}}
 
 .booting .desktop,.booting .taskbar{visibility:hidden}.splash{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:linear-gradient(135deg,#f2f0e8,#e5ede5);transition:opacity .5s,visibility .5s}.splash.done{opacity:0;visibility:hidden;pointer-events:none}.splash-inner{text-align:center;width:min(440px,90vw);padding:30px}.splash-logo{width:88px;height:88px;margin:0 auto 22px;border-radius:26px;display:grid;place-items:center;background:linear-gradient(135deg,#6f967c,#a9bea7);color:#fff;font-size:43px;font-weight:900;box-shadow:0 15px 70px #8795ff55}.splash h1{font-size:38px;letter-spacing:-.06em;margin:0}.splash p{color:#748078;margin:10px 0 26px}.boot-progress{height:4px;background:#dce5dc;border-radius:9px;overflow:hidden;margin:0 auto 22px;max-width:250px}.boot-progress span{display:block;height:100%;width:0;background:var(--accent);transition:width 1.2s ease}.splash button{background:var(--accent);color:#fff;border:0;font-weight:800;padding:12px 26px;border-radius:12px}.external-app{display:flex;flex-direction:column;gap:10px;height:100%;min-height:0}.external-app iframe{width:100%;height:100%;min-height:0;flex:1;border:0;border-radius:0;background:#fff}.window.flashcard-fullscreen{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-width:0!important;min-height:0!important;border:0!important;border-radius:0!important;transform:none!important;box-shadow:none!important}.window.flashcard-fullscreen .titlebar{display:none}.window.flashcard-fullscreen .window-body{padding:0!important;overflow:hidden;display:flex;flex-direction:column}.window.flashcard-fullscreen .external-app{gap:0}.window.flashcard-fullscreen .external-app h2,.window.flashcard-fullscreen .external-app p{display:none}.flashcard-exit{position:absolute;top:10px;right:10px;z-index:30;width:40px;height:40px;padding:0;border:1px solid #ffffff40;border-radius:12px;background:#111520e8;color:#fff;font-size:25px;line-height:1;box-shadow:0 4px 18px #0007}.flashcard-exit:hover{background:#d9485b}flashcard-open #taskbar{display:none!important}.games-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.game-link{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);border:1px solid var(--line);background:#f7f9f5;border-radius:12px;padding:14px}.game-link:hover{background:#ffffff16}</style>
-</head>
+<style>
+:root{--accent:#0878d1;--text:#202b38;--muted:#647487;--panel:rgba(250,252,255,.98);--panel2:#eaf2fa;--line:#d6e1ec}
+body{background:#dce9f6;color:#202b38}
+.wallpaper{background:radial-gradient(ellipse at 50% 42%,#ffffff 0%,#dceafa 27%,transparent 55%),radial-gradient(ellipse at 78% 18%,#a9d2f1 0%,transparent 34%),radial-gradient(ellipse at 18% 78%,#b9d9f1 0%,transparent 40%),linear-gradient(135deg,#d8e9f8,#eef4fa 52%,#c9e0f3)}
+.wallpaper:after{background:linear-gradient(130deg,#ffffff30,transparent 55%,#4d8db21a)}
+.desktop{padding:28px 30px 100px}
+.brand{color:#233c54}.brand span{color:#0878d1}
+.date{color:#425a70}
+.welcome{left:50%;top:24%;transform:translateX(-50%);text-align:center;width:min(620px,90vw)}
+.welcome h1{color:#244866;font-weight:650;letter-spacing:-.045em}
+.welcome p{color:#60788e}
+.desktop-icons{top:105px;left:24px;grid-template-columns:repeat(1,88px);gap:7px}
+.desktop-app{color:#263d52;border-radius:7px;text-shadow:0 1px 3px #fff;background:transparent}
+.desktop-app:hover{background:#ffffff80;border-color:#ffffffaa}
+.app-icon{width:48px;height:48px;border-radius:11px;background:#ffffffd9;border:1px solid #d7e5f2;box-shadow:0 2px 8px #365c7a18;color:#0878d1;font-weight:700}
+.taskbar{height:62px;bottom:0;left:0;right:0;transform:none;width:100%;max-width:none;border-radius:0;border:0;border-top:1px solid #ffffffb8;background:#edf4fbe8;box-shadow:0 -3px 18px #365c7a12;justify-content:center;gap:5px;padding:6px 16px;backdrop-filter:blur(22px)}
+.taskbar button{width:46px;height:46px;border-radius:8px;color:#24394d}
+.taskbar button:hover,.taskbar .active{background:#d9e9f7}
+.taskbar .start{background:transparent}
+.taskbar .start:hover{background:#d9e9f7}
+.taskbar .search-pin{font-size:26px;font-weight:400}
+.taskbar .tray{position:absolute;right:22px;top:14px;color:#31475a;text-align:right;line-height:1.35;font-size:11px}
+.win-mark{width:21px;height:21px;display:grid;grid-template-columns:1fr 1fr;gap:2px;transform:skewY(-5deg)}
+.win-mark i{display:block;background:#0878d1}
+.task-icon{width:31px;height:31px;display:grid;place-items:center;border-radius:7px;font-size:19px;font-weight:700;box-shadow:0 1px 3px #1e34451c}
+.task-icon.edge{color:#fff;background:linear-gradient(145deg,#13a8b0 0%,#0878d1 55%,#2354a8 100%);border-radius:50%;font-style:italic}
+.task-icon.onenote{color:#fff;background:linear-gradient(90deg,#7b4ab7 0 35%,#a77bd2 35%);border-radius:5px}
+.task-icon.outlook{color:#fff;background:linear-gradient(135deg,#1686d9,#0758a9);border-radius:5px}
+.task-icon.explorer{font-size:21px;background:#f7c84d}
+.task-icon.teams{color:#fff;background:linear-gradient(135deg,#6556b8,#9587df);border-radius:8px}
+.task-icon.settings-icon{color:#536c80;background:#e4edf5;font-size:23px}
+.window{background:var(--panel);border:1px solid #cbd9e6;box-shadow:0 18px 60px #27445e30;backdrop-filter:blur(22px)}
+.titlebar{background:#f7faff}
+button{background:#f4f8fc;border-color:#d5e1ed;color:#263d52}
+button:hover{background:#e7f1fa}
+input,textarea,select{background:#fff;color:#263d52;border-color:#cbd9e6}
+.flashcard{background:linear-gradient(145deg,#f3f8fd,#e4eef8);color:#253e55}
+.splash{background:radial-gradient(ellipse at 50% 30%,#ffffff 0%,transparent 48%),linear-gradient(135deg,#d9eafb,#eef4fa)}
+.splash-logo{background:linear-gradient(135deg,#0878d1,#35a6c8);color:#fff;box-shadow:0 12px 38px #0878d133}
+.splash h1{color:#244866}.splash p{color:#60788e}
+.splash button{background:#0878d1;color:#fff}
+.boot-progress{background:#cbddea}.boot-progress span{background:#0878d1}
+.toast{background:#fff;color:#263d52;border-color:#d6e1ec}
+@media(max-width:560px){.taskbar{justify-content:flex-start;overflow-x:auto}.taskbar .tray{display:none}.desktop-icons{left:10px;top:90px}.welcome{left:50%;top:27%;width:90%}}
+</style></head>
 <body class="booting">
 <div class="splash" id="splash"><div class="splash-inner"><div class="splash-logo">F</div><h1>FlashOS</h1><p>Your browser. Your apps. Your world.</p><div class="boot-progress"><span id="bootProgress"></span></div><button id="bootButton">Start FlashOS</button></div></div>
 <div class="wallpaper" id="wallpaper"></div>
@@ -25,11 +69,11 @@
 <div class="desktop-icons" id="desktopIcons"></div>
 <section class="welcome"><h1 id="greeting">Welcome to FlashOS</h1><p>Your space. Your apps. Your ideas.</p></section>
 </main>
-<div class="taskbar" id="taskbar" aria-label="App dock"><button class="start" data-app="launcher" title="All apps">✣</button><span class="divider"></span><button data-app="webflash" title="Flashcard.com">🌐</button><button data-app="notes" title="Notes">📝</button><button data-app="flashcards" title="Flashcards">📚</button><button data-app="calculator" title="Calculator">🧮</button><button data-app="files" title="Files">📁</button><button data-app="paint" title="Paint">🎨</button><span class="divider"></span><span class="tray">FlashOS&nbsp; · &nbsp;Ready</span></div>
+<div class="taskbar" id="taskbar" aria-label="Windows-style taskbar"><button class="start" data-app="launcher" title="Start"><span class="win-mark"><i></i><i></i><i></i><i></i></span></button><button class="search-pin" data-app="launcher" title="Search">⌕</button><button data-app="webflash" title="Microsoft Edge — Flashcard.com"><span class="task-icon edge">e</span></button><button data-app="notes" title="OneNote — Notes"><span class="task-icon onenote">N</span></button><button data-app="calculator" title="Outlook — Calculator"><span class="task-icon outlook">O</span></button><button data-app="files" title="File Explorer"><span class="task-icon explorer">📁</span></button><button data-app="paint" title="Teams — Paint"><span class="task-icon teams">T</span></button><button data-app="settings" title="Settings"><span class="task-icon settings-icon">⚙</span></button><span class="tray"><span id="trayClock">12:00</span><br><span id="trayDate">14/11/2026</span></span></div>
 <script>
 const $=s=>document.querySelector(s);
-const icons={flashaccount:"👤",notes:"📝",flashcards:"📚",calculator:"🧮",files:"📁",paint:"🎨",calendar:"📅",settings:"⚙️",launcher:"✣",music:"🎵",gamehub:"🎮",webflash:"🌐"};
-const labels={flashaccount:"FlashAccount",notes:"Notes",flashcards:"Flashcards",calculator:"Calculator",files:"Files",paint:"Paint",calendar:"Calendar",settings:"Settings",launcher:"All apps",music:"Music",gamehub:"Game Hub",webflash:"Flashcard.com"};
+const icons={flashaccount:"👤",notes:"N",flashcards:"📚",calculator:"O",files:"📁",paint:"T",calendar:"📅",settings:"⚙",launcher:"✣",music:"🎵",gamehub:"🎮",webflash:"e"};
+const labels={flashaccount:"FlashAccount",notes:"OneNote",flashcards:"Flashcards",calculator:"Outlook",files:"File Explorer",paint:"Teams",calendar:"Calendar",settings:"Settings",launcher:"Start",music:"Music",gamehub:"Game Hub",webflash:"Microsoft Edge"};
 const apps=["flashaccount","notes","flashcards","webflash","calculator","files","paint","calendar","settings","music"];
 const safeRead=(key,fallback)=>{try{const v=localStorage.getItem(key);return v===null?fallback:JSON.parse(v)}catch{return fallback}};
 const safeWrite=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value));return true}catch{return false}};
