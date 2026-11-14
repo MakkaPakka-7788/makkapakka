@@ -60,7 +60,26 @@ input,textarea,select{background:#fff;color:#263d52;border-color:#cbd9e6}
 .boot-progress{background:#cbddea}.boot-progress span{background:#0878d1}
 .toast{background:#fff;color:#263d52;border-color:#d6e1ec}
 @media(max-width:560px){.taskbar{justify-content:flex-start;overflow-x:auto}.taskbar .tray{display:none}.desktop-icons{left:10px;top:90px}.welcome{left:50%;top:27%;width:90%}}
-</style></head>
+</style>
+<style>
+html,body{background:#000!important}
+body{color:#fff!important}
+.wallpaper,.wallpaper:after{background:#000!important}
+.desktop-head,.desktop-icons,.welcome{display:none!important}
+.desktop{background:#000!important;padding:0!important}
+.taskbar{height:56px!important;bottom:0!important;left:0!important;right:0!important;width:100%!important;max-width:none!important;transform:none!important;justify-content:flex-start!important;gap:4px!important;padding:4px 14px!important;border:0!important;border-top:1px solid #d5d5d5!important;border-radius:0!important;background:#f3f3f3!important;box-shadow:none!important;backdrop-filter:none!important}
+.taskbar button{width:42px!important;height:46px!important;border-radius:5px!important;background:transparent!important;color:#222!important}
+.taskbar button:hover,.taskbar .active{background:#e1e1e1!important}
+.taskbar .start{margin-right:2px!important}
+.taskbar .search-pin{width:225px!important;justify-content:start!important;padding-left:12px!important;border:1px solid #d5d5d5!important;border-radius:24px!important;background:#fff!important;font-size:22px!important}
+.task-view{position:relative!important}
+.task-view span{position:absolute;width:15px;height:15px;border:2px solid #333;border-radius:2px}
+.task-view span:first-child{left:10px;top:11px;background:#f3f3f3}
+.task-view span:last-child{right:8px;bottom:10px;background:#d9d9d9}
+.taskbar .tray{position:fixed!important;right:14px!important;top:auto!important;bottom:9px!important;color:#222!important;text-align:right!important;line-height:1.25!important;font-size:11px!important}
+@media(max-width:700px){.taskbar .search-pin{width:46px!important;padding:0!important}.taskbar .tray{display:none!important}}
+</style>
+</head>
 <body class="booting">
 <div class="splash" id="splash"><div class="splash-inner"><div class="splash-logo">F</div><h1>FlashOS</h1><p>Your browser. Your apps. Your world.</p><div class="boot-progress"><span id="bootProgress"></span></div><button id="bootButton">Start FlashOS</button></div></div>
 <div class="wallpaper" id="wallpaper"></div>
@@ -69,7 +88,7 @@ input,textarea,select{background:#fff;color:#263d52;border-color:#cbd9e6}
 <div class="desktop-icons" id="desktopIcons"></div>
 <section class="welcome"><h1 id="greeting">Welcome to FlashOS</h1><p>Your space. Your apps. Your ideas.</p></section>
 </main>
-<div class="taskbar" id="taskbar" aria-label="Windows-style taskbar"><button class="start" data-app="launcher" title="Start"><span class="win-mark"><i></i><i></i><i></i><i></i></span></button><button class="search-pin" data-app="launcher" title="Search">⌕</button><button data-app="webflash" title="Microsoft Edge — Flashcard.com"><span class="task-icon edge">e</span></button><button data-app="notes" title="OneNote — Notes"><span class="task-icon onenote">N</span></button><button data-app="calculator" title="Outlook — Calculator"><span class="task-icon outlook">O</span></button><button data-app="files" title="File Explorer"><span class="task-icon explorer">📁</span></button><button data-app="paint" title="Teams — Paint"><span class="task-icon teams">T</span></button><button data-app="settings" title="Settings"><span class="task-icon settings-icon">⚙</span></button><span class="tray"><span id="trayClock">12:00</span><br><span id="trayDate">14/11/2026</span></span></div>
+<div class="taskbar" id="taskbar" aria-label="Windows-style taskbar"><button class="start" data-app="launcher" title="Start"><span class="win-mark"><i></i><i></i><i></i><i></i></span></button><button class="search-pin" data-app="launcher" title="Search">⌕</button><button class="task-view" data-app="launcher" title="Task View"><span></span><span></span></button><button data-app="webflash" title="Microsoft Edge — Flashcard.com"><span class="task-icon edge">e</span></button><button data-app="notes" title="OneNote — Notes"><span class="task-icon onenote">N</span></button><button data-app="calculator" title="Outlook — Calculator"><span class="task-icon outlook">O</span></button><button data-app="files" title="File Explorer"><span class="task-icon explorer">📁</span></button><button data-app="paint" title="Teams — Paint"><span class="task-icon teams">T</span></button><button data-app="settings" title="Settings"><span class="task-icon settings-icon">⚙</span></button><span class="tray"><span id="trayClock">12:00</span><br><span id="trayDate">14/11/2026</span></span></div>
 <script>
 const $=s=>document.querySelector(s);
 const icons={flashaccount:"👤",notes:"N",flashcards:"📚",calculator:"O",files:"📁",paint:"T",calendar:"📅",settings:"⚙",launcher:"✣",music:"🎵",gamehub:"🎮",webflash:"e"};
