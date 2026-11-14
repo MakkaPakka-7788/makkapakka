@@ -29,7 +29,7 @@ button:hover{background:#0e55bd}
 </form>
 <script>
 const saltText="71XAXhevouhLnBRipYpEaw==";
-const verifierText="HHDNOE7MIJYbD9IBMeSygqgF7yO7ZdjHJzosVL8IIFs=";
+const verifierText="3AvvZnBNRrsai96noYySq9e19Kb3OkU694uMEj6unp8=";
 const decode=v=>Uint8Array.from(atob(v),c=>c.charCodeAt(0));
 async function verify(value){
  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(value),"PBKDF2",false,["deriveBits"]);
