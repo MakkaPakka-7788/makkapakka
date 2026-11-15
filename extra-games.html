@@ -13,9 +13,7 @@ h1{font-size:30px;margin:0}.sub{color:#777;margin:8px 0 0}.wrap{width:min(1100px
 .game:hover{background:#191919;border-color:#777;transform:translateY(-2px)}
 .icon{font-size:42px}.name{font-size:19px;font-weight:bold}.description{color:#777;font-size:12px;margin-top:7px}
 button{background:#eee;color:#111;border:0;padding:10px 15px;font-family:inherit;font-weight:bold;cursor:pointer}
-#gate{position:fixed;inset:0;background:#f3f7fc;display:none;place-items:center;padding:20px;z-index:5;font-family:Arial,sans-serif;color:#1d2a3a}
-#gate.open{display:grid}.gatebox{width:min(390px,100%);background:#fff;border:1px solid #dce5ef;border-top:5px solid #1769e0;border-radius:14px;padding:30px;text-align:center;box-shadow:0 8px 30px #1e3c5e20}
-.gatebox h2{color:#1769e0}.gatebox input{width:100%;padding:13px;border:1px solid #ccd7e3;border-radius:8px;font:16px Arial;margin:12px 0}.gatebox button{width:100%;background:#1769e0;color:white;border-radius:8px;padding:12px}.gatebox p{color:#718096}
+
 </style>
 </head>
 <body>
@@ -118,10 +116,5 @@ button{background:#eee;color:#111;border:0;padding:10px 15px;font-family:inherit
                     <div class="description">Explore a collection of browser games.</div>
                 </div>
             </a></div></main>
-<div id="gate"><form class="gatebox" id="gateform"><h2>GAME ACCESS</h2><p>Enter the direct game access passcode.</p><input id="pin" type="password" placeholder="Passcode" autocomplete="off" required><button>CONTINUE</button><p id="msg" aria-live="polite"></p></form></div>
-<script>
-const gate=document.getElementById("gate"),form=document.getElementById("gateform"),pin=document.getElementById("pin"),msg=document.getElementById("msg");let target=null;
-document.querySelector(".games").addEventListener("click",e=>{const a=e.target.closest("a.game");if(!a)return;e.preventDefault();target=a.href;gate.classList.add("open");pin.value="";msg.textContent="";pin.focus()});
-form.addEventListener("submit",e=>{e.preventDefault();if(pin.value==="pness"&&target){location.href=target}else{msg.textContent="Incorrect passcode.";pin.select()}});
-</script>
+
 </body></html>
