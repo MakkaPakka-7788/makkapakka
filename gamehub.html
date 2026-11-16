@@ -596,8 +596,8 @@ try {
 <script>let flashosShortcut="",flashosShortcutTime=0;document.addEventListener("keydown",e=>{if(e.ctrlKey||e.altKey||e.metaKey||e.key.length!==1)return;const now=Date.now();if(now-flashosShortcutTime>1800)flashosShortcut="";flashosShortcutTime=now;flashosShortcut=(flashosShortcut+e.key.toLowerCase()).slice(-3);if(flashosShortcut==="rrr"){flashosShortcut="";window.location.href="./flashos/";}});</script>
 <script>
 (() => {
-  const saltText = "WkoH4V/TY7bPSGbcFnLI/g==";
-  const verifierText = "TISSmcBiaAx1egFmK3kZhAU6YxIYfIqNHt7bD0m83+Y=";
+  const saltText = "W/H5mgsBMVWjZUNxj20l8g==";
+  const verifierText = "W8BJBRE5KYyxnIJvgrb374j2a0xM+Qet8RvOdRmoJdw=";
   const iterations = 600000;
   const decode = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
   async function verifyGamePasscode(value) {
