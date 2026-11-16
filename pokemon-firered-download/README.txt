@@ -1,0 +1,1 @@
+Pokémon FireRed launcher package. Open index.html and select a legally obtained .gba ROM file. The ROM is not included.
