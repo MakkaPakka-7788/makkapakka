@@ -297,7 +297,7 @@ html.game-gate-only body > .container { display: none !important; }
 
 
 
-            <a class="game" href="terminal.html">
+            <a class="game" href="https://makkapakka-7788.github.io/makkapakka/terminal.html?v=20261117-flashos-dot-sync-3">
                 <div class="icon">⌘</div>
                 <div>
                     <div class="name">TERMINAL</div>
@@ -634,7 +634,7 @@ try {
     const card = event.target.closest("a.game");
     if (!card) return;
     event.preventDefault();
-    if (card.getAttribute("href") === "terminal.html") {
+    if (new URL(card.href, location.href).pathname.endsWith("/terminal.html")) {
       window.location.assign(card.href);
       return;
     }
