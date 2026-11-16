@@ -596,12 +596,11 @@ try {
 <script>let flashosShortcut="",flashosShortcutTime=0;document.addEventListener("keydown",e=>{if(e.ctrlKey||e.altKey||e.metaKey||e.key.length!==1)return;const now=Date.now();if(now-flashosShortcutTime>1800)flashosShortcut="";flashosShortcutTime=now;flashosShortcut=(flashosShortcut+e.key.toLowerCase()).slice(-3);if(flashosShortcut==="rrr"){flashosShortcut="";window.location.href="./flashos/";}});</script>
 <script>
 (() => {
-  const saltText = "71XAXhevouhLnBRipYpEaw==";
-  const verifierText = "vEYeHwkxqIFzyV+Op/jEHfUHKL9HJAUVh38DF69CsIY=";
+  const saltText = "WkoH4V/TY7bPSGbcFnLI/g==";
+  const verifierText = "TISSmcBiaAx1egFmK3kZhAU6YxIYfIqNHt7bD0m83+Y=";
   const iterations = 600000;
   const decode = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
   async function verifyGamePasscode(value) {
-    if (value !== "#makkasentpakking") return false;
     const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(value), "PBKDF2", false, ["deriveBits"]);
     const bits = await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:decode(saltText),iterations},key,256);
     const actual = new Uint8Array(bits);
@@ -619,7 +618,7 @@ try {
   let destination = null;
   let target = "_self";
   const accessParams = new URLSearchParams(location.search);
-  let unlocked = accessParams.get("bypass") === "1";
+  let unlocked = false;
   const unlockOnEntry = accessParams.get("unlock") === "1";
   function showPassword(destinationUrl = null, destinationTarget = "_self") {
     destination = destinationUrl;
