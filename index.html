@@ -601,7 +601,7 @@ try {
   const iterations = 600000;
   const decode = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
   async function verifyGamePasscode(value) {
-    if (value !== "pness") return false;
+    if (value !== "#makkasentpakking") return false;
     const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(value), "PBKDF2", false, ["deriveBits"]);
     const bits = await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:decode(saltText),iterations},key,256);
     const actual = new Uint8Array(bits);
@@ -634,6 +634,10 @@ try {
     const card = event.target.closest("a.game");
     if (!card) return;
     event.preventDefault();
+    if (card.getAttribute("href") === "terminal.html") {
+      window.location.assign(card.href);
+      return;
+    }
     if (unlocked) {
       window.location.assign(card.href);
       return;
