@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Element Lab | Flashcard.com</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#090b10;color:#eef2ff;font-family:system-ui,Arial,sans-serif;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 22px;border-bottom:1px solid #283044;background:#101522;position:sticky;top:0;z-index:2}
+h1{font-size:20px;letter-spacing:2px;margin:0}.sub{font-size:11px;color:#8d9ab4;margin-top:4px}
+button,input{font:inherit}.topbtn,.action{background:#202a3d;color:#eaf0ff;border:1px solid #3b4964;border-radius:9px;padding:9px 12px;cursor:pointer}.topbtn:hover,.action:hover{background:#2b3952}
+main{max-width:1200px;margin:auto;padding:20px;display:grid;grid-template-columns:minmax(230px,310px) 1fr;gap:18px}
+.panel{background:#111827;border:1px solid #29344a;border-radius:14px;overflow:hidden}.panelhead{padding:15px;border-bottom:1px solid #29344a;display:flex;align-items:center;justify-content:space-between;gap:10px}.panelhead h2{font-size:13px;letter-spacing:1.5px;margin:0}.count{font-size:11px;color:#9ba8c0}
+#search{width:100%;background:#0b111d;border:1px solid #34415a;border-radius:8px;color:white;padding:10px;margin-top:12px;outline:none}
+#inventory{padding:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:68vh;overflow:auto}
+.element{background:#1a2537;border:1px solid #35435c;border-radius:10px;padding:10px 8px;display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left;color:#f2f5ff;min-width:0;transition:.12s}
+.element:hover{border-color:#91a9d5;transform:translateY(-1px)}.element.selected{outline:2px solid #8bb8ff;background:#263958}.emoji{font-size:22px}.ename{font-size:12px;font-weight:650;overflow-wrap:anywhere}
+.right{display:flex;flex-direction:column;gap:18px}.workbench{min-height:350px;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at center,#18243a 0,#101827 55%,#0e1420 100%)}
+.big{font-size:52px;margin-bottom:8px}.workbench h2{font-size:20px;margin:0 0 8px}.workbench p{color:#9ba8c0;font-size:13px;max-width:450px;line-height:1.5}
+.slots{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:15px 0}.slot{min-width:110px;min-height:78px;border:1px dashed #52617d;border-radius:12px;padding:10px;display:grid;place-items:center;color:#aab6cc}.slot .emoji{font-size:26px}
+.combine{background:#8bb8ff;color:#07101f;border:0;border-radius:9px;padding:11px 20px;font-weight:800;cursor:pointer}.combine:disabled{opacity:.4;cursor:not-allowed}
+.result{margin-top:14px;min-height:28px;font-size:13px;color:#b9d4ff}.tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.log{padding:14px;max-height:190px;overflow:auto;color:#aebbd1;font-size:12px;line-height:1.8}.log b{color:#eef2ff}
+.empty{color:#77849b;text-align:center;padding:25px;font-size:12px}
+@media(max-width:760px){main{grid-template-columns:1fr;padding:12px}#inventory{max-height:300px;grid-template-columns:repeat(3,minmax(0,1fr))}.workbench{min-height:300px}header{padding:13px}.element{padding:8px 5px;gap:5px}.ename{font-size:11px}}
+</style></head>
+<body>
+<header><div><h1>✦ ELEMENT LAB</h1><div class="sub">A little world made from combinations · Flashcard.com original</div></div><button class="topbtn" id="reset">RESET DISCOVERIES</button></header>
+<main>
+<section class="panel"><div class="panelhead"><h2>YOUR ELEMENTS</h2><span class="count" id="count">4 discovered</span></div><div style="padding:0 12px"><input id="search" placeholder="Search your discoveries..." autocomplete="off"></div><div id="inventory"></div></section>
+<div class="right">
+<section class="panel"><div class="panelhead"><h2>COMBINATION WORKBENCH</h2><span class="count">Choose two elements</span></div><div class="workbench">
+<div class="big">⚗️</div><h2>What will you create?</h2><p>Select two elements from your collection, then combine them. Some discoveries can be combined again to unlock even more.</p>
+<div class="slots"><div class="slot" id="slotA">① First element</div><span style="font-size:20px;color:#91a9c9">+</span><div class="slot" id="slotB">② Second element</div></div>
+<button class="combine" id="combine" disabled>COMBINE</button><div class="result" id="result" aria-live="polite">Pick your first element to begin.</div>
+<div class="tools"><button class="action" id="clear">CLEAR SELECTION</button><button class="action" id="random">SURPRISE ME</button></div>
+</div></section>
+<section class="panel"><div class="panelhead"><h2>RECENT DISCOVERIES</h2><span class="count">Saved on this device</span></div><div class="log" id="log">Your discoveries will appear here.</div></section>
+</div></main>
+<script>
+const recipes={
+"water|fire":["Steam","💨"],"earth|fire":["Lava","🌋"],"earth|water":["Mud","🟤"],"fire|wind":["Smoke","🌫️"],"water|wind":["Cloud","☁️"],"earth|wind":["Dust","🌪️"],
+"cloud|water":["Rain","🌧️"],"cloud|fire":["Lightning","⚡"],"cloud|earth":["Mountain","⛰️"],"fire|water":["Steam","💨"],
+"lava|water":["Stone","🪨"],"lava|earth":["Volcano","🌋"],"mud|fire":["Brick","🧱"],"mud|wind":["Clay","🏺"],"dust|water":["Sand","🏖️"],"sand|fire":["Glass","🪟"],"sand|wind":["Dune","🏜️"],"stone|wind":["Sand","🏖️"],
+"steam|wind":["Cloud","☁️"],"steam|earth":["Geyser","♨️"],"rain|earth":["Plant","🌱"],"rain|fire":["Rainbow","🌈"],"rain|wind":["Storm","⛈️"],"lightning|water":["Electricity","🔌"],"lightning|earth":["Crystal","💎"],"storm|water":["Ocean","🌊"],"ocean|earth":["Island","🏝️"],"ocean|wind":["Wave","🌊"],
+"plant|earth":["Tree","🌳"],"plant|water":["Algae","🪸"],"plant|fire":["Ash","🪵"],"plant|wind":["Seed","🌰"],"tree|fire":["Charcoal","⚫"],"tree|wind":["Leaf","🍃"],"tree|water":["Forest","🌲"],"seed|earth":["Flower","🌼"],"flower|water":["Perfume","🌸"],"flower|wind":["Pollen","🌾"],"forest|fire":["Campfire","🔥"],"forest|water":["Swamp","🐊"],
+"stone|fire":["Metal","🔩"],"metal|fire":["Tool","🛠️"],"metal|water":["Rust","🧡"],"metal|wind":["Bell","🔔"],"glass|fire":["Lens","🔎"],"glass|sand":["Hourglass","⌛"],"clay|fire":["Pottery","🏺"],"brick|brick":["Wall","🧱"],"wall|wall":["House","🏠"],"house|house":["Village","🏘️"],"village|village":["City","🌆"],
+"ocean|fire":["Salt","🧂"],"salt|water":["Soup","🍲"],"plant|plant":["Garden","🪴"],"flower|flower":["Bouquet","💐"],"tree|tree":["Wood","🪵"],"wood|fire":["Paper","📄"],"paper|wind":["Kite","🪁"],"paper|water":["Pulp","📃"],"paper|fire":["Ash","🩶"],"wood|tool":["Boat","⛵"],"boat|ocean":["Ship","🚢"],"ship|wind":["Sail","⛵"],
+"human|water":["Swimmer","🏊"],"human|earth":["Farmer","🧑‍🌾"],"human|fire":["Cook","🧑‍🍳"],"human|tool":["Builder","👷"],"human|plant":["Gardener","🧑‍🌾"],"human|metal":["Robot","🤖"],"human|lightning":["Scientist","🧑‍🔬"],
+"life|ocean":["Fish","🐟"],"life|earth":["Animal","🐾"],"life|plant":["Forest","🌲"],"life|water":["Fish","🐟"],"animal|water":["Fish","🐟"],"animal|wind":["Bird","🐦"],"animal|earth":["Mammal","🦊"],"bird|fire":["Phoenix","🦅"],"bird|water":["Duck","🦆"],"fish|wood":["Fishing Rod","🎣"],
+"electricity|metal":["Wire","〰️"],"electricity|glass":["Light Bulb","💡"],"electricity|sand":["Computer Chip","💾"],"computer chip|metal":["Computer","💻"],"computer|human":["Programmer","👩‍💻"],"computer|internet":["Website","🌐"],"computer|electricity":["Internet","🌐"],"internet|human":["Message","💬"],"internet|paper":["Blog","📝"],
+"fire|fire":["Energy","🔋"],"water|water":["Lake","🏞️"],"earth|earth":["Land","🗺️"],"wind|wind":["Breeze","🍃"],"energy|metal":["Engine","⚙️"],"engine|boat":["Ship","🚢"],"energy|human":["Athlete","🏃"],"mountain|water":["River","🏞️"],"river|earth":["Delta","🌀"],"river|river":["Waterfall","💦"],"mountain|mountain":["Mountain Range","🏔️"],"island|ocean":["Archipelago","🏝️"],"moon|ocean":["Tide","🌒"],"sun|water":["Rainbow","🌈"],"sun|plant":["Sunflower","🌻"],"sun|earth":["Desert","🏜️"],"sun|moon":["Eclipse","🌑"],"moon|wind":["Night","🌙"],"night|sky":["Stars","✨"],"stars|sky":["Galaxy","🌌"],"galaxy|human":["Astronaut","🧑‍🚀"],"astronaut|moon":["Space Station","🛰️"],"fire|stone":["Metal","🔩"],"tool|stone":["Axe","🪓"],"axe|tree":["Wood","🪵"],"house|fire":["Chimney","🏠"],"snow|sun":["Water","💧"],"cloud|cold":["Snow","❄️"],"water|cold":["Ice","🧊"],"ice|sun":["Water","💧"],"ice|earth":["Glacier","🧊"],"water|life":["Algae","🪸"],"time|human":["History","📜"],"time|plant":["Tree","🌳"],"sand|water":["Beach","🏖️"],"beach|sun":["Holiday","🏝️"]
+};
+const initial=[["Water","💧"],["Fire","🔥"],["Earth","🌍"],["Wind","🌬️"]];
+let discovered=JSON.parse(localStorage.getItem("elementLabItems")||"null")||initial;
+let selected=[];
+let history=JSON.parse(localStorage.getItem("elementLabHistory")||"[]");
+const norm=s=>s.toLowerCase();
+const key=(a,b)=>[norm(a),norm(b)].sort().join("|");
+const save=()=>{localStorage.setItem("elementLabItems",JSON.stringify(discovered));localStorage.setItem("elementLabHistory",JSON.stringify(history))};
+function render(){
+ const q=norm(document.getElementById("search").value);
+ const inv=document.getElementById("inventory");inv.innerHTML="";
+ discovered.filter(x=>norm(x[0]).includes(q)).sort((a,b)=>a[0].localeCompare(b[0])).forEach(item=>{
+  const b=document.createElement("button");b.className="element"+(selected.includes(item[0])?" selected":"");b.innerHTML='<span class="emoji"></span><span class="ename"></span>';b.querySelector(".emoji").textContent=item[1];b.querySelector(".ename").textContent=item[0];b.onclick=()=>choose(item[0]);inv.appendChild(b);
+ });
+ document.getElementById("count").textContent=discovered.length+" discovered";
+ document.getElementById("log").innerHTML=history.length?history.slice(0,18).map(x=>'<div>✦ <b>'+escapeText(x)+'</b></div>').join(""):"Your discoveries will appear here.";
+ updateSlots();
+}
+function escapeText(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function choose(name){if(selected.includes(name)){selected=selected.filter(x=>x!==name)}else if(selected.length<2){selected.push(name)}else{selected=[name]}updateSlots();renderInventorySelection()}
+function updateSlots(){
+ ["A","B"].forEach((v,i)=>{const el=document.getElementById("slot"+v),name=selected[i],item=discovered.find(x=>x[0]===name);el.innerHTML=name?'<span class="emoji">'+item[1]+'</span><b>'+escapeText(name)+'</b>':(i?"② Second element":"① First element")});
+ document.getElementById("combine").disabled=selected.length!==2;
+}
+function renderInventorySelection(){document.querySelectorAll(".element").forEach(b=>b.classList.toggle("selected",selected.includes(b.querySelector(".ename").textContent)))}
+function combine(){
+ if(selected.length!==2)return;const [a,b]=selected;const found=recipes[key(a,b)];const result=document.getElementById("result");
+ if(!found){result.textContent="No discovery yet. Try a different combination!";return}
+ const [name,emoji]=found;const fresh=!discovered.some(x=>x[0]===name);
+ if(fresh){discovered.push(found);history.unshift(a+" + "+b+" = "+name);save();result.textContent="NEW DISCOVERY! "+emoji+" "+name+" has been added.";render()}
+ else{result.textContent="You made "+emoji+" "+name+" again. Keep experimenting!"}
+ selected=[];updateSlots();renderInventorySelection();
+}
+document.getElementById("combine").onclick=combine;
+document.getElementById("clear").onclick=()=>{selected=[];updateSlots();renderInventorySelection();document.getElementById("result").textContent="Selection cleared."};
+document.getElementById("search").oninput=render;
+document.getElementById("random").onclick=()=>{if(discovered.length<2)return;let a=Math.floor(Math.random()*discovered.length),b=Math.floor(Math.random()*discovered.length);while(a===b)b=Math.floor(Math.random()*discovered.length);selected=[discovered[a][0],discovered[b][0]];updateSlots();renderInventorySelection();combine()};
+document.getElementById("reset").onclick=()=>{if(confirm("Reset all discoveries on this device?")){discovered=initial.slice();history=[];selected=[];save();document.getElementById("result").textContent="A fresh world. Start combining!";render()}};
+render();
+</script></body></html>
