@@ -24,12 +24,12 @@ main{max-width:1200px;margin:auto;padding:20px;display:grid;grid-template-column
 @media(max-width:760px){main{grid-template-columns:1fr;padding:12px}#inventory{max-height:300px;grid-template-columns:repeat(3,minmax(0,1fr))}.workbench{min-height:300px}header{padding:13px}.element{padding:8px 5px;gap:5px}.ename{font-size:11px}}
 </style></head>
 <body>
-<header><div><h1>✦ ELEMENT LAB</h1><div class="sub">A little world made from combinations · Flashcard.com original</div></div><button class="topbtn" id="reset">RESET DISCOVERIES</button></header>
+<header><div><h1>✦ ELEMENT LAB</h1><div class="sub">A growing world of materials · offline inference engine</div></div><button class="topbtn" id="reset">RESET DISCOVERIES</button></header>
 <main>
 <section class="panel"><div class="panelhead"><h2>YOUR ELEMENTS</h2><span class="count" id="count">4 discovered</span></div><div style="padding:0 12px"><input id="search" placeholder="Search your discoveries..." autocomplete="off"></div><div id="inventory"></div></section>
 <div class="right">
 <section class="panel"><div class="panelhead"><h2>COMBINATION WORKBENCH</h2><span class="count">Choose two elements</span></div><div class="workbench">
-<div class="big">⚗️</div><h2>What will you create?</h2><p>Select two elements from your collection, then combine them. Some discoveries can be combined again to unlock even more.</p>
+<div class="big">⚗️</div><h2>What will you create?</h2><p>Select two elements from your collection, then combine them. An offline inference engine uses material families and chemistry-style rules to predict new results.</p>
 <div class="slots"><div class="slot" id="slotA">① First element</div><span style="font-size:20px;color:#91a9c9">+</span><div class="slot" id="slotB">② Second element</div></div>
 <button class="combine" id="combine" disabled>COMBINE</button><div class="result" id="result" aria-live="polite">Pick your first element to begin.</div>
 <div class="tools"><button class="action" id="clear">CLEAR SELECTION</button><button class="action" id="random">SURPRISE ME</button></div>
@@ -74,9 +74,105 @@ function updateSlots(){
  document.getElementById("combine").disabled=selected.length!==2;
 }
 function renderInventorySelection(){document.querySelectorAll(".element").forEach(b=>b.classList.toggle("selected",selected.includes(b.querySelector(".ename").textContent)))}
+
+const materialGroups={
+ elements:"hydrogen helium lithium beryllium boron carbon nitrogen oxygen fluorine neon sodium magnesium aluminium silicon phosphorus sulfur chlorine argon potassium calcium titanium chromium manganese iron cobalt nickel copper zinc bromine silver tin iodine tungsten platinum gold mercury lead uranium",
+ metals:"iron copper tin zinc aluminium aluminum silver gold nickel cobalt titanium chromium tungsten platinum bronze brass steel",
+ rocks:"stone granite basalt marble limestone sandstone quartz obsidian slate clay",
+ minerals:"quartz salt sulfur gypsum calcite mica graphite diamond ruby sapphire emerald",
+ liquids:"water oil alcohol mercury lava acid milk juice ink petrol gasoline",
+ gases:"oxygen hydrogen nitrogen carbon dioxide methane helium steam smoke ozone",
+ plants:"tree flower grass moss algae fern bamboo cactus wheat rice cotton",
+ animals:"human animal fish bird dog cat horse bee butterfly whale shark",
+ foods:"bread cheese chocolate sugar flour rice wheat egg meat fruit vegetable soup",
+ tools:"hammer axe knife needle saw wrench gear engine machine",
+ energy:"fire electricity sunlight heat cold lightning energy radiation",
+ planets:"sun moon earth mars venus jupiter saturn star galaxy",
+ chemicals:"acid alkali ammonia bleach ethanol methane propane glucose cellulose",
+ materials:"plastic rubber paper glass ceramic concrete brick fabric wool silk leather",
+ weather:"cloud rain snow ice storm wind tornado hurricane fog",
+ living:"life bacteria virus fungus mushroom cell"
+};
+const groupOf={};
+for(const [group,words] of Object.entries(materialGroups))for(const word of words.split(" "))groupOf[word]=group;
+const emojiFor={
+ hydrogen:"⚛️",oxygen:"🫧",carbon:"⚫",iron:"🔩",copper:"🟠",tin:"🥫",zinc:"⚙️",sodium:"🧂",chlorine:"🧪",bronze:"🟤",brass:"🟡",steel:"🏗️",rust:"🟠",glass:"🪟",ceramic:"🏺",concrete:"🧱",plastic:"🧴",rubber:"🛞",diamond:"💎",quartz:"💎",salt:"🧂",ammonia:"🧪",methane:"🔥",ozone:"🌫️",alloy:"🔩",solution:"🧪",compound:"⚗️",hybrid:"🧬",steam:"💨",charcoal:"⚫",cement:"🧱",compost:"🌱",ecosystem:"🌳",plasma:"✨",crystal:"🔮",fuel:"⛽",battery:"🔋",medicine:"💊",fertilizer:"🌱",smog:"🌫️",mud:"🟤"
+};
+function typeOf(name){
+ const n=name.toLowerCase();
+ if(groupOf[n])return groupOf[n];
+ if(/steel|bronze|brass|alloy|metal|iron|copper|gold|silver|tin|zinc/.test(n))return "metals";
+ if(/acid|salt|oxide|chloride|sulfate|carbonate|ammonia|methane|chemical|solution|compound/.test(n))return "chemicals";
+ if(/glass|ceramic|concrete|brick|plastic|rubber|paper|fabric|leather/.test(n))return "materials";
+ if(/tree|flower|plant|wood|leaf|grass|algae|moss|seed/.test(n))return "plants";
+ if(/fish|bird|animal|human|bacteria|fungus|mushroom|life|cell/.test(n))return "living";
+ if(/water|oil|milk|juice|lava|mercury|ink|petrol/.test(n))return "liquids";
+ if(/oxygen|hydrogen|nitrogen|gas|steam|smoke|helium|carbon dioxide/.test(n))return "gases";
+ if(/stone|rock|sand|granite|marble|limestone|quartz|crystal|ore/.test(n))return "rocks";
+ if(/fire|energy|electricity|lightning|heat|sunlight|radiation/.test(n))return "energy";
+ if(/cloud|rain|snow|ice|storm|wind|fog/.test(n))return "weather";
+ if(/bread|cheese|chocolate|sugar|flour|rice|meat|fruit|food|soup/.test(n))return "foods";
+ return "other";
+}
+function inferCombination(a,b){
+ const x=a.toLowerCase(),y=b.toLowerCase(),types=[typeOf(a),typeOf(b)];
+ const has=(p,q)=>types.includes(p)&&types.includes(q);
+ const pair=[x,y].sort().join("|");
+ const exact={
+ "carbon|oxygen":["Carbon Dioxide","🌫️"],"hydrogen|oxygen":["Water","💧"],
+ "copper|tin":["Bronze","🟤"],"copper|zinc":["Brass","🟡"],
+ "carbon|iron":["Steel","🏗️"],"chlorine|sodium":["Salt","🧂"],
+ "oxygen|silicon":["Silica","💎"],"hydrogen|nitrogen":["Ammonia","🧪"],
+ "carbon|hydrogen":["Methane","🔥"],"calcium|carbon":["Limestone","🪨"],
+ "iron|oxygen":["Rust","🟠"],"oxygen|sulfur":["Sulfur Dioxide","🌫️"],
+ "carbon|sulfur":["Carbon Disulfide","🧪"],"hydrogen|chlorine":["Hydrochloric Acid","🧪"],
+ "aluminium|oxygen":["Aluminium Oxide","⚪"],"aluminum|oxygen":["Aluminium Oxide","⚪"],
+ "copper|oxygen":["Copper Oxide","🟤"],"iron|carbon":["Steel","🏗️"],
+ "clay|heat":["Ceramic","🏺"],"sand|heat":["Glass","🪟"],
+ "wood|heat":["Charcoal","⚫"],"limestone|heat":["Cement","🧱"],
+ "oil|heat":["Fuel","⛽"],"water|electricity":["Hydrogen","⚛️"],
+ "water|cold":["Ice","🧊"],"water|heat":["Steam","💨"],
+ "plant|water":["Algae","🪸"],"plant|earth":["Tree","🌳"],
+ "animal|plant":["Ecosystem","🌳"],"bacteria|water":["Culture","🧫"],
+ "fungus|wood":["Mushroom","🍄"],"sand|water":["Mud","🟤"],
+ "salt|water":["Brine","🧂"],"sugar|water":["Syrup","🍯"],
+ "flour|water":["Dough","🥖"],"dough|heat":["Bread","🍞"],
+ "milk|bacteria":["Yogurt","🥣"],"fruit|sugar":["Jam","🍓"],
+ "copper|electricity":["Wire","〰️"],"metal|electricity":["Electromagnet","🧲"],
+ "silicon|electricity":["Computer Chip","💾"],"glass|metal":["Mirror","🪞"],
+ "rubber|carbon":["Tyre","🛞"],"sand|pressure":["Quartzite","💎"]
+ };
+ if(exact[pair])return exact[pair];
+ if(has("metals","metals"))return ["Alloy","🔩"];
+ if(has("metals","gases"))return ["Metal Oxide","⚗️"];
+ if(has("metals","rocks")||has("metals","minerals"))return ["Mineral Ore","⛏️"];
+ if(has("liquids","liquids"))return ["Mixture","🧪"];
+ if(has("liquids","gases"))return ["Aerosol","🌫️"];
+ if(has("plants","liquids"))return ["Plant Extract","🧪"];
+ if(has("plants","plants"))return ["Hybrid Plant","🌱"];
+ if(has("living","plants")||has("living","living"))return ["Living Ecosystem","🌿"];
+ if(has("foods","foods"))return ["Food Mixture","🥘"];
+ if(has("foods","heat")||has("foods","energy"))return ["Cooked "+a,"🍲"];
+ if(has("materials","materials"))return ["Composite Material","🧱"];
+ if(has("materials","energy"))return ["Melted "+a,"🔥"];
+ if(has("rocks","energy"))return ["Magma","🌋"];
+ if(has("gases","energy"))return ["Plasma","✨"];
+ if(has("chemicals","liquids"))return ["Chemical Solution","⚗️"];
+ if(has("chemicals","metals"))return ["Chemical Compound","🧪"];
+ if(has("weather","liquids"))return ["Precipitation","🌧️"];
+ if(has("weather","energy"))return ["Storm","⛈️"];
+ if(has("planets","energy")||has("planets","rocks"))return ["Space Dust","🌌"];
+ if(has("tools","metals"))return ["Machine Part","⚙️"];
+ if(has("tools","materials"))return ["Crafted Tool","🛠️"];
+ if(has("energy","energy"))return ["Energy Field","✨"];
+ const groupA=types[0],groupB=types[1];
+ if(groupA===groupB&&groupA!=="other")return ["New "+groupA.slice(0,-1)+" Blend","🧬"];
+ return ["Unknown Compound","⚗️"];
+}
+
 function combine(){
- if(selected.length!==2)return;const [a,b]=selected;const found=recipes[key(a,b)];const result=document.getElementById("result");
- if(!found){result.textContent="No discovery yet. Try a different combination!";return}
+ if(selected.length!==2)return;const [a,b]=selected;const found=recipes[key(a,b)]||inferCombination(a,b);const result=document.getElementById("result");
+ if(!found){result.textContent="The lab has no clear result for that pair yet.";return}
  const [name,emoji]=found;const fresh=!discovered.some(x=>x[0]===name);
  if(fresh){discovered.push(found);history.unshift(a+" + "+b+" = "+name);save();result.textContent="NEW DISCOVERY! "+emoji+" "+name+" has been added.";render()}
  else{result.textContent="You made "+emoji+" "+name+" again. Keep experimenting!"}
