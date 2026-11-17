@@ -100,7 +100,15 @@ const emojiFor={
 };
 function typeOf(name){
  const n=name.toLowerCase();
- if(groupOf[n])return groupOf[n];
+ if("iron copper tin zinc aluminium aluminum silver gold nickel cobalt titanium chromium tungsten platinum bronze brass steel".split(" ").includes(n))return "metals";
+ if("hydrogen helium nitrogen oxygen fluorine neon chlorine argon bromine".split(" ").includes(n))return "gases";
+ if(n==="carbon"||n==="silicon"||n==="phosphorus"||n==="sulfur"||n==="boron")return "minerals";
+ if(n==="earth"||n==="stone"||n==="mountain")return "rocks";
+ if(n==="fire"||n==="lightning"||n==="energy")return "energy";
+ if(n==="wind"||n==="cloud"||n==="rain"||n==="snow"||n==="ice")return "weather";
+ if(n==="water"||n==="lava"||n==="mud"||n==="oil")return "liquids";
+ if(n==="tool"||n==="axe"||n==="hammer")return "tools";
+ if(groupOf[n]&&groupOf[n]!=="elements")return groupOf[n];
  if(/steel|bronze|brass|alloy|metal|iron|copper|gold|silver|tin|zinc/.test(n))return "metals";
  if(/acid|salt|oxide|chloride|sulfate|carbonate|ammonia|methane|chemical|solution|compound/.test(n))return "chemicals";
  if(/glass|ceramic|concrete|brick|plastic|rubber|paper|fabric|leather/.test(n))return "materials";
