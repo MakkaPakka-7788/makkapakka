@@ -483,8 +483,11 @@ html.game-gate-only body > .container { display: none !important; }
 
 <script>
 function openFlashcards() {
-    window.location.href =
-        "https://makkapakka-7788.github.io/makkapakka/flashcard.html";
+    if (window.parent !== window) {
+        window.parent.postMessage({ type: "FLASHOS_OPEN_APP", app: "webflash" }, "*");
+        return;
+    }
+    window.location.href = "./flashos/";
 }
 
 let uCount = 0;
@@ -502,8 +505,7 @@ document.addEventListener("keydown", function(e) {
 
     if (uCount === 3) {
         uCount = 0;
-        window.location.href =
-            "https://makkapakka-7788.github.io/makkapakka/flashcard.html";
+        openFlashcards();
     }
 });
 </script>
@@ -593,7 +595,7 @@ try {
 </script>
 
 
-<script>let flashosShortcut="",flashosShortcutTime=0;document.addEventListener("keydown",e=>{if(e.ctrlKey||e.altKey||e.metaKey||e.key.length!==1)return;const now=Date.now();if(now-flashosShortcutTime>1800)flashosShortcut="";flashosShortcutTime=now;flashosShortcut=(flashosShortcut+e.key.toLowerCase()).slice(-3);if(flashosShortcut==="rrr"){flashosShortcut="";window.location.href="./flashos/";}});</script>
+<script>let flashosShortcut="",flashosShortcutTime=0;document.addEventListener("keydown",e=>{if(e.ctrlKey||e.altKey||e.metaKey||e.key.length!==1)return;const now=Date.now();if(now-flashosShortcutTime>1800)flashosShortcut="";flashosShortcutTime=now;flashosShortcut=(flashosShortcut+e.key.toLowerCase()).slice(-3);if(flashosShortcut==="rrr"){flashosShortcut="";if(window.parent!==window)window.parent.postMessage({type:"FLASHOS_HOME"},"*");else window.location.href="./flashos/";}});</script>
 <script>
 (() => {
   const saltText = "W/H5mgsBMVWjZUNxj20l8g==";
