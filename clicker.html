@@ -4,48 +4,40 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090d15">
 <title>Star Clicker</title>
 <style>
-:root{color-scheme:dark;--bg:#080c13;--panel:#101722;--line:#263446;--text:#e9f2ff;--muted:#8fa3ba;--blue:#7bcfff;--gold:#ffd58a;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}body{min-height:100dvh;background:radial-gradient(ellipse at 29% 44%,#13233a 0,transparent 47%),radial-gradient(ellipse at 73% 5%,#132132 0,transparent 40%),#080c13}
-button{font:inherit;color:inherit;cursor:pointer}.app{min-height:100dvh;padding:15px 18px 18px;max-width:1800px;margin:auto;display:flex;flex-direction:column;gap:12px}
-.topbar{height:38px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-size:13px;font-weight:850;letter-spacing:.18em;color:#cfeaff}.brand b{color:var(--blue)}.save{font-size:11px;color:var(--muted)}
-.layout{flex:1;min-height:520px;display:grid;grid-template-columns:minmax(0,1fr) minmax(315px,370px);gap:12px}
-.panel{background:linear-gradient(150deg,#101722f2,#0d131df5);border:1px solid #28384b;border-radius:18px;box-shadow:0 18px 50px #0005;min-width:0}
-.space-panel{display:flex;flex-direction:column;overflow:hidden;position:relative}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#263446;border-bottom:1px solid #263446}
-.stat{background:#101722;padding:12px 16px;text-align:center}.stat strong{display:block;font-size:clamp(18px,2.7vw,27px);font-variant-numeric:tabular-nums;letter-spacing:-.035em}.stat span{display:block;margin-top:3px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.15em}
-.space-title{position:absolute;z-index:2;top:83px;left:20px;pointer-events:none}.space-title strong{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#c5d6e8}.space-title span{display:block;font-size:10px;color:#7890aa;margin-top:4px}
-.universe{position:relative;isolation:isolate;flex:1;min-height:300px;overflow:hidden;background:radial-gradient(ellipse at 50% 50%,#0d1a29 0,#0a111b 55%,#090e16 100%)}
+:root{color-scheme:dark;--bg:#080c13;--panel:#101722;--line:#263446;--text:#e9f2ff;--muted:#8fa3ba;--accent:#bc86ff;--gold:#ffd58a;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}body{min-height:100dvh;background:radial-gradient(ellipse at 30% 45%,#17223b 0,transparent 47%),radial-gradient(ellipse at 75% 5%,#132132 0,transparent 40%),#080c13}
+button{font:inherit;color:inherit;cursor:pointer}.app{min-height:100dvh;padding:14px 18px 18px;max-width:1800px;margin:auto;display:flex;flex-direction:column;gap:12px}
+.topbar{height:36px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-size:13px;font-weight:850;letter-spacing:.18em;color:#d9c8ff}.brand b{color:var(--accent)}.save{font-size:11px;color:var(--muted)}
+.layout{flex:1;min-height:520px;display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,390px);gap:12px}.panel{background:linear-gradient(150deg,#101722f2,#0d131df5);border:1px solid #28384b;border-radius:18px;box-shadow:0 18px 50px #0005;min-width:0}
+.space-panel{display:flex;flex-direction:column;overflow:hidden;position:relative}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#263446;border-bottom:1px solid #263446}.stat{background:#101722;padding:12px 16px;text-align:center}.stat strong{display:block;font-size:clamp(18px,2.7vw,27px);font-variant-numeric:tabular-nums;letter-spacing:-.035em}.stat span{display:block;margin-top:3px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.15em}
+.space-title{position:absolute;z-index:2;top:82px;left:20px;pointer-events:none}.space-title strong{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#c5d6e8}.space-title span{display:block;font-size:10px;color:#7890aa;margin-top:4px}
+.universe{position:relative;isolation:isolate;flex:1;min-height:300px;overflow:hidden;background:radial-gradient(ellipse at 50% 50%,#101c2d 0,#0a111b 57%,#090e16 100%)}
 .universe:before{content:"";position:absolute;inset:0;opacity:.55;background-image:radial-gradient(1px 1px at 13% 20%,#e8f5ff 99%,transparent),radial-gradient(1px 1px at 78% 15%,#cceaff 99%,transparent),radial-gradient(1px 1px at 28% 79%,#fff 99%,transparent),radial-gradient(1.5px 1.5px at 88% 63%,#d9edff 99%,transparent),radial-gradient(1px 1px at 57% 24%,#fff 99%,transparent),radial-gradient(1px 1px at 67% 83%,#bbdcff 99%,transparent),radial-gradient(1px 1px at 9% 56%,#fff 99%,transparent),radial-gradient(1px 1px at 43% 90%,#fff 99%,transparent),radial-gradient(1px 1px at 94% 37%,#fff 99%,transparent)}
-.universe:after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 38%,#05080d99 100%)}
-.galaxy{position:absolute;inset:0;transform:scale(var(--zoom,.50));transition:transform .3s ease;transform-origin:center center;filter:hue-rotate(calc(var(--tier-hue,0) * 1deg))}
-.machine-zone{position:absolute;left:50%;top:50%;border:1px solid #a7d5ff28;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
-.machine-zone:after{content:"";position:absolute;inset:3px;border:1px dashed #cce7ff12;border-radius:50%}
-.machine-orbit{position:absolute;left:50%;top:50%;border:1px solid #a7d5ff50;border-radius:50%;transform:translate(-50%,-50%);animation:orbit linear infinite;pointer-events:none;box-shadow:0 0 12px #83c6ff0b}
-.machine-token{position:absolute;width:36px;height:36px;display:grid;place-items:center;transform:translate(-50%,-50%);filter:drop-shadow(0 2px 5px #000);font-size:var(--machine-size,25px);line-height:1;white-space:nowrap;pointer-events:auto}
-.machine-token:before{content:"";position:absolute;inset:0;border-radius:50%;background:#101a28c9;border:1px solid #a8d9ff4d;box-shadow:0 0 9px #91cfff20;z-index:-1}
-.machine-token small{position:absolute;left:67%;top:-7px;font:700 8px/13px system-ui;color:#101722;background:#e0f1ff;border-radius:8px;padding:0 4px}
-@keyframes orbit{to{transform:translate(-50%,-50%) rotate(360deg)}}
-.star-button{position:absolute;z-index:3;left:50%;top:50%;width:clamp(138px,17vw,198px);aspect-ratio:1;padding:0;transform:translate(-50%,-50%);border:0;border-radius:50%;background:transparent;filter:drop-shadow(0 0 15px #e59b5340);touch-action:manipulation}
-.star-button:focus-visible{outline:2px solid var(--blue);outline-offset:9px}.star-button:active .star-surface{transform:scale(.975)}
+.galaxy{position:absolute;inset:0;transform:scale(var(--zoom,.58));transition:transform .3s ease;transform-origin:center center}
+.machine-orbit{position:absolute;left:50%;top:50%;width:var(--orbit-size,300px);height:var(--orbit-size,300px);border:1px solid color-mix(in srgb,var(--machine-color) 64%,transparent);border-radius:50%;transform:translate(-50%,-50%);animation:orbit 68s linear infinite;box-shadow:0 0 16px color-mix(in srgb,var(--machine-color) 12%,transparent)}
+.machine-orbit:after{content:"";position:absolute;inset:4px;border:1px dashed color-mix(in srgb,var(--machine-color) 14%,transparent);border-radius:50%}
+.machine-token{position:absolute;left:50%;top:0;width:clamp(50px,7vw,78px);height:clamp(50px,7vw,78px);display:grid;place-items:center;transform:translate(-50%,-50%);border:1px solid color-mix(in srgb,var(--machine-color) 75%,white 5%);border-radius:50%;background:radial-gradient(circle at 32% 28%,#28394d,#101721 68%);box-shadow:0 0 18px color-mix(in srgb,var(--machine-color) 42%,transparent),inset 0 0 12px #ffffff0b;font-size:var(--machine-size,48px);filter:drop-shadow(0 3px 6px #000);animation:machineBob 4s ease-in-out infinite alternate}
+@keyframes orbit{to{transform:translate(-50%,-50%) rotate(360deg)}}@keyframes machineBob{to{margin-top:3px}}
+.star-button{position:absolute;z-index:3;left:50%;top:50%;width:clamp(126px,15vw,180px);aspect-ratio:1;padding:0;transform:translate(-50%,-50%);border:0;border-radius:50%;background:transparent;filter:drop-shadow(0 0 17px #e59b5350);touch-action:manipulation;cursor:pointer;pointer-events:auto}
+.star-button:focus-visible{outline:2px solid var(--accent);outline-offset:8px}.star-button:active .star-surface{transform:scale(.965)}
 .star-surface{position:absolute;inset:5%;overflow:hidden;border-radius:50%;background:radial-gradient(ellipse at 32% 25%,#fff8d5 0,#ffd788 9%,#f5a344 24%,#c95426 46%,#692c25 74%,#251824 100%);box-shadow:inset -19px -20px 31px #170f21bd,inset 7px 7px 21px #fff5b554,0 0 35px #ed924766;transition:transform .12s}
 .star-surface:before{content:"";position:absolute;inset:-12%;border-radius:45%;opacity:.62;background:radial-gradient(ellipse at 28% 35%,transparent 0 8%,#ffe7a45e 9% 11%,transparent 13%),radial-gradient(ellipse at 67% 60%,transparent 0 12%,#a9442f78 13% 16%,transparent 19%),radial-gradient(ellipse at 45% 75%,#ffd27177 0 4%,transparent 18%),radial-gradient(ellipse at 72% 23%,#ffda9670 0 5%,transparent 14%);mix-blend-mode:screen}
 .star-surface:after{content:"";position:absolute;inset:0;border-radius:50%;background:linear-gradient(145deg,#fff8 0%,transparent 24% 64%,#090b1bba 100%),radial-gradient(ellipse at 22% 18%,#fff9,transparent 30%);mix-blend-mode:soft-light}
-.star-corona{position:absolute;left:50%;top:50%;width:clamp(148px,18vw,210px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;border:1px solid #ffc77b66;box-shadow:0 0 22px #ffb55223,inset 0 0 17px #ffae4020;pointer-events:none;z-index:2}
-.click-hand{position:absolute;z-index:4;left:calc(50% + 50px);top:calc(50% + 31px);font-size:clamp(31px,3.5vw,43px);opacity:0;filter:drop-shadow(0 4px 6px #000b);transform:rotate(-27deg) translate(12px,10px);pointer-events:none}
-.has-gloves .click-hand{opacity:.96;animation:handIdle 2.7s ease-in-out infinite}.has-gloves .hand-two{left:calc(50% - 75px);top:calc(50% - 50px);font-size:28px;animation-delay:.2s}
-.is-clicking .click-hand{animation:handTap .22s ease-out 1}.is-clicking .hand-two{animation:handTap .22s ease-out 1 .04s}
-@keyframes handIdle{50%{translate:-4px -4px}}@keyframes handTap{0%{translate:0 0;scale:1}55%{translate:-24px -18px;scale:.9}100%{translate:0 0;scale:1}}
 .float{position:absolute;z-index:6;pointer-events:none;color:#ffe0a1;font-weight:900;text-shadow:0 2px 8px #000;animation:float .8s ease-out forwards}@keyframes float{to{transform:translateY(-55px);opacity:0}}
-.zoombar{display:flex;align-items:center;gap:9px;padding:10px 14px;border-top:1px solid #263446;background:#0d141e}.zoombar label{font-size:10px;color:var(--muted);white-space:nowrap}.zoombar input{width:min(230px,32vw);accent-color:#8bcfff}.zoombar .zoom-value{width:34px;color:#cfeaff;font-size:10px}.zoombar .zoom-help{margin-left:auto;color:#687e96;font-size:10px}
-.shop{display:flex;flex-direction:column;overflow:hidden}.shop-head{flex:0 0 auto;padding:14px 14px 11px;border-bottom:1px solid #263446;background:#111a26}.shop-title-row{display:flex;justify-content:space-between;align-items:center;gap:8px}.shop h1{margin:0;font-size:16px;letter-spacing:-.02em}.tier-badge{display:inline-block;vertical-align:middle;margin-left:5px;border:1px solid #6baed7;border-radius:20px;padding:3px 7px;color:#b5e2ff;font-size:9px;letter-spacing:.08em;text-transform:uppercase}.shop-caption{margin-top:5px;font-size:10px;color:var(--muted);line-height:1.4}
-.buy-modes{display:flex;gap:4px}.buy-modes button{border:1px solid #30445a;background:#0d141e;color:#91a5bb;border-radius:7px;padding:5px 7px;font-size:9px}.buy-modes button.active{color:#07111a;background:var(--blue);border-color:var(--blue);font-weight:850}
-.upgrades{overflow:auto;overscroll-behavior:contain;padding:8px;scrollbar-color:#40566c #101722;scrollbar-width:thin}
-.upgrade{width:100%;display:flex;align-items:center;gap:9px;text-align:left;margin-bottom:6px;padding:9px;border:1px solid #27384c;border-radius:11px;background:linear-gradient(120deg,#141e2a,#101722);transition:border-color .12s,background .12s}.upgrade:hover:not(:disabled){border-color:#578ab3;background:#182739}.upgrade:disabled{opacity:.43;cursor:not-allowed}.upgrade .icon{font-size:25px;width:34px;text-align:center;filter:drop-shadow(0 2px 3px #000)}.upgrade .details{flex:1;min-width:0}.upgrade strong{display:block;font-size:11px}.upgrade small{display:block;color:var(--muted);margin-top:3px;font-size:9px;line-height:1.3}.upgrade .price{color:var(--gold);font-size:10px;font-weight:800;white-space:nowrap;text-align:right}
+.zoombar{display:flex;align-items:center;gap:9px;padding:10px 14px;border-top:1px solid #263446;background:#0d141e}.zoombar label{font-size:10px;color:var(--muted);white-space:nowrap}.zoombar input{width:min(230px,32vw);accent-color:var(--accent)}.zoom-value{width:36px;color:#cfeaff;font-size:10px}.zoom-help{margin-left:auto;color:#687e96;font-size:10px}
+.shop{display:flex;flex-direction:column;overflow:hidden}.shop-head{flex:0 0 auto;padding:14px 14px 12px;border-bottom:1px solid #263446;background:#111a26}.tierline{display:flex;align-items:center;justify-content:space-between;gap:8px}.shop h1{margin:0;font-size:16px;letter-spacing:-.02em}.tier-badge{display:inline-block;border:1px solid var(--accent);border-radius:20px;padding:4px 8px;color:var(--accent);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.shop-caption{margin-top:6px;font-size:10px;color:var(--muted);line-height:1.4}
+.current-machine{flex:0 0 auto;margin:10px 10px 7px;padding:13px;border:1px solid color-mix(in srgb,var(--accent) 55%,#263446);border-radius:13px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 11%,#111a26),#101722)}
+.current-top{display:flex;align-items:center;gap:11px}.current-icon{width:56px;height:56px;flex:0 0 auto;display:grid;place-items:center;border-radius:12px;background:#080f19;border:1px solid color-mix(in srgb,var(--accent) 40%,#263446);font-size:38px;filter:drop-shadow(0 0 9px color-mix(in srgb,var(--accent) 45%,transparent))}
+.current-meta{min-width:0;flex:1}.current-meta strong{display:block;font-size:13px;line-height:1.3}.current-meta span{display:block;margin-top:4px;color:var(--muted);font-size:10px}
+.progress-row{display:flex;justify-content:space-between;gap:8px;margin:12px 0 5px;color:#a8bad0;font-size:9px}.progress-track{height:6px;overflow:hidden;border-radius:8px;background:#080d14;border:1px solid #263446}.progress-fill{height:100%;width:0;background:var(--accent);box-shadow:0 0 10px var(--accent);transition:width .2s}
+.buy-button{width:100%;margin-top:11px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--accent) 60%,#263446);border-radius:9px;background:var(--accent);color:#10101a;font-size:11px;font-weight:900;transition:filter .15s,transform .15s}.buy-button:hover:not(:disabled){filter:brightness(1.12);transform:translateY(-1px)}.buy-button:disabled{cursor:not-allowed;opacity:.42}
+.roadmap-title{flex:0 0 auto;padding:9px 14px 7px;color:#c4d3e2;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-top:1px solid #263446}.roadmap{overflow:auto;overscroll-behavior:contain;padding:0 9px 9px;scrollbar-color:#40566c #101722;scrollbar-width:thin}
+.form-row{display:flex;align-items:center;gap:9px;padding:7px 8px;margin-bottom:4px;border:1px solid transparent;border-radius:9px;color:#879bb1}.form-row.active{border-color:color-mix(in srgb,var(--accent) 55%,#263446);background:color-mix(in srgb,var(--accent) 10%,#101722);color:#eaf4ff}.form-row.done{color:#70859c}.form-row .form-icon{font-size:20px;width:27px;text-align:center}.form-row .form-name{flex:1;min-width:0;font-size:10px}.form-row .form-state{font-size:9px;color:#71869e}.form-row.active .form-state{color:var(--accent);font-weight:800}
 .shop-foot{flex:0 0 auto;padding:8px 11px;border-top:1px solid #263446;display:flex;justify-content:space-between;align-items:center;gap:8px;color:#71869e;font-size:9px}.reset{border:1px solid #304155;border-radius:7px;background:transparent;color:#9db1c7;padding:5px 8px;font-size:9px}
-.toast{position:fixed;z-index:20;left:50%;top:18px;transform:translateX(-50%);max-width:calc(100vw - 24px);padding:12px 16px;text-align:center;color:#f0f8ff;background:#142436;border:1px solid #83cfff;border-radius:12px;box-shadow:0 12px 35px #0009;font-size:13px;font-weight:800;animation:toastIn .25s ease-out}@keyframes toastIn{from{opacity:0;translate:0 -8px}to{opacity:1;translate:0 0}}
-@media(min-width:761px){.layout{height:calc(100dvh - 80px);max-height:1200px}.space-panel{min-height:0}.universe{min-height:0}}
-@media(max-width:760px){.app{padding:11px 10px}.layout{display:flex;flex-direction:column;min-height:0}.space-panel{min-height:61vh}.universe{min-height:0;flex:1}.shop{height:min(68vh,600px);min-height:360px}.space-title{top:74px;left:14px}.star-button{width:clamp(138px,34vw,180px)}.star-corona{width:clamp(148px,36vw,190px)}.zoombar .zoom-help{display:none}}
-@media(max-width:410px){.shop-title-row{align-items:flex-start;flex-direction:column}.stats .stat{padding:10px 5px}.stats .stat span{font-size:8px}}
+.toast{position:fixed;z-index:20;left:50%;top:18px;transform:translateX(-50%);max-width:calc(100vw - 24px);padding:12px 16px;text-align:center;color:#f0f8ff;background:#142436;border:1px solid var(--accent);border-radius:12px;box-shadow:0 12px 35px #0009;font-size:13px;font-weight:800;animation:toastIn .25s ease-out}@keyframes toastIn{from{opacity:0;translate:0 -8px}to{opacity:1;translate:0 0}}
+@media(min-width:761px){.layout{height:calc(100dvh - 78px);max-height:1200px}.space-panel{min-height:0}.universe{min-height:0}}
+@media(max-width:760px){.app{padding:10px}.layout{display:flex;flex-direction:column;min-height:0}.space-panel{min-height:59vh}.universe{min-height:0;flex:1}.shop{height:min(78vh,680px);min-height:420px}.space-title{top:72px;left:14px}.star-button{width:clamp(126px,34vw,160px)}.zoom-help{display:none}}
+@media(max-width:410px){.stats .stat{padding:9px 4px}.stats .stat span{font-size:8px}.current-machine{margin:8px;padding:10px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -53,82 +45,159 @@ button{font:inherit;color:inherit;cursor:pointer}.app{min-height:100dvh;padding:
 <main class="app">
 <header class="topbar"><div class="brand">✦ STAR <b>CLICKER</b></div><div id="saveStatus" class="save" aria-live="polite">Saved on this device</div></header>
 <div class="layout">
-<section class="panel space-panel" id="spacePanel" aria-label="Your solar system">
-<div class="stats"><div class="stat"><strong id="score">0</strong><span>Stardust</span></div><div class="stat"><strong id="perClick">1</strong><span>Per tap</span></div><div class="stat"><strong id="perSecond">0</strong><span>Per second</span></div></div>
-<div class="space-title"><strong>Your star system</strong><span id="machineCount">A quiet little corner of space</span></div>
-<div class="universe" id="universe"><div class="galaxy" id="galaxy"><div id="orbits"></div><div class="star-corona"></div><button id="star" class="star-button" aria-label="Collect stardust from the star"><span class="star-surface"></span></button><span class="click-hand hand-one" aria-hidden="true">🧤</span><span class="click-hand hand-two" aria-hidden="true">🖐️</span></div></div>
-<div class="zoombar"><label for="zoom">GALAXY ZOOM</label><input id="zoom" type="range" min="25" max="100" value="42"><span class="zoom-value" id="zoomValue">42%</span><span class="zoom-help">Zoom out to see more rings</span></div>
+<section class="panel space-panel" id="spacePanel" aria-label="Your star system">
+<div class="stats"><div class="stat"><strong id="score">0</strong><span>Stardust</span></div><div class="stat"><strong id="perClick">1</strong><span>Per tap</span></div><div class="stat"><strong id="perSecond">1</strong><span>Per second</span></div></div>
+<div class="space-title"><strong>Your evolving starship</strong><span id="spaceCaption">A tiny telescope starts the journey</span></div>
+<div class="universe" id="universe"><div class="galaxy" id="galaxy"><div class="machine-orbit" id="machineOrbit"><div class="machine-token" id="machineToken" aria-hidden="true">🔭</div></div><button id="star" class="star-button" aria-label="Collect stardust from the star"><span class="star-surface"></span></button></div></div>
+<div class="zoombar"><label for="zoom">GALAXY ZOOM</label><input id="zoom" type="range" min="22" max="100" value="58"><span class="zoom-value" id="zoomValue">58%</span><span class="zoom-help">Zoom out to see the full orbit</span></div>
 </section>
-<aside class="panel shop" aria-label="Upgrade shop">
-<div class="shop-head"><div class="shop-title-row"><div><h1>Upgrade shop <span id="tierBadge" class="tier-badge">Tier 1</span></h1><div class="shop-caption">Each machine has its own 8-slot orbit. Fill one and buy again to rebirth.</div></div><div class="buy-modes" aria-label="Purchase amount"><button class="active" data-mode="1">×1</button><button data-mode="10">×10</button><button data-mode="max">MAX</button></div></div></div>
-<section class="upgrades" id="upgrades" aria-label="Available upgrades"></section>
-<footer class="shop-foot"><span id="tierPower">Tier 1 · Base machine value</span><button class="reset" id="reset">Reset game</button></footer>
+<aside class="panel shop" aria-label="Machine upgrade panel">
+<div class="shop-head"><div class="tierline"><h1>Machine evolution</h1><span id="tierBadge" class="tier-badge">Tier 1 · Purple</span></div><div class="shop-caption">One machine mutates through 30 space forms. Each new tier is worth 8× the last.</div></div>
+<section class="current-machine">
+<div class="current-top"><div class="current-icon" id="currentIcon">🔭</div><div class="current-meta"><strong id="currentName">Pocket telescope</strong><span id="currentPower">Makes 1 stardust per tap and each second</span></div></div>
+<div class="progress-row"><span id="progressLabel">Build ring · 0 / 8</span><span id="nextForm">Next: Long-focus telescope</span></div>
+<div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+<button id="buyButton" class="buy-button">Build next piece · 15</button>
+</section>
+<div class="roadmap-title">30 machine forms <span id="rebirthLabel"></span></div>
+<section id="roadmap" class="roadmap" aria-label="Machine evolution roadmap"></section>
+<footer class="shop-foot"><span id="tierPower">Tier 1 · ×1 output</span><button class="reset" id="reset">Reset game</button></footer>
 </aside>
 </div>
 </main>
 <script>
-const RING_SLOTS=8;
-const upgrades=[
-{id:"gloves",icon:"🧤",name:"Astro gloves",kind:"click",amount:1,base:15,growth:1.16},
-{id:"drone",icon:"🛰️",name:"Star drone",kind:"idle",amount:1,base:35,growth:1.17},
-{id:"telescope",icon:"🔭",name:"Deep-space telescope",kind:"click",amount:10,base:160,growth:1.18},
-{id:"rover",icon:"🌙",name:"Moon rover",kind:"idle",amount:5,base:260,growth:1.19},
-{id:"nebula",icon:"☁️",name:"Nebula gloves",kind:"click",amount:100,base:1200,growth:1.20},
-{id:"station",icon:"🚀",name:"Orbit station",kind:"idle",amount:25,base:1800,growth:1.20},
-{id:"quantum",icon:"⚛️",name:"Quantum tapper",kind:"click",amount:1000,base:9500,growth:1.21},
-{id:"comet",icon:"☄️",name:"Comet miners",kind:"idle",amount:125,base:13000,growth:1.21},
-{id:"galaxy",icon:"🌌",name:"Galaxy pulse",kind:"click",amount:10000,base:80000,growth:1.22},
-{id:"cruiser",icon:"🛸",name:"Mining cruiser",kind:"idle",amount:625,base:95000,growth:1.22},
-{id:"starforge",icon:"🔥",name:"Star forge",kind:"click",amount:100000,base:700000,growth:1.23},
-{id:"dyson",icon:"☀️",name:"Dyson swarm",kind:"idle",amount:3125,base:850000,growth:1.23},
-{id:"pulsar",icon:"💫",name:"Pulsar punch",kind:"click",amount:1000000,base:6500000,growth:1.24},
-{id:"wormhole",icon:"🌀",name:"Wormhole harvest",kind:"idle",amount:15625,base:8000000,growth:1.24},
-{id:"supernova",icon:"🌟",name:"Supernova switch",kind:"click",amount:10000000,base:65000000,growth:1.25},
-{id:"ringworld",icon:"🪐",name:"Ringworld farms",kind:"idle",amount:78125,base:80000000,growth:1.25},
-{id:"universe",icon:"🌠",name:"Universe shaker",kind:"click",amount:100000000,base:700000000,growth:1.26},
-{id:"multiverse",icon:"♾️",name:"Multiverse engines",kind:"idle",amount:390625,base:900000000,growth:1.26},
-{id:"time",icon:"⏳",name:"Time tapper",kind:"click",amount:1000000000,base:8500000000,growth:1.27},
-{id:"ancient",icon:"🗿",name:"Ancient star miners",kind:"idle",amount:1953125,base:11000000000,growth:1.27},
-{id:"infinity",icon:"🔮",name:"Infinity gloves",kind:"click",amount:10000000000,base:120000000000,growth:1.28},
-{id:"celestial",icon:"👑",name:"Celestial collectors",kind:"idle",amount:9765625,base:160000000000,growth:1.28},
-{id:"cosmic",icon:"🧿",name:"Cosmic fingertip",kind:"click",amount:100000000000,base:1800000000000,growth:1.29},
-{id:"bigbang",icon:"💥",name:"Big Bang factory",kind:"idle",amount:48828125,base:2500000000000,growth:1.29}
+"use strict";
+const RING_SLOTS=8,STAGES_PER_REBIRTH=90;
+const forms=[
+{name:"Pocket telescope",icon:"🔭",size:34},
+{name:"Long-focus telescope",icon:"🔭",size:38},
+{name:"Twin-dish telescope",icon:"📡",size:42},
+{name:"Orbital telescope",icon:"🛰️",size:46},
+{name:"Lunar observatory",icon:"🌙",size:50},
+{name:"Solar observatory",icon:"☀️",size:54},
+{name:"Deep-space array",icon:"📡",size:58},
+{name:"Planet scanner",icon:"🪐",size:60},
+{name:"Star mapper",icon:"🌌",size:62},
+{name:"Comet harvester",icon:"☄️",size:64},
+{name:"Asteroid miner",icon:"🚀",size:66},
+{name:"Nebula station",icon:"🛰️",size:68},
+{name:"Solar-sail cruiser",icon:"🛸",size:70},
+{name:"Pulsar observatory",icon:"💫",size:72},
+{name:"Dyson collector",icon:"☀️",size:74},
+{name:"Wormhole probe",icon:"🌀",size:76},
+{name:"Quantum relay",icon:"⚛️",size:78},
+{name:"Moon foundry",icon:"🌙",size:80},
+{name:"Ringworld engine",icon:"🪐",size:82},
+{name:"Galaxy carrier",icon:"🚀",size:84},
+{name:"Starforge vessel",icon:"🔥",size:86},
+{name:"Dark-matter ship",icon:"🌑",size:88},
+{name:"Time skimmer",icon:"⏳",size:90},
+{name:"Nebula ark",icon:"🌌",size:92},
+{name:"Quasar engine",icon:"💥",size:94},
+{name:"Cosmic gateway",icon:"🌀",size:96},
+{name:"Galaxy constructor",icon:"🏗️",size:98},
+{name:"Universe explorer",icon:"🌠",size:100},
+{name:"Intergalactic cruiser",icon:"🛸",size:104},
+{name:"Intergalactic flagship",icon:"🚀",size:110}
 ];
-let state={dust:0,owned:{},tier:1};try{const saved=JSON.parse(localStorage.getItem("starClicker.save")||"{}");state={...state,...saved,owned:{...state.owned,...(saved.owned||{})};state.tier=Math.max(1,Number(state.tier)||1)}catch{}
-let buyMode="1",zoom=42,toastTimer;
+const palettes=[
+{name:"Violet",colors:["#bc86ff","#ffdf63","#ff9b55"]},
+{name:"Aurora",colors:["#65a9ff","#7dffd2","#ff78b8"]},
+{name:"Cosmic",colors:["#6de7ff","#c1ff62","#ff555e"]},
+{name:"Nebula",colors:["#fa75ff","#ffe06f","#62f1c0"]},
+{name:"Stellar",colors:["#e8c3ff","#a4f6ff","#ffb1d4"]},
+{name:"Solar",colors:["#a8e4ff","#d1ff7c","#ff784b"]}
+];
+let state={dust:0n,stage:0,progress:0,rebirths:0},zoom=58,toastTimer;
 const $=id=>document.getElementById(id);
-function short(n){if(!Number.isFinite(n))return "∞";if(n<1000000)return Math.floor(n).toLocaleString();const units=["K","M","B","T","Qa","Qi","Sx","Sp","Oc","No","Dc"];let tier=Math.floor(Math.log10(n)/3);if(tier>units.length)return n.toExponential(2);let value=n/Math.pow(1000,tier);return value.toFixed(value>=100?0:value>=10?1:2)+units[tier-1]}
-function owned(id){return Number(state.owned[id]||0)}
-function tierMultiplier(){return Math.pow(RING_SLOTS,state.tier-1)}
-function cost(u,count=owned(u.id)){const v=u.base*Math.pow(u.growth,count);return Number.isFinite(v)?Math.ceil(v):Number.MAX_VALUE}
-function clickPower(){return (1+upgrades.filter(u=>u.kind==="click").reduce((sum,u)=>sum+u.amount*owned(u.id),0))*tierMultiplier()}
-function idlePower(){return upgrades.filter(u=>u.kind==="idle").reduce((sum,u)=>sum+u.amount*owned(u.id),0)*tierMultiplier()}
-function priceFor(u,n){let total=0;for(let i=0;i<n;i++)total+=cost(u,owned(u.id)+i);return total}
-function maxAffordable(u){let count=0,total=0;while(count<10000){const next=cost(u,owned(u.id)+count);if(!Number.isFinite(next)||total+next>state.dust)break;total+=next;count++}return{count,total}}
-function paletteHue(){const hues=[0,105,205,275,330,48];return hues[(state.tier-1)%hues.length]}
-function save(){try{localStorage.setItem("starClicker.save",JSON.stringify(state));$("saveStatus").textContent="Saved on this device"}catch{$("saveStatus").textContent="Couldn't save"}}
-function showToast(message){const previous=$("rebirthToast");if(previous)previous.remove();clearTimeout(toastTimer);const el=document.createElement("div");el.id="rebirthToast";el.className="toast";el.setAttribute("role","status");el.setAttribute("aria-live","polite");el.textContent=message;document.body.append(el);toastTimer=setTimeout(()=>el.remove(),3800)}
-function drawOrbits(){
-const host=$("orbits");host.innerHTML="";let total=0;
-upgrades.forEach((u,index)=>{const count=owned(u.id);if(!count)return;total+=count;const visible=Math.min(count,RING_SLOTS),radius=126+index*23;
-const zone=document.createElement("div");zone.className="machine-zone";zone.style.width=(radius*2)+"px";zone.style.height=(radius*2)+"px";host.append(zone);
-const ring=document.createElement("div");ring.className="machine-orbit";ring.style.width=(radius*2)+"px";ring.style.height=(radius*2)+"px";ring.style.animationDuration=(70+index*3)+"s";ring.style.animationDelay=(-index*2)+"s";
-for(let slot=0;slot<visible;slot++){const angle=(Math.PI*2*slot/RING_SLOTS)-Math.PI/2;const token=document.createElement("span");token.className="machine-token";token.style.left=(50+50*Math.cos(angle))+"%";token.style.top=(50+50*Math.sin(angle))+"%";token.style.setProperty("--machine-size",Math.min(24+index*1.15,48)+"px");token.textContent=u.icon;if(slot===RING_SLOTS-1&&count>RING_SLOTS){const badge=document.createElement("small");badge.textContent="×"+short(count);token.append(badge)}ring.append(token)}
-host.append(ring)
-});
-$("machineCount").textContent=total?short(total)+" machine"+(total===1?"":"s")+" across "+upgrades.filter(u=>owned(u.id)>0).length+" orbit ring"+(upgrades.filter(u=>owned(u.id)>0).length===1?"":"s"):"A quiet little corner of space";
-$("spacePanel").classList.toggle("has-gloves",owned("gloves")>0||owned("nebula")>0||owned("infinity")>0);
-$("galaxy").style.setProperty("--zoom",zoom/100);$("galaxy").style.setProperty("--tier-hue",paletteHue());
+try{
+ const saved=JSON.parse(localStorage.getItem("starClicker.save")||"{}");
+ const savedDust=String(saved.dust??0);
+ state.dust=BigInt(savedDust.includes(".")?Math.floor(Number(savedDust)):savedDust);
+ state.rebirths=Math.max(0,Number(saved.rebirths)||0);
+ state.stage=Math.max(0,Math.min(STAGES_PER_REBIRTH-1,Number(saved.stage)||0));
+ state.progress=Math.max(0,Math.min(RING_SLOTS-1,Number(saved.progress)||0));
+}catch{state={dust:0n,stage:0,progress:0,rebirths:0}}
+function machineIndex(){return Math.floor(state.stage/3)}
+function colorTier(){return state.stage%3}
+function globalPowerExponent(){return state.rebirths*STAGES_PER_REBIRTH+state.stage}
+function machinePower(){return 8n**BigInt(globalPowerExponent())}
+function short(value){
+ const n=typeof value==="bigint"?value:BigInt(Math.max(0,Math.floor(value)));
+ if(n<1000000n)return n.toLocaleString();
+ const digits=n.toString(),exp=digits.length-1;
+ return digits[0]+"."+digits.slice(1,3)+"e"+exp
 }
-function drawShop(){const host=$("upgrades");host.innerHTML=upgrades.map(u=>'<button class="upgrade" data-id="'+u.id+'"><span class="icon">'+u.icon+'</span><span class="details"><strong>'+u.name+'</strong><small>+'+short(u.amount*tierMultiplier())+' '+(u.kind==="click"?"per tap":"per second")+' · Owned: <b>'+short(owned(u.id))+' / '+RING_SLOTS+'</b></small></span><span class="price" id="price-'+u.id+'"></span></button>').join("");$("upgradeCount").textContent="· "+upgrades.length;$("tierBadge").textContent="Tier "+state.tier;$("tierPower").textContent="Tier "+state.tier+" · ×"+short(tierMultiplier())+" machine value";host.querySelectorAll(".upgrade").forEach(b=>b.addEventListener("click",()=>buy(b.dataset.id)));refresh()}
-function refresh(){ $("score").textContent=short(state.dust);$("perClick").textContent=short(clickPower());$("perSecond").textContent=short(idlePower());for(const u of upgrades){const b=document.querySelector('[data-id="'+u.id+'"]');if(!b)continue;const qty=buyMode==="max"?maxAffordable(u):{count:Number(buyMode),total:priceFor(u,Number(buyMode))};const full=owned(u.id)>=RING_SLOTS;b.disabled=!full&&(!qty.count||qty.total>state.dust);const label=full?"REBIRTH → TIER "+(state.tier+1):(buyMode==="max"?(qty.count?"MAX · "+short(qty.total):"Need "+short(cost(u))):"×"+qty.count+" · "+short(qty.total));$("price-"+u.id).textContent=label}}
-function rebirth(trigger){state.tier++;state.dust=0;state.owned={};state.owned[trigger.id]=1;save();drawOrbits();drawShop();showToast("REBIRTH! Tier "+state.tier+" · All rings reset · Each machine is now worth "+RING_SLOTS+"×");$("upgrades").scrollTop=0}
-function buy(id){const u=upgrades.find(x=>x.id===id);if(!u)return;if(owned(u.id)>=RING_SLOTS){rebirth(u);return}const qty=buyMode==="max"?maxAffordable(u):{count:Number(buyMode),total:priceFor(u,Number(buyMode))};if(!qty.count||qty.total>state.dust)return;const room=RING_SLOTS-owned(u.id);if(qty.count>room){const availableCost=priceFor(u,room);if(state.dust<availableCost)return;state.dust-=availableCost;state.owned[id]=owned(id)+room;save();drawOrbits();drawShop();showToast(u.name+" ring complete! Buy again to rebirth into Tier "+(state.tier+1));return}state.dust-=qty.total;state.owned[id]=owned(id)+qty.count;save();drawOrbits();drawShop()}
-function collect(event){const amount=clickPower();state.dust+=amount;save();refresh();const stage=$("universe").getBoundingClientRect(),el=document.createElement("span");el.className="float";el.textContent="+"+short(amount);el.style.left=(event.clientX-stage.left)+"px";el.style.top=(event.clientY-stage.top)+"px";$("universe").append(el);setTimeout(()=>el.remove(),800);const panel=$("spacePanel");panel.classList.remove("is-clicking");void panel.offsetWidth;panel.classList.add("is-clicking");setTimeout(()=>panel.classList.remove("is-clicking"),250)}
+function machineName(index){return forms[Math.max(0,Math.min(forms.length-1,index))].name}
+function palette(){return palettes[state.rebirths%palettes.length]}
+function currentColor(){return palette().colors[colorTier()]}
+function currentCost(){
+ const stageScale=8n**BigInt(globalPowerExponent());
+ const rebirthBase=BigInt(15+machineIndex()*3+colorTier()*2);
+ const progressScale=BigInt(Math.round(Math.pow(1.2,state.progress)*1000));
+ return rebirthBase*stageScale*progressScale/1000n
+}
+function save(){
+ try{localStorage.setItem("starClicker.save",JSON.stringify({dust:state.dust.toString(),stage:state.stage,progress:state.progress,rebirths:state.rebirths}));$("saveStatus").textContent="Saved on this device"}
+ catch{$("saveStatus").textContent="Couldn't save"}
+}
+function notify(message){
+ const old=$("notice");if(old)old.remove();clearTimeout(toastTimer);
+ const note=document.createElement("div");note.id="notice";note.className="toast";note.setAttribute("role","status");note.setAttribute("aria-live","polite");note.textContent=message;document.body.append(note);
+ toastTimer=setTimeout(()=>note.remove(),4000)
+}
+function updateMachine(){
+ const index=machineIndex(),form=forms[index],tier=colorTier()+1,power=machinePower(),accent=currentColor(),orbitSize=260+index*18;
+ document.documentElement.style.setProperty("--accent",accent);
+ $("tierBadge").textContent="Tier "+tier+" · "+palette().name;
+ $("tierBadge").style.borderColor=accent;$("tierBadge").style.color=accent;
+ $("currentIcon").textContent=form.icon;$("currentIcon").style.color=accent;
+ $("currentIcon").style.fontSize=Math.min(38+index*1.2,74)+"px";
+ $("currentName").textContent=form.name;$("currentPower").textContent="Makes "+short(power)+" stardust per tap and each second";
+ $("machineToken").textContent=form.icon;$("machineToken").style.setProperty("--machine-size",Math.min(form.size,96)+"px");
+ $("machineToken").style.color=accent;$("machineToken").style.borderColor=accent;
+ $("machineOrbit").style.setProperty("--orbit-size",orbitSize+"px");$("machineOrbit").style.setProperty("--machine-color",accent);
+ $("progressLabel").textContent="Ring progress · "+state.progress+" / "+RING_SLOTS;
+ const nextStage=state.stage+1;
+ $("nextForm").textContent=nextStage>=STAGES_PER_REBIRTH?"Next: Rebirth · "+forms[0].name:"Next: "+machineName(Math.floor(nextStage/3))+" · Tier "+(nextStage%3+1);
+ $("progressFill").style.width=(state.progress/RING_SLOTS*100)+"%";
+ $("tierPower").textContent="Tier "+tier+" · ×"+short(power)+" output";
+ $("rebirthLabel").textContent=state.rebirths?"· Rebirth "+short(state.rebirths):"";
+ $("spaceCaption").textContent=state.rebirths?"Rebirth "+short(state.rebirths)+" · "+palette().name+" palette":(index===0?"A tiny telescope starts the journey":"Machine "+(index+1)+" of 30 · "+palette().name+" palette");
+ drawRoadmap();updateStats()
+}
+function drawRoadmap(){
+ const host=$("roadmap"),active=machineIndex();host.innerHTML=forms.map((form,index)=>'<div class="form-row '+(index===active?"active":index<active?"done":"")+'"><span class="form-icon">'+form.icon+'</span><span class="form-name">'+(index+1)+". "+form.name+'</span><span class="form-state">'+(index<active?"Complete":index===active?"NOW":"Locked")+'</span></div>').join("")
+}
+function updateStats(){
+ const power=machinePower();$("score").textContent=short(state.dust);$("perClick").textContent=short(power);$("perSecond").textContent=short(power);
+ const cost=currentCost();$("buyButton").disabled=state.dust<cost;$("buyButton").textContent="Build next piece · "+short(cost)
+}
+function advanceStage(){
+ state.progress=0;
+ if(state.stage<STAGES_PER_REBIRTH-1){state.stage++;notify(machineName(machineIndex())+" evolved · Tier "+(colorTier()+1)+" · machine power ×8")}
+ else{state.rebirths++;state.stage=0;state.dust=0n;notify("REBIRTH "+short(state.rebirths)+" · Back to "+forms[0].name+" · New "+palette().name+" palette")}
+ save();updateMachine();if(state.stage===0)$("roadmap").scrollTop=0
+}
+function buyNext(){
+ const cost=currentCost();if(state.dust<cost)return;
+ state.dust-=cost;state.progress++;
+ if(state.progress>=RING_SLOTS)advanceStage();else{save();updateMachine()}
+}
+function collect(event){
+ state.dust+=machinePower();save();updateStats();
+ const bounds=$("universe").getBoundingClientRect(),float=document.createElement("span");
+ float.className="float";float.textContent="+"+short(machinePower());
+ float.style.left=Math.max(12,Math.min(bounds.width-70,(event.clientX||bounds.left+bounds.width/2)-bounds.left))+"px";
+ float.style.top=Math.max(30,Math.min(bounds.height-25,(event.clientY||bounds.top+bounds.height/2)-bounds.top))+"px";
+ $("universe").append(float);setTimeout(()=>float.remove(),850)
+}
 $("star").addEventListener("click",collect);
-document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{buyMode=b.dataset.mode;document.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("active",x===b));refresh()}));
-$("zoom").addEventListener("input",e=>{zoom=Number(e.target.value);$("zoomValue").textContent=zoom+"%";$("galaxy").style.setProperty("--zoom",zoom/100)});
-$("reset").addEventListener("click",()=>{if(confirm("Reset the game and erase your saved stardust, upgrades and tier?")){state={dust:0,owned:{},tier:1};save();drawOrbits();drawShop()}});
-drawOrbits();drawShop();setInterval(()=>{const gain=idlePower();if(gain>0){state.dust+=gain;save();refresh()}},1000);
+$("buyButton").addEventListener("click",buyNext);
+$("zoom").addEventListener("input",event=>{zoom=Number(event.target.value);$("zoomValue").textContent=zoom+"%";$("galaxy").style.setProperty("--zoom",zoom/100)});
+$("reset").addEventListener("click",()=>{if(confirm("Reset all stardust, machine progress and rebirths?")){state={dust:0n,stage:0,progress:0,rebirths:0};save();updateMachine()}});
+$("galaxy").style.setProperty("--zoom",zoom/100);
+updateMachine();setInterval(()=>{state.dust+=machinePower();save();updateStats()},1000);
 </script>
-</body></html>
+</body>
+</html>
