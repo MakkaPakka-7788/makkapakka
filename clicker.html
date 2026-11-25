@@ -150,7 +150,7 @@ function renderRoadmap(){
  }).join("")
 }
 function render(){
- const power=totalPower(),clickPower=power+1;$("score").textContent=fmt(state.dust);$("perClick").textContent=fmt(clickPower);$("perSecond").textContent=fmt(power);
+ const power=totalPower(),clickPower=power+1n;$("score").textContent=fmt(state.dust);$("perClick").textContent=fmt(clickPower);$("perSecond").textContent=fmt(power);
  const cost=purchaseCost();$("buyButton").disabled=state.dust<cost;$("buyButton").textContent="Buy telescope · "+fmt(cost);
  const nextBase=state.counts[0],name=forms[0].name;$("mergeHint").textContent=nextBase+" / "+RING_SLOTS+" "+name.toLowerCase()+"s toward a merge. Eight combine into the next tier.";
  $("fleetPower").textContent=totalMachines()?fmt(totalMachines())+" telescopes · "+fmt(power)+"/sec":"Your telescope fleet is waiting";
