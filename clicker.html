@@ -1,62 +1,79 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#10151f">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10151f">
 <title>Star Clicker</title>
 <style>
 :root{color-scheme:dark;--bg:#0b1018;--panel:#141d2a;--line:#28384d;--text:#eef5ff;--muted:#9bb0c8;--blue:#64c7ff;--gold:#ffd166;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--text);background:radial-gradient(ellipse at 50% -10%,#183653 0,transparent 48%),var(--bg)}
-button{font:inherit;color:inherit;cursor:pointer}.wrap{width:min(1000px,100%);margin:auto;padding:28px 20px 50px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{font-size:14px;font-weight:800;letter-spacing:.16em;color:var(--blue)}.save{font-size:12px;color:var(--muted)}
-h1{text-align:center;font-size:clamp(32px,6vw,54px);letter-spacing:-.05em;margin:42px 0 4px}.subtitle{text-align:center;color:var(--muted);margin:0 0 28px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:650px;margin:0 auto 20px}.stat{padding:14px;text-align:center;background:#101925cc;border:1px solid var(--line);border-radius:14px}.stat strong{display:block;font-size:clamp(19px,4vw,28px);font-variant-numeric:tabular-nums}.stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
-.play-area{position:relative;min-height:285px;display:grid;place-items:center;overflow:hidden;border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,#111b29,#0f1722);box-shadow:0 18px 60px #0005}.play-area:before,.play-area:after{content:"✦";position:absolute;color:#7398b455;font-size:26px}.play-area:before{top:22%;left:16%}.play-area:after{right:17%;bottom:22%;font-size:18px}
-#star{width:190px;height:190px;display:grid;place-items:center;border:0;background:transparent;font-size:140px;line-height:1;filter:drop-shadow(0 0 22px #ffd16666);transition:transform .12s;touch-action:manipulation;user-select:none}#star:hover{transform:scale(1.06)}#star:active{transform:scale(.88)}#star:focus-visible{outline:2px solid var(--blue);outline-offset:4px;border-radius:50%}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--text);background:radial-gradient(ellipse at 50% -10%,#183653 0,transparent 48%),var(--bg)}button{font:inherit;color:inherit;cursor:pointer}
+.wrap{width:min(1100px,100%);margin:auto;padding:24px 18px 50px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{font-size:14px;font-weight:800;letter-spacing:.16em;color:var(--blue)}.save{font-size:12px;color:var(--muted)}
+h1{text-align:center;font-size:clamp(32px,6vw,54px);letter-spacing:-.05em;margin:36px 0 4px}.subtitle{text-align:center;color:var(--muted);margin:0 0 24px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:740px;margin:0 auto 18px}.stat{padding:13px;text-align:center;background:#101925cc;border:1px solid var(--line);border-radius:14px}.stat strong{display:block;font-size:clamp(18px,4vw,27px);font-variant-numeric:tabular-nums}.stat span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.play-area{position:relative;min-height:220px;display:grid;place-items:center;overflow:hidden;border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,#111b29,#0f1722);box-shadow:0 18px 60px #0005}.play-area:before,.play-area:after{content:"✦";position:absolute;color:#7398b455;font-size:26px}.play-area:before{top:22%;left:16%}.play-area:after{right:17%;bottom:22%;font-size:18px}
+#star{width:170px;height:170px;display:grid;place-items:center;border:0;background:transparent;font-size:125px;line-height:1;filter:drop-shadow(0 0 22px #ffd16666);transition:transform .12s;touch-action:manipulation;user-select:none}#star:hover{transform:scale(1.06)}#star:active{transform:scale(.88)}#star:focus-visible{outline:2px solid var(--blue);outline-offset:4px;border-radius:50%}
 .float{position:absolute;pointer-events:none;color:var(--gold);font-weight:900;animation:float .8s ease-out forwards;text-shadow:0 2px 10px #000}@keyframes float{to{transform:translateY(-75px);opacity:0}}
-.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:26px 2px 12px}.section-title h2{font-size:16px;margin:0}.section-title span{color:var(--muted);font-size:12px}
-.upgrades{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.upgrade{display:flex;align-items:center;gap:12px;text-align:left;padding:14px;border:1px solid var(--line);border-radius:15px;background:var(--panel);transition:border-color .15s,transform .15s}.upgrade:hover:not(:disabled){border-color:#578ab3;transform:translateY(-1px)}.upgrade:disabled{opacity:.55;cursor:not-allowed}.upgrade .icon{font-size:28px}.upgrade .details{flex:1;min-width:0}.upgrade strong{display:block}.upgrade small{display:block;color:var(--muted);margin-top:3px}.upgrade .price{color:var(--gold);font-size:13px;font-weight:800;white-space:nowrap}
-.reset{display:block;margin:22px auto 0;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--muted);font-size:12px}.reset:hover{color:var(--text);border-color:#60758b}
-@media(max-width:560px){.wrap{padding:18px 14px 32px}.stats{gap:6px}.stat{padding:11px 4px}.play-area{min-height:245px}.upgrades{grid-template-columns:1fr}.upgrade{padding:12px}.section-title{margin-top:20px}}
+.shop-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:23px 2px 12px}.shop-head h2{font-size:18px;margin:0}.buy-modes{display:flex;gap:6px}.buy-modes button{padding:7px 11px;border:1px solid var(--line);border-radius:9px;background:#101925;color:var(--muted);font-size:12px}.buy-modes button.active{color:#07111a;background:var(--blue);border-color:var(--blue);font-weight:800}
+.upgrades{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.upgrade{display:flex;align-items:center;gap:11px;text-align:left;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);transition:border-color .15s,transform .15s}.upgrade:hover:not(:disabled){border-color:#578ab3;transform:translateY(-1px)}.upgrade:disabled{opacity:.5;cursor:not-allowed}.upgrade .icon{font-size:27px;width:34px;text-align:center}.upgrade .details{flex:1;min-width:0}.upgrade strong{display:block;font-size:13px}.upgrade small{display:block;color:var(--muted);margin-top:3px;font-size:11px;line-height:1.35}.upgrade .price{color:var(--gold);font-size:12px;font-weight:800;white-space:nowrap;text-align:right}
+.bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:19px}.reset{padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--muted);font-size:12px}.reset:hover{color:var(--text);border-color:#60758b}.hint{color:var(--muted);font-size:11px}
+@media(max-width:560px){.wrap{padding:16px 12px 32px}.stats{gap:6px}.stat{padding:10px 3px}.play-area{min-height:190px}#star{height:145px;font-size:108px}.upgrades{grid-template-columns:1fr}.shop-head{margin-top:18px}.upgrade{padding:10px}.upgrade .icon{font-size:24px}}
 </style>
 </head>
 <body>
 <main class="wrap">
 <header class="top"><div class="brand">✦ STAR CLICKER</div><div class="save" id="saveStatus" aria-live="polite">Saved on this device</div></header>
-<h1>Make a little stardust.</h1><p class="subtitle">Tap the star. Build your tiny space empire.</p>
-<section class="stats" aria-label="Game stats">
-<div class="stat"><strong id="score">0</strong><span>Stardust</span></div>
-<div class="stat"><strong id="perClick">1</strong><span>Per tap</span></div>
-<div class="stat"><strong id="perSecond">0</strong><span>Per second</span></div>
-</section>
+<h1>Make a little stardust.</h1><p class="subtitle">Tap the star. Hire a whole galaxy of helpers.</p>
+<section class="stats" aria-label="Game stats"><div class="stat"><strong id="score">0</strong><span>Stardust</span></div><div class="stat"><strong id="perClick">1</strong><span>Per tap</span></div><div class="stat"><strong id="perSecond">0</strong><span>Per second</span></div></section>
 <section class="play-area" aria-label="Tap zone"><button id="star" aria-label="Collect stardust">⭐</button></section>
-<div class="section-title"><h2>Build your crew</h2><span>Upgrades save automatically</span></div>
-<section class="upgrades" aria-label="Upgrades">
-<button class="upgrade" data-upgrade="click"><span class="icon">🧑‍🚀</span><span class="details"><strong>Astro gloves</strong><small>+1 stardust per tap · Owned: <b id="clickOwned">0</b></small></span><span class="price" id="clickCost">Cost 25</span></button>
-<button class="upgrade" data-upgrade="drone"><span class="icon">🛰️</span><span class="details"><strong>Star drone</strong><small>+1 stardust per second · Owned: <b id="droneOwned">0</b></small></span><span class="price" id="droneCost">Cost 50</span></button>
-<button class="upgrade" data-upgrade="telescope"><span class="icon">🔭</span><span class="details"><strong>Deep-space scope</strong><small>+10 stardust per tap · Owned: <b id="scopeOwned">0</b></small></span><span class="price" id="scopeCost">Cost 250</span></button>
-<button class="upgrade" data-upgrade="station"><span class="icon">🚀</span><span class="details"><strong>Orbit station</strong><small>+10 stardust per second · Owned: <b id="stationOwned">0</b></small></span><span class="price" id="stationCost">Cost 500</span></button>
-</section>
-<button class="reset" id="reset">Start over</button>
+<div class="shop-head"><h2>🚀 Upgrade shop <span id="upgradeCount"></span></h2><div class="buy-modes" aria-label="Purchase amount"><button class="active" data-mode="1">Buy 1</button><button data-mode="10">Buy 10</button><button data-mode="max">Buy Max</button></div></div>
+<section class="upgrades" id="upgrades" aria-label="Upgrades"></section>
+<footer class="bottom"><span class="hint">Your progress saves automatically on this device.</span><button class="reset" id="reset">Start over</button></footer>
 </main>
 <script>
-const defaults={dust:0,gloves:0,drones:0,scopes:0,stations:0};
-let state={...defaults};try{state={...defaults,...JSON.parse(localStorage.getItem("starClicker.save")||"{}")}}catch{}
-const $=id=>document.getElementById(id),fmt=n=>Math.floor(n).toLocaleString();
-const costs={gloves:25,drones:50,scopes:250,stations:500};
-function income(){return state.drones+state.stations*10}
-function power(){return 1+state.gloves+state.scopes*10}
-function price(key){return Math.floor(costs[key]*Math.pow(key==="gloves"?1.55:key==="drones"?1.6:1.7,state[key]))}
-function save(){try{localStorage.setItem("starClicker.save",JSON.stringify(state));$("saveStatus").textContent="Saved on this device"}catch{$("saveStatus").textContent="Save unavailable"}}
-function render(){ $("score").textContent=fmt(state.dust);$("perClick").textContent=fmt(power());$("perSecond").textContent=fmt(income());
-for(const [key,label] of [["gloves","click"],["drones","drone"],["scopes","scope"],["stations","station"]]){$(label+"Owned").textContent=state[key];$(label+"Cost").textContent="Cost "+fmt(price(key));document.querySelector('[data-upgrade="'+(key==="gloves"?"click":key==="drones"?"drone":key==="scopes"?"telescope":"station")+'"]').disabled=state.dust<price(key)}
-}
-function collect(x,y){state.dust+=power();save();render();const el=document.createElement("span");el.className="float";el.textContent="+"+fmt(power());el.style.left=x+"px";el.style.top=y+"px";document.querySelector(".play-area").append(el);setTimeout(()=>el.remove(),850)}
+const upgrades=[
+{id:"gloves",icon:"🧑‍🚀",name:"Astro gloves",kind:"click",amount:1,base:15,growth:1.16},
+{id:"drone",icon:"🛰️",name:"Star drone",kind:"idle",amount:1,base:35,growth:1.17},
+{id:"telescope",icon:"🔭",name:"Deep-space scope",kind:"click",amount:10,base:160,growth:1.18},
+{id:"rover",icon:"🌙",name:"Moon rover",kind:"idle",amount:5,base:260,growth:1.19},
+{id:"nebula",icon:"☁️",name:"Nebula gloves",kind:"click",amount:100,base:1200,growth:1.20},
+{id:"station",icon:"🚀",name:"Orbit station",kind:"idle",amount:25,base:1800,growth:1.20},
+{id:"quantum",icon:"⚛️",name:"Quantum tapper",kind:"click",amount:1000,base:9500,growth:1.21},
+{id:"comet",icon:"☄️",name:"Comet miners",kind:"idle",amount:125,base:13000,growth:1.21},
+{id:"galaxy",icon:"🌌",name:"Galaxy pulse",kind:"click",amount:10000,base:80000,growth:1.22},
+{id:"cruiser",icon:"🛸",name:"Mining cruiser",kind:"idle",amount:625,base:95000,growth:1.22},
+{id:"starforge",icon:"🔥",name:"Star forge",kind:"click",amount:100000,base:700000,growth:1.23},
+{id:"dyson",icon:"☀️",name:"Dyson swarm",kind:"idle",amount:3125,base:850000,growth:1.23},
+{id:"pulsar",icon:"💫",name:"Pulsar punch",kind:"click",amount:1000000,base:6500000,growth:1.24},
+{id:"wormhole",icon:"🌀",name:"Wormhole harvest",kind:"idle",amount:15625,base:8000000,growth:1.24},
+{id:"supernova",icon:"🌟",name:"Supernova switch",kind:"click",amount:10000000,base:65000000,growth:1.25},
+{id:"ringworld",icon:"🪐",name:"Ringworld farms",kind:"idle",amount:78125,base:80000000,growth:1.25},
+{id:"universe",icon:"🌠",name:"Universe shaker",kind:"click",amount:100000000,base:700000000,growth:1.26},
+{id:"multiverse",icon:"♾️",name:"Multiverse engines",kind:"idle",amount:390625,base:900000000,growth:1.26},
+{id:"time",icon:"⏳",name:"Time tapper",kind:"click",amount:1000000000,base:8500000000,growth:1.27},
+{id:"ancient",icon:"🗿",name:"Ancient star miners",kind:"idle",amount:1953125,base:11000000000,growth:1.27},
+{id:"infinity",icon:"🔮",name:"Infinity gloves",kind:"click",amount:10000000000,base:120000000000,growth:1.28},
+{id:"celestial",icon:"👑",name:"Celestial collectors",kind:"idle",amount:9765625,base:160000000000,growth:1.28},
+{id:"cosmic",icon:"🧿",name:"Cosmic fingertip",kind:"click",amount:100000000000,base:1800000000000,growth:1.29},
+{id:"bigbang",icon:"💥",name:"Big Bang factory",kind:"idle",amount:48828125,base:2500000000000,growth:1.29}
+];
+let state={dust:0,owned:{}};try{const saved=JSON.parse(localStorage.getItem("starClicker.save")||"{}");state={...state,...saved,owned:{...state.owned,...saved.owned}}}catch{}
+let buyMode="1";
+const $=id=>document.getElementById(id);
+function short(n){if(!Number.isFinite(n))return "∞";if(n<1000000)return Math.floor(n).toLocaleString();const units=["K","M","B","T","Qa","Qi","Sx","Sp","Oc","No","Dc"];let tier=Math.floor(Math.log10(n)/3);if(tier>units.length)return n.toExponential(2);let value=n/Math.pow(1000,tier);return value.toFixed(value>=100?0:value>=10?1:2)+units[tier-1]}
+function owned(id){return Number(state.owned[id]||0)}
+function cost(u,count=owned(u.id)){const v=u.base*Math.pow(u.growth,count);return Number.isFinite(v)?Math.ceil(v):Number.MAX_VALUE}
+function clickPower(){return 1+upgrades.filter(u=>u.kind==="click").reduce((sum,u)=>sum+u.amount*owned(u.id),0)}
+function idlePower(){return upgrades.filter(u=>u.kind==="idle").reduce((sum,u)=>sum+u.amount*owned(u.id),0)}
+function priceFor(u,n){let total=0;for(let i=0;i<n;i++)total+=cost(u,owned(u.id)+i);return total}
+function maxAffordable(u){let count=0,total=0;while(count<10000){const next=cost(u,owned(u.id)+count);if(!Number.isFinite(next)||total+next>state.dust)break;total+=next;count++}return {count,total}}
+function save(){try{localStorage.setItem("starClicker.save",JSON.stringify(state));$("saveStatus").textContent="Saved on this device"}catch{$("saveStatus").textContent="Couldn't save"}}
+function drawShop(){const host=$("upgrades");host.innerHTML=upgrades.map(u=>'<button class="upgrade" data-id="'+u.id+'"><span class="icon">'+u.icon+'</span><span class="details"><strong>'+u.name+'</strong><small>+'+short(u.amount)+' '+(u.kind==="click"?"per tap":"per second")+' · Owned: <b>'+short(owned(u.id))+'</b></small></span><span class="price" id="price-'+u.id+'"></span></button>').join("");$("upgradeCount").textContent="· "+upgrades.length+" upgrades";host.querySelectorAll(".upgrade").forEach(b=>b.addEventListener("click",()=>buy(b.dataset.id)));refresh()}
+function refresh(){ $("score").textContent=short(state.dust);$("perClick").textContent=short(clickPower());$("perSecond").textContent=short(idlePower());for(const u of upgrades){const b=document.querySelector('[data-id="'+u.id+'"]');if(!b)continue;let qty=buyMode==="max"?maxAffordable(u):Number(buyMode);let total=buyMode==="max"?qty.total:priceFor(u,qty);b.disabled=total>state.dust||qty.count===0;const label=buyMode==="max"?(qty.count?"Buy "+short(qty.count)+" · "+short(total):"Need "+short(cost(u))):"Buy "+qty+" · "+short(total);$("price-"+u.id).textContent=label}}
+function buy(id){const u=upgrades.find(x=>x.id===id);if(!u)return;let qty=buyMode==="max"?maxAffordable(u):{count:Number(buyMode),total:priceFor(u,Number(buyMode))};if(!qty.count||qty.total>state.dust)return;state.dust-=qty.total;state.owned[id]=owned(id)+qty.count;save();refresh()}
+function collect(x,y){const amount=clickPower();state.dust+=amount;save();refresh();const el=document.createElement("span");el.className="float";el.textContent="+"+short(amount);const r=document.querySelector(".play-area").getBoundingClientRect();el.style.left=(x-r.left)+"px";el.style.top=(y-r.top)+"px";document.querySelector(".play-area").append(el);setTimeout(()=>el.remove(),850)}
 $("star").addEventListener("click",e=>collect(e.clientX,e.clientY));
-document.querySelectorAll(".upgrade").forEach(b=>b.addEventListener("click",()=>{const key=({click:"gloves",drone:"drones",telescope:"scopes",station:"stations"})[b.dataset.upgrade],cost=price(key);if(state.dust<cost)return;state.dust-=cost;state[key]++;save();render()}));
-setInterval(()=>{if(income()>0){state.dust+=income();save();render()}},1000);
-$("reset").addEventListener("click",()=>{if(confirm("Start over and erase your saved stardust?")){state={...defaults};save();render()}});
-render();
+document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{buyMode=b.dataset.mode;document.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("active",x===b));refresh()}));
+$("reset").addEventListener("click",()=>{if(confirm("Start over and erase all your saved stardust and upgrades?")){state={dust:0,owned:{}};save();refresh()}});
+drawShop();setInterval(()=>{const gain=idlePower();if(gain>0){state.dust+=gain;save();refresh()}},1000);
 </script>
 </body>
 </html>
