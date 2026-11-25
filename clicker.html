@@ -100,14 +100,6 @@ const forms=[
 {name:"Intergalactic cruiser",icon:"🛸",size:104},
 {name:"Intergalactic flagship",icon:"🚀",size:110}
 ];
-const palettes=[
-{name:"Violet",colors:["#bc86ff","#ffdf63","#ff9b55"]},
-{name:"Aurora",colors:["#65a9ff","#7dffd2","#ff78b8"]},
-{name:"Cosmic",colors:["#6de7ff","#c1ff62","#ff555e"]},
-{name:"Nebula",colors:["#fa75ff","#ffe06f","#62f1c0"]},
-{name:"Stellar",colors:["#e8c3ff","#a4f6ff","#ffb1d4"]},
-{name:"Solar",colors:["#a8e4ff","#d1ff7c","#ff784b"]}
-];
 let state={dust:0n,stage:0,progress:0,rebirths:0},zoom=58,toastTimer;
 const $=id=>document.getElementById(id);
 try{
@@ -129,8 +121,9 @@ function short(value){
  return digits[0]+"."+digits.slice(1,3)+"e"+exp
 }
 function machineName(index){return forms[Math.max(0,Math.min(forms.length-1,index))].name}
-function palette(){return palettes[state.rebirths%palettes.length]}
-function currentColor(){return palette().colors[colorTier()]}
+function currentHue(){return (state.rebirths*47)%360}
+function palette(){const names=["Violet","Rose","Crimson","Amber","Gold","Lime","Emerald","Teal","Cyan","Azure","Indigo","Magenta"];return{name:names[Math.round(currentHue()/30)%names.length]}}
+function currentColor(){const baseHue=[270,48,28][colorTier()];return "hsl("+((baseHue+currentHue())%360)+" 90% 68%)"}
 function currentCost(){
  const stageScale=8n**BigInt(globalPowerExponent());
  const rebirthBase=BigInt(15+machineIndex()*3+colorTier()*2);
@@ -149,7 +142,7 @@ function notify(message){
 function updateMachine(){
  const index=machineIndex(),form=forms[index],tier=colorTier()+1,power=machinePower(),accent=currentColor(),orbitSize=260+index*18;
  document.documentElement.style.setProperty("--accent",accent);
- $("tierBadge").textContent="Tier "+tier+" · "+palette().name;
+ $("tierBadge").textContent="Tier "+tier+" · "+palette().name;document.documentElement.style.setProperty("--rebirth-hue",currentHue());
  $("tierBadge").style.borderColor=accent;$("tierBadge").style.color=accent;
  $("currentIcon").textContent=form.icon;$("currentIcon").style.color=accent;
  $("currentIcon").style.fontSize=Math.min(38+index*1.2,74)+"px";
