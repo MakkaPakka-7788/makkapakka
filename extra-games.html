@@ -41,7 +41,10 @@ function openExternalGame(url,title){
 }
 function closeExternalGame(){
   gameViewer.classList.remove("open");
-  viewerFrame.removeAttribute("src");
+  unlocked.classList.add("open");
+  viewerFrame.src="about:blank";
+  viewerTitle.textContent="GAME";
+  window.scrollTo(0,0);
 }
 document.addEventListener("keydown",event=>{
   if(event.key==="Escape"&&gameViewer.classList.contains("open"))closeExternalGame();
